@@ -8,6 +8,9 @@ add_library(manimation_core STATIC
     Project.cpp
     PythonImport.cpp
     SceneTemplate.cpp
+    Catalog.cpp
+    RateFunctions.cpp
+    SceneEvaluator.cpp
     RecentProjects.cpp
 )
 

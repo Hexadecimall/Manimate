@@ -12,6 +12,12 @@ add_library(manimation_ui STATIC
     code/PythonHighlighter.cpp
     code/CodeEditor.cpp
     code/CodeEditorWindow.cpp
+    render/SceneRenderer.cpp
+    editor/EditorState.cpp
+    editor/CanvasView.cpp
+    editor/TimelineView.cpp
+    editor/LibraryPanel.cpp
+    editor/InspectorPanel.cpp
     project/ProjectWindow.cpp
 )
 
@@ -23,6 +29,8 @@ target_include_directories(manimation_ui PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/launcher
     ${CMAKE_CURRENT_SOURCE_DIR}/code
     ${CMAKE_CURRENT_SOURCE_DIR}/project
+    ${CMAKE_CURRENT_SOURCE_DIR}/render
+    ${CMAKE_CURRENT_SOURCE_DIR}/editor
 )
 
 target_link_libraries(manimation_ui PUBLIC Manimation::Core Qt6::Widgets)

@@ -5,6 +5,8 @@
 #include "RecentProjectsModel.h"
 #include "AppWindow.h"
 #include "CodeEditor.h"
+#include "EditorState.h"
+#include "SceneEvaluator.h"
 #include "ProjectWindow.h"
 #include "Theme.h"
 #include "TitleBar.h"
@@ -45,6 +47,10 @@ private slots:
 
     void snapshot();
     void projectSnapshot();
+
+    void addingAnObjectSelectsIt();
+    void animationsChangeWhatTheCanvasWouldDraw();
+    void undoRestoresWhatWasThere();
 
 private:
     void seed(const QString &name, const QString &description, int minutesAgo);
@@ -280,6 +286,70 @@ void LauncherTest::snapshot()
     QVERIFY(window.grab().save(QString::fromUtf8(target)));
 }
 
+void LauncherTest::addingAnObjectSelectsIt()
+{
+    EditorState state;
+    state.setDocument(Document::createNew(QStringLiteral("Scratch")), {});
+
+    const ObjectId id = state.addObject(QStringLiteral("manim.Circle"));
+    QVERIFY(id != kInvalidObjectId);
+    QCOMPARE(state.selectedObject(), id);
+    QCOMPARE(state.document().objects.size(), 1);
+    // Catalog defaults are filled in, so the object is drawable straight away.
+    QCOMPARE(state.document().objects.first().params.value(QStringLiteral("radius")).toDouble(), 1.0);
+}
+
+void LauncherTest::animationsChangeWhatTheCanvasWouldDraw()
+{
+    EditorState state;
+    state.setDocument(Document::createNew(QStringLiteral("Scratch")), {});
+
+    const ObjectId id = state.addObject(QStringLiteral("manim.Square"));
+    state.setPlayhead(0.0);
+    const ClipId clip = state.addClip(id, QStringLiteral("manim.Create"));
+    QVERIFY(clip != kInvalidClipId);
+    state.setClipTiming(clip, 1.0, 2.0, 0);
+
+    // Before its entrance the object is not on screen at all.
+    QVERIFY(evaluator::evaluate(state.document(), 0.5).isEmpty());
+
+    // Halfway through Create it is partly drawn.
+    const auto midway = evaluator::evaluate(state.document(), 2.0);
+    QCOMPARE(midway.size(), 1);
+    QVERIFY(midway.first().drawProgress > 0.0);
+    QVERIFY(midway.first().drawProgress < 1.0);
+
+    // Afterwards it stays, fully drawn.
+    const auto after = evaluator::evaluate(state.document(), 5.0);
+    QCOMPARE(after.size(), 1);
+    QCOMPARE(after.first().drawProgress, 1.0);
+
+    // A shift moves it, and the move persists once the clip has finished.
+    const ClipId shift = state.addClip(id, QStringLiteral("manim.Shift"));
+    state.setClipTiming(shift, 4.0, 1.0, 1);
+    state.setClipParam(shift, QStringLiteral("by"), QPointF(2.0, 0.0));
+
+    QCOMPARE(evaluator::evaluate(state.document(), 3.0).first().offset, QPointF(0, 0));
+    QCOMPARE(evaluator::evaluate(state.document(), 6.0).first().offset, QPointF(2.0, 0.0));
+}
+
+void LauncherTest::undoRestoresWhatWasThere()
+{
+    EditorState state;
+    state.setDocument(Document::createNew(QStringLiteral("Scratch")), {});
+
+    state.addObject(QStringLiteral("manim.Circle"));
+    QCOMPARE(state.document().objects.size(), 1);
+    QVERIFY(state.canUndo());
+
+    state.undo();
+    QCOMPARE(state.document().objects.size(), 0);
+    QVERIFY(state.canRedo());
+
+    state.redo();
+    QCOMPARE(state.document().objects.size(), 1);
+}
+
 /// Writes a PNG of a project window, so the wired-up editor can be looked at.
 void LauncherTest::projectSnapshot()
 {
@@ -296,7 +366,47 @@ void LauncherTest::projectSnapshot()
 
     ProjectWindow window;
     QVERIFY(window.openProject(layout.projectFile));
-    window.resize(1000, 660);
+
+    // Build a small scene so the editor has something to show.
+    EditorState *state = window.state();
+    const ObjectId circle = state->addObject(QStringLiteral("manim.Circle"));
+    state->setObjectParam(circle, QStringLiteral("position"), QPointF(-3.2, 0.6));
+    state->setObjectParam(circle, QStringLiteral("color"), QColor(0x58, 0xC4, 0xDD));
+    state->setObjectParam(circle, QStringLiteral("fill_opacity"), 0.35);
+
+    const ObjectId square = state->addObject(QStringLiteral("manim.Square"));
+    state->setObjectParam(square, QStringLiteral("position"), QPointF(0.0, 0.6));
+    state->setObjectParam(square, QStringLiteral("color"), QColor(0x83, 0xC1, 0x67));
+    state->setObjectParam(square, QStringLiteral("rotation"), 15.0);
+
+    const ObjectId star = state->addObject(QStringLiteral("manim.Star"));
+    state->setObjectParam(star, QStringLiteral("position"), QPointF(3.2, 0.6));
+    state->setObjectParam(star, QStringLiteral("color"), QColor(0xF0, 0xC2, 0x4B));
+    state->setObjectParam(star, QStringLiteral("fill_opacity"), 0.5);
+
+    const ObjectId title = state->addObject(QStringLiteral("manim.Text"));
+    state->setObjectParam(title, QStringLiteral("text"), QStringLiteral("Fourier Series"));
+    state->setObjectParam(title, QStringLiteral("position"), QPointF(0.0, -2.2));
+    state->setObjectParam(title, QStringLiteral("font_size"), 54.0);
+
+    state->setPlayhead(0.0);
+    const ClipId c1 = state->addClip(circle, QStringLiteral("manim.Create"));
+    state->setClipTiming(c1, 0.0, 1.2, 0);
+    const ClipId c2 = state->addClip(square, QStringLiteral("manim.GrowFromCenter"));
+    state->setClipTiming(c2, 0.6, 1.0, 1);
+    const ClipId c3 = state->addClip(star, QStringLiteral("manim.FadeIn"));
+    state->setClipTiming(c3, 1.2, 1.0, 2);
+    const ClipId c4 = state->addClip(title, QStringLiteral("manim.Write"));
+    state->setClipTiming(c4, 1.8, 1.4, 3);
+    const ClipId c5 = state->addClip(square, QStringLiteral("manim.Rotate"));
+    state->setClipTiming(c5, 3.0, 1.6, 1);
+    const ClipId c6 = state->addClip(circle, QStringLiteral("manim.Shift"));
+    state->setClipTiming(c6, 3.4, 1.2, 0);
+
+    state->selectClip(c5);
+    state->setPlayhead(3.9);
+
+    window.resize(1420, 900);
     window.show();
     QVERIFY(QTest::qWaitForWindowExposed(&window));
     QTest::qWait(250);
