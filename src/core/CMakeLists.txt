@@ -7,6 +7,7 @@ add_library(manimation_core STATIC
     Document.cpp
     Project.cpp
     PythonImport.cpp
+    SceneTemplate.cpp
     RecentProjects.cpp
 )
 

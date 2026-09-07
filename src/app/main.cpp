@@ -1,9 +1,45 @@
 #include "LauncherWindow.h"
+#include "ProjectWindow.h"
 #include "Theme.h"
 #include "Version.h"
 
 #include <QApplication>
 #include <QCommandLineParser>
+#include <QPointer>
+
+namespace {
+
+/// Open `projectFile` in a window of its own, standing the launcher down while
+/// it is up. Closing the project brings the launcher back, so the application
+/// always has somewhere to be.
+void openProject(mn::ui::LauncherWindow *launcher, const QString &projectFile)
+{
+    auto *window = new mn::ui::ProjectWindow;
+    window->setAttribute(Qt::WA_DeleteOnClose);
+
+    if (!window->openProject(projectFile)) {
+        delete window;
+        launcher->show();
+        launcher->raise();
+        return;
+    }
+
+    QPointer<mn::ui::LauncherWindow> safeLauncher(launcher);
+    QObject::connect(window, &mn::ui::ProjectWindow::closed, launcher, [safeLauncher] {
+        if (!safeLauncher)
+            return;
+        safeLauncher->show();
+        safeLauncher->raise();
+        safeLauncher->activateWindow();
+    });
+
+    launcher->hide();
+    window->show();
+    window->raise();
+    window->activateWindow();
+}
+
+} // namespace
 
 int main(int argc, char *argv[])
 {
@@ -24,6 +60,8 @@ int main(int argc, char *argv[])
     mn::theme::apply(application);
 
     mn::ui::LauncherWindow launcher;
+    QObject::connect(&launcher, &mn::ui::LauncherWindow::projectOpened, &launcher,
+                     [&launcher](const QString &projectFile) { openProject(&launcher, projectFile); });
     launcher.show();
 
     const QStringList arguments = parser.positionalArguments();

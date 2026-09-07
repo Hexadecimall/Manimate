@@ -2,6 +2,7 @@
 #include "Json.h"
 #include "Project.h"
 #include "PythonImport.h"
+#include "SceneTemplate.h"
 #include "Version.h"
 
 #include <QDir>
@@ -41,6 +42,11 @@ private slots:
     void scanDetectsManimImports();
     void importCopiesScriptAndAdoptsItsScene();
     void importRefusesAMissingFile();
+
+    void starterScriptUsesTheProjectsOwnNames();
+    void starterScriptEscapesQuotesInTheName();
+    void ensureScriptCreatesOneThenLeavesItAlone();
+    void ensureScriptPrefersAnImportedScript();
 };
 
 void DocumentTest::newDocumentHasIdentityAndOneTrack()
@@ -463,6 +469,79 @@ void DocumentTest::importRefusesAMissingFile()
     QVERIFY(!python_import::into(layout, QDir(dir.path()).filePath(QStringLiteral("nope.py")),
                                  nullptr, &error));
     QVERIFY(!error.isEmpty());
+}
+
+void DocumentTest::starterScriptUsesTheProjectsOwnNames()
+{
+    Document document = Document::createNew(QStringLiteral("Fourier Series"));
+    document.sceneClassName = QStringLiteral("FourierSeries");
+
+    const QString script = scene_template::starterScript(document);
+    QVERIFY(script.contains(QStringLiteral("class FourierSeries(Scene):")));
+    QVERIFY(script.contains(QStringLiteral("\"Fourier Series\"")));
+    QVERIFY(script.contains(QStringLiteral("from manim import *")));
+    QVERIFY(script.contains(QStringLiteral("def construct(self):")));
+}
+
+void DocumentTest::starterScriptEscapesQuotesInTheName()
+{
+    Document document = Document::createNew(QStringLiteral("The \"Big\" One"));
+    const QString script = scene_template::starterScript(document);
+    // The name is embedded in a Python string literal, so its quotes must be
+    // escaped or the generated file will not parse.
+    QVERIFY(script.contains(QStringLiteral("\\\"Big\\\"")));
+}
+
+void DocumentTest::ensureScriptCreatesOneThenLeavesItAlone()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+
+    ProjectLayout layout;
+    QString error;
+    QVERIFY2(project::create(dir.path(), QStringLiteral("Starter"), &layout, &error), qPrintable(error));
+
+    Document document;
+    QVERIFY(Document::load(layout.projectFile, &document, &error));
+
+    const QString path = scene_template::ensureScript(layout, document, &error);
+    QVERIFY2(!path.isEmpty(), qPrintable(error));
+    QCOMPARE(QFileInfo(path).fileName(), QStringLiteral("starter.py"));
+
+    // Editing then reopening must not overwrite the user's work.
+    QFile file(path);
+    QVERIFY(file.open(QIODevice::WriteOnly | QIODevice::Truncate));
+    file.write("# mine now\n");
+    file.close();
+
+    const QString again = scene_template::ensureScript(layout, document, &error);
+    QCOMPARE(again, path);
+    QFile check(path);
+    QVERIFY(check.open(QIODevice::ReadOnly));
+    QCOMPARE(check.readAll(), QByteArray("# mine now\n"));
+}
+
+void DocumentTest::ensureScriptPrefersAnImportedScript()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+
+    const QString imported = QDir(dir.path()).filePath(QStringLiteral("existing.py"));
+    QFile file(imported);
+    QVERIFY(file.open(QIODevice::WriteOnly));
+    file.write("from manim import *\n\n\nclass Existing(Scene):\n    pass\n");
+    file.close();
+
+    ProjectLayout layout;
+    QVERIFY(project::create(dir.path(), QStringLiteral("Adopted"), &layout, nullptr));
+
+    Document document;
+    QVERIFY(Document::load(layout.projectFile, &document, nullptr));
+    QVERIFY(python_import::into(layout, imported, &document, nullptr));
+
+    // The project should open the script it was built from, not a new one.
+    const QString path = scene_template::ensureScript(layout, document, nullptr);
+    QCOMPARE(QFileInfo(path).fileName(), QStringLiteral("existing.py"));
 }
 
 QTEST_MAIN(DocumentTest)

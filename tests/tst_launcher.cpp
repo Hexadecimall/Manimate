@@ -4,6 +4,8 @@
 #include "RecentProjects.h"
 #include "RecentProjectsModel.h"
 #include "AppWindow.h"
+#include "CodeEditor.h"
+#include "ProjectWindow.h"
 #include "Theme.h"
 #include "TitleBar.h"
 
@@ -38,7 +40,11 @@ private slots:
 
     void menusGoWherePlatformExpects();
 
+    void projectWindowOpensTheProjectsScript();
+    void projectWindowSavesBackToTheScript();
+
     void snapshot();
+    void projectSnapshot();
 
 private:
     void seed(const QString &name, const QString &description, int minutesAgo);
@@ -202,6 +208,45 @@ void LauncherTest::menusGoWherePlatformExpects()
     }
 }
 
+void LauncherTest::projectWindowOpensTheProjectsScript()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+
+    ProjectLayout layout;
+    QString error;
+    QVERIFY2(project::create(dir.path(), QStringLiteral("Wired Up"), &layout, &error), qPrintable(error));
+
+    ProjectWindow window;
+    QVERIFY(window.openProject(layout.projectFile));
+
+    QCOMPARE(window.document().metadata.name, QStringLiteral("Wired Up"));
+    QCOMPARE(QFileInfo(window.scriptPath()).fileName(), QStringLiteral("wired_up.py"));
+    QVERIFY(window.editor()->toPlainText().contains(QStringLiteral("class WiredUp(Scene):")));
+    QVERIFY(!window.isModified());
+}
+
+void LauncherTest::projectWindowSavesBackToTheScript()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+
+    ProjectLayout layout;
+    QVERIFY(project::create(dir.path(), QStringLiteral("Saveable"), &layout, nullptr));
+
+    ProjectWindow window;
+    QVERIFY(window.openProject(layout.projectFile));
+
+    window.editor()->insertPlainText(QStringLiteral("# edited\n"));
+    QVERIFY(window.isModified());
+    QVERIFY(window.save());
+    QVERIFY(!window.isModified());
+
+    QFile file(window.scriptPath());
+    QVERIFY(file.open(QIODevice::ReadOnly));
+    QVERIFY(QString::fromUtf8(file.readAll()).contains(QStringLiteral("# edited")));
+}
+
 /// Writes a PNG of the launcher when MANIMATION_UI_SNAPSHOT names a path.
 /// Skipped otherwise, so the suite stays headless-friendly.
 void LauncherTest::snapshot()
@@ -231,6 +276,30 @@ void LauncherTest::snapshot()
         list->setCurrentIndex(list->model()->index(0, 0));
     }
     QTest::qWait(120);
+
+    QVERIFY(window.grab().save(QString::fromUtf8(target)));
+}
+
+/// Writes a PNG of a project window, so the wired-up editor can be looked at.
+void LauncherTest::projectSnapshot()
+{
+    const QByteArray target = qgetenv("MANIMATION_PROJECT_SNAPSHOT");
+    if (target.isEmpty())
+        QSKIP("MANIMATION_PROJECT_SNAPSHOT is not set");
+
+    ProjectLayout layout;
+    QString error;
+    QVERIFY2(project::create(m_dir.path(), QStringLiteral("Fourier Series"), &layout, &error),
+             qPrintable(error));
+
+    theme::apply(*qApp);
+
+    ProjectWindow window;
+    QVERIFY(window.openProject(layout.projectFile));
+    window.resize(1000, 660);
+    window.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&window));
+    QTest::qWait(250);
 
     QVERIFY(window.grab().save(QString::fromUtf8(target)));
 }
