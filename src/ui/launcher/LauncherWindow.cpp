@@ -6,6 +6,7 @@
 #include "ProjectCardDelegate.h"
 #include "RecentProjectsModel.h"
 #include "AppWindow.h"
+#include "CodeEditorWindow.h"
 #include "Theme.h"
 #include "TitleBar.h"
 #include "Version.h"
@@ -91,6 +92,11 @@ void LauncherWindow::buildMenus()
     QAction *importAction = fileMenu->addAction(tr("Import from Python…"),
                                                 QKeySequence(tr("Ctrl+Shift+I")), this,
                                                 &LauncherWindow::importFromPython);
+    fileMenu->addSeparator();
+    QAction *scriptAction = fileMenu->addAction(tr("Open Script in Code Editor…"),
+                                                QKeySequence(tr("Ctrl+Shift+O")), this,
+                                                &LauncherWindow::openScriptInCodeEditor);
+    scriptAction->setMenuRole(QAction::NoRole);
     newAction->setMenuRole(QAction::NoRole);
     openAction->setMenuRole(QAction::NoRole);
     importAction->setMenuRole(QAction::NoRole);
@@ -270,6 +276,24 @@ void LauncherWindow::newProject()
     if (dialog.exec() != QDialog::Accepted)
         return;
     openProject(dialog.layout().projectFile);
+}
+
+void LauncherWindow::openScriptInCodeEditor()
+{
+    const QString script = NewProjectDialog::askForPythonFile(this);
+    if (script.isEmpty())
+        return;
+
+    // The window owns itself: closing it should not close the launcher, and the
+    // launcher should not have to keep a list of open scripts.
+    auto *window = new CodeEditorWindow;
+    window->setAttribute(Qt::WA_DeleteOnClose);
+    if (!window->open(script)) {
+        delete window;
+        return;
+    }
+    window->show();
+    window->raise();
 }
 
 void LauncherWindow::importFromPython()

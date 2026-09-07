@@ -29,6 +29,7 @@ public Q_SLOTS:
     void newProject();
     void openProjectFromDisk();
     void importFromPython();
+    void openScriptInCodeEditor();
 
     /// Open `path`, which may be a .manproj file or a project folder.
     void openProject(const QString &path);

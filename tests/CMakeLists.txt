@@ -11,3 +11,8 @@ qt_add_executable(tst_launcher tst_launcher.cpp)
 target_link_libraries(tst_launcher PRIVATE Manimation::Ui Qt6::Test)
 add_test(NAME tst_launcher COMMAND tst_launcher)
 set_target_properties(tst_launcher PROPERTIES WIN32_EXECUTABLE FALSE MACOSX_BUNDLE FALSE)
+
+qt_add_executable(tst_codeeditor tst_codeeditor.cpp)
+target_link_libraries(tst_codeeditor PRIVATE Manimation::Ui Qt6::Test)
+add_test(NAME tst_codeeditor COMMAND tst_codeeditor)
+set_target_properties(tst_codeeditor PROPERTIES WIN32_EXECUTABLE FALSE MACOSX_BUNDLE FALSE)
