@@ -68,6 +68,9 @@ jobs:
         uses: jurplel/install-qt-action@v4
         with:
           version: 6.8.3
+          # Multimedia is not part of the default set, and the editor plays the
+          # timeline's sounds through it.
+          modules: qtmultimedia
           cache: true
 
       # Manim and a Python to run it are shipped inside the package, so a
@@ -110,10 +113,10 @@ jobs:
 
           # Put ffmpeg where the interpreter's own bin is, so adding one
           # directory to PATH is enough for a render to find everything.
-          "$interpreter" -c "
-          import imageio_ffmpeg, os, shutil, stat, sys
+          RUNTIME_DIR="$PWD/runtime" "$interpreter" -c "
+          import imageio_ffmpeg, os, shutil, stat
           source = imageio_ffmpeg.get_ffmpeg_exe()
-          root = os.path.dirname(os.path.dirname(os.path.abspath(sys.executable)))
+          root = os.environ['RUNTIME_DIR']
           target_dir = root if os.name == 'nt' else os.path.join(root, 'bin')
           os.makedirs(target_dir, exist_ok=True)
           target = os.path.join(target_dir, 'ffmpeg.exe' if os.name == 'nt' else 'ffmpeg')
