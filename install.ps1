@@ -26,7 +26,7 @@
     Print the asset that would be installed, then exit.
 
 .EXAMPLE
-    irm https://raw.githubusercontent.com/Hexadecimall/Manimation/main/install.ps1 | iex
+    irm https://raw.githubusercontent.com/Hexadecimall/Manimate/main/install.ps1 | iex
 
 .EXAMPLE
     .\install.ps1 -Portable
@@ -46,7 +46,7 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
-$Repo = 'Hexadecimall/Manimation'
+$Repo = 'Hexadecimall/Manimate'
 $Api = "https://api.github.com/repos/$Repo/releases"
 
 function Write-Step { param([string] $Message) Write-Host "==> $Message" -ForegroundColor Cyan }

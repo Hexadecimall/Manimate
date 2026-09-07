@@ -2,7 +2,7 @@
 #
 # Install Manimate on macOS or Linux.
 #
-#   curl -fsSL https://raw.githubusercontent.com/Hexadecimall/Manimation/main/install.sh | sh
+#   curl -fsSL https://raw.githubusercontent.com/Hexadecimall/Manimate/main/install.sh | sh
 #
 # Options (pass after `-s --` when piping, e.g. `... | sh -s -- --channel stable`):
 #   --channel dev|stable   Which builds to install. Default: dev.
@@ -14,7 +14,7 @@
 
 set -eu
 
-REPO="Hexadecimall/Manimation"
+REPO="Hexadecimall/Manimate"
 API="https://api.github.com/repos/$REPO/releases"
 
 CHANNEL="dev"

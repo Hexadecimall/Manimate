@@ -15,13 +15,13 @@ Everything is bundled, so Qt does not need to be installed.
 **macOS and Linux**
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/Hexadecimall/Manimation/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/Hexadecimall/Manimate/main/install.sh | sh
 ```
 
 **Windows**
 
 ```powershell
-irm https://raw.githubusercontent.com/Hexadecimall/Manimation/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/Hexadecimall/Manimate/main/install.ps1 | iex
 ```
 
 Both take `--channel stable` (`-Channel stable`) for released builds rather than
@@ -30,7 +30,7 @@ install without touching anything. On Windows, `-Portable` unpacks the zip
 instead of running the installer, and needs no administrator rights.
 
 Or take a package straight from
-[Releases](https://github.com/Hexadecimall/Manimation/releases). Every platform
+[Releases](https://github.com/Hexadecimall/Manimate/releases). Every platform
 has both an installer and a ready-to-run build that installs nothing:
 
 | Platform | Installer            | Ready to run                    |
