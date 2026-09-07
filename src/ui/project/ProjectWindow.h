@@ -90,6 +90,8 @@ private:
     void stepFrame(int frames);
     void advancePlayback();
 
+    void addSound();
+    void showShortcuts();
     void revealProjectFolder();
     bool confirmDiscard();
     bool writeScript();

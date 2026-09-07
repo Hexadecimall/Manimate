@@ -45,9 +45,12 @@ CodeEditorWindow::CodeEditorWindow(QWidget *parent)
 
     // A thin status strip: where the file is, and where the cursor is.
     auto *status = new QWidget;
+    status->setObjectName(QStringLiteral("status"));
+    status->setAttribute(Qt::WA_StyledBackground, true);
     status->setFixedHeight(26);
-    status->setStyleSheet(QStringLiteral("QWidget { background: %1; border-top: 1px solid %2; }")
-                              .arg(p.window.name(), p.border.name()));
+    status->setStyleSheet(
+        QStringLiteral("QWidget#status { background: %1; border-top: 1px solid %2; }")
+            .arg(p.window.name(), p.border.name()));
 
     m_pathLabel = new QLabel;
     m_pathLabel->setProperty("role", "subtitle");

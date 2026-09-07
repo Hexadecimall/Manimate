@@ -11,6 +11,7 @@
 #include "RecentProjects.h"
 #include "SceneTemplate.h"
 #include "Theme.h"
+#include "Version.h"
 #include "TimelineView.h"
 #include "TitleBar.h"
 
@@ -140,9 +141,12 @@ QWidget *ProjectWindow::buildViewerHeader()
     const theme::Palette &p = theme::palette();
 
     auto *bar = new QWidget;
+    bar->setObjectName(QStringLiteral("viewerHeader"));
+    bar->setAttribute(Qt::WA_StyledBackground, true);
     bar->setFixedHeight(30);
-    bar->setStyleSheet(QStringLiteral("QWidget { background: %1; border-bottom: 1px solid %2; }")
-                           .arg(p.surfaceRaised.name(), p.border.name()));
+    bar->setStyleSheet(
+        QStringLiteral("QWidget#viewerHeader { background: %1; border-bottom: 1px solid %2; }")
+            .arg(p.surfaceRaised.name(), p.border.name()));
 
     auto *layout = new QHBoxLayout(bar);
     layout->setContentsMargins(14, 0, 14, 0);
@@ -164,8 +168,11 @@ QWidget *ProjectWindow::buildTimelineBar()
     const theme::Palette &p = theme::palette();
 
     auto *bar = new QWidget;
+    bar->setObjectName(QStringLiteral("timelineBar"));
+    bar->setAttribute(Qt::WA_StyledBackground, true);
     bar->setFixedHeight(30);
-    bar->setStyleSheet(QStringLiteral("QWidget { background: %1; border-top: 1px solid %2;"
+    bar->setStyleSheet(QStringLiteral("QWidget#timelineBar { background: %1;"
+                                      " border-top: 1px solid %2;"
                                       " border-bottom: 1px solid %2; }")
                            .arg(p.surfaceRaised.name(), p.border.name()));
 
@@ -182,17 +189,7 @@ QWidget *ProjectWindow::buildTimelineBar()
     addAudio->setProperty("role", "quiet");
     addAudio->setCursor(Qt::PointingHandCursor);
     addAudio->setFixedHeight(24);
-    connect(addAudio, &QPushButton::clicked, this, [this] {
-        const QString chosen = QFileDialog::getOpenFileName(
-            this, tr("Add Sound"), m_layout.assetsDir,
-            tr("Audio (*.wav *.mp3 *.m4a *.aiff *.flac *.ogg)"));
-        if (chosen.isEmpty())
-            return;
-        if (m_state->addAudio(chosen) == kInvalidClipId) {
-            QMessageBox::warning(this, tr("Cannot add that"),
-                                 tr("The file could not be copied into the project's assets."));
-        }
-    });
+    connect(addAudio, &QPushButton::clicked, this, &ProjectWindow::addSound);
     layout->addWidget(addAudio);
     layout->addSpacing(8);
 
@@ -283,9 +280,12 @@ QWidget *ProjectWindow::buildTransportBar()
     const theme::Palette &p = theme::palette();
 
     auto *bar = new QWidget;
+    bar->setObjectName(QStringLiteral("transportBar"));
+    bar->setAttribute(Qt::WA_StyledBackground, true);
     bar->setFixedHeight(40);
-    bar->setStyleSheet(QStringLiteral("QWidget { background: %1; border-top: 1px solid %2; }")
-                           .arg(p.window.name(), p.border.name()));
+    bar->setStyleSheet(
+        QStringLiteral("QWidget#transportBar { background: %1; border-top: 1px solid %2; }")
+            .arg(p.window.name(), p.border.name()));
 
     auto *layout = new QHBoxLayout(bar);
     layout->setContentsMargins(14, 0, 14, 0);
@@ -351,8 +351,10 @@ QWidget *ProjectWindow::buildCodePage()
     const theme::Palette &warn = theme::palette();
     m_codeStaleBar = new QWidget;
     m_codeStaleBar->setFixedHeight(34);
+    m_codeStaleBar->setObjectName(QStringLiteral("codeStaleBar"));
+    m_codeStaleBar->setAttribute(Qt::WA_StyledBackground, true);
     m_codeStaleBar->setStyleSheet(
-        QStringLiteral("QWidget { background: %1; border-bottom: 1px solid %2; }")
+        QStringLiteral("QWidget#codeStaleBar { background: %1; border-bottom: 1px solid %2; }")
             .arg(theme::mix(warn.surfaceRaised, warn.accent, 0.22).name(), warn.border.name()));
 
     auto *staleLayout = new QHBoxLayout(m_codeStaleBar);
@@ -381,9 +383,12 @@ QWidget *ProjectWindow::buildCodePage()
     layout->addWidget(m_codeEditor, 1);
 
     auto *status = new QWidget;
+    status->setObjectName(QStringLiteral("codeStatus"));
+    status->setAttribute(Qt::WA_StyledBackground, true);
     status->setFixedHeight(26);
-    status->setStyleSheet(QStringLiteral("QWidget { background: %1; border-top: 1px solid %2; }")
-                              .arg(p.window.name(), p.border.name()));
+    status->setStyleSheet(
+        QStringLiteral("QWidget#codeStatus { background: %1; border-top: 1px solid %2; }")
+            .arg(p.window.name(), p.border.name()));
 
     auto *scriptLabel = new QLabel;
     scriptLabel->setProperty("role", "subtitle");
@@ -698,10 +703,21 @@ void ProjectWindow::showPage(Page page)
 
 void ProjectWindow::buildMenus()
 {
+    // Everything here also has to work without the menu, so each action is a
+    // thin wrapper over something the interface already does.
     auto *fileMenu = new QMenu(tr("File"), this);
     QAction *saveAction = fileMenu->addAction(tr("Save"), QKeySequence::Save, this, [this] { save(); });
+    fileMenu->addSeparator();
+    QAction *renderAction = fileMenu->addAction(tr("Render Video…"), QKeySequence(tr("Ctrl+R")), this,
+                                                [this] {
+                                                    showPage(Page::Export);
+                                                    startRender();
+                                                });
     QAction *revealAction = fileMenu->addAction(tr("Show Project Folder"), this,
                                                 &ProjectWindow::revealProjectFolder);
+    QAction *outputAction = fileMenu->addAction(tr("Show Rendered Video"), this, [this] {
+        QDesktopServices::openUrl(QUrl::fromLocalFile(m_layout.outputDir));
+    });
     fileMenu->addSeparator();
     QAction *closeAction = fileMenu->addAction(tr("Close Project"), QKeySequence::Close, this,
                                                [this] { close(); });
@@ -712,23 +728,125 @@ void ProjectWindow::buildMenus()
     editMenu->addSeparator();
     QAction *deleteAction = editMenu->addAction(tr("Delete"), QKeySequence::Delete, m_state,
                                                 &EditorState::deleteSelection);
+    QAction *ungroupAction = editMenu->addAction(tr("Ungroup"), QKeySequence(tr("Ctrl+Shift+G")),
+                                                 this, [this] {
+                                                     m_state->ungroupObject(m_state->selectedObject());
+                                                 });
+
+    auto *insertMenu = new QMenu(tr("Insert"), this);
+    QAction *trackAction = insertMenu->addAction(tr("Add Track"), QKeySequence(tr("Ctrl+T")), this,
+                                                 [this] { m_state->addTrack(); });
+    QAction *soundAction = insertMenu->addAction(tr("Add Sound…"), this, [this] { addSound(); });
+    insertMenu->addSeparator();
+    QAction *blockAction = insertMenu->addAction(
+        tr("Python Block"), QKeySequence(tr("Ctrl+Shift+P")), this, [this] {
+            const ObjectId selected = m_state->selectedObject();
+            if (selected == kInvalidObjectId) {
+                QMessageBox::information(this, tr("Nothing selected"),
+                                         tr("A Python block attaches to an object, so it knows "
+                                            "what TARGET refers to. Select one first."));
+                return;
+            }
+            m_state->addClip(selected, QStringLiteral("manim.Code"));
+        });
 
     auto *viewMenu = new QMenu(tr("View"), this);
     QAction *editPage = viewMenu->addAction(tr("Edit"), QKeySequence(tr("Ctrl+1")), this,
                                             [this] { showPage(Page::Edit); });
     QAction *codePage = viewMenu->addAction(tr("Code"), QKeySequence(tr("Ctrl+2")), this,
                                             [this] { showPage(Page::Code); });
+    QAction *exportPage = viewMenu->addAction(tr("Export"), QKeySequence(tr("Ctrl+3")), this,
+                                              [this] { showPage(Page::Export); });
     viewMenu->addSeparator();
     QAction *playAction = viewMenu->addAction(tr("Play / Pause"), QKeySequence(Qt::Key_Space), this,
                                               &ProjectWindow::togglePlayback);
+    QAction *startAction = viewMenu->addAction(tr("Go to Start"), QKeySequence(Qt::Key_Home), this,
+                                               [this] {
+                                                   stopPlayback();
+                                                   m_state->setPlayhead(0);
+                                               });
+    QAction *endAction = viewMenu->addAction(tr("Go to End"), QKeySequence(Qt::Key_End), this,
+                                             [this] {
+                                                 stopPlayback();
+                                                 m_state->setPlayhead(m_state->timelineDuration());
+                                             });
+    viewMenu->addSeparator();
+    QAction *zoomIn = viewMenu->addAction(tr("Zoom In"), QKeySequence::ZoomIn, this, [this] {
+        m_timeline->setScale(m_timeline->scale() * 1.25);
+        if (m_zoomSlider)
+            m_zoomSlider->setValue(int(m_timeline->scale()));
+    });
+    QAction *zoomOut = viewMenu->addAction(tr("Zoom Out"), QKeySequence::ZoomOut, this, [this] {
+        m_timeline->setScale(m_timeline->scale() / 1.25);
+        if (m_zoomSlider)
+            m_zoomSlider->setValue(int(m_timeline->scale()));
+    });
 
-    for (QAction *action : {saveAction, revealAction, closeAction, m_undoAction, m_redoAction,
-                            deleteAction, editPage, codePage, playAction}) {
+    auto *helpMenu = new QMenu(tr("Help"), this);
+    QAction *shortcutsAction = helpMenu->addAction(tr("Keyboard Shortcuts"), this,
+                                                   &ProjectWindow::showShortcuts);
+    helpMenu->addSeparator();
+    QAction *manimDocs = helpMenu->addAction(tr("Manim Documentation"), this, [] {
+        QDesktopServices::openUrl(QUrl(QStringLiteral("https://docs.manim.community")));
+    });
+    QAction *manimExamples = helpMenu->addAction(tr("Manim Examples"), this, [] {
+        QDesktopServices::openUrl(
+            QUrl(QStringLiteral("https://docs.manim.community/en/stable/examples.html")));
+    });
+    helpMenu->addSeparator();
+    QAction *reportAction = helpMenu->addAction(tr("Report an Issue"), this, [] {
+        QDesktopServices::openUrl(
+            QUrl(QStringLiteral("https://github.com/Hexadecimall/Manimate/issues")));
+    });
+    QAction *aboutAction = helpMenu->addAction(tr("About Manimate"), this, [this] {
+        QMessageBox box(QMessageBox::NoIcon, tr("About Manimate"),
+                        tr("Manimate %1").arg(version::string()), QMessageBox::Ok, this);
+        QString manim;
+        box.setInformativeText(RenderJob::manimAvailable(&manim)
+                                   ? tr("A visual editor for Manim.\n\nUsing Manim %1.").arg(manim)
+                                   : tr("A visual editor for Manim.\n\nManim was not found."));
+        box.exec();
+    });
+
+    for (QAction *action : {saveAction, renderAction, revealAction, outputAction, closeAction,
+                            m_undoAction, m_redoAction, deleteAction, ungroupAction, trackAction,
+                            soundAction, blockAction, editPage, codePage, exportPage, playAction,
+                            startAction, endAction, zoomIn, zoomOut, shortcutsAction, manimDocs,
+                            manimExamples, reportAction}) {
         action->setMenuRole(QAction::NoRole);
     }
+    // About belongs in the application menu on macOS, where it is looked for.
+    aboutAction->setMenuRole(QAction::AboutRole);
 
-    setMenus({fileMenu, editMenu, viewMenu});
+    setMenus({fileMenu, editMenu, insertMenu, viewMenu, helpMenu});
     updateHistoryActions();
+}
+
+void ProjectWindow::showShortcuts()
+{
+    QMessageBox box(QMessageBox::NoIcon, tr("Keyboard Shortcuts"), tr("Keyboard Shortcuts"),
+                    QMessageBox::Ok, this);
+    box.setInformativeText(tr(
+        "Canvas\n"
+        "    Drag                 move the selected object\n"
+        "    Shift-drag           snap to a quarter unit\n"
+        "    Drag a corner        resize\n"
+        "    Arrow keys           nudge, with shift for further\n"
+        "    Backspace            delete\n"
+        "\n"
+        "Timeline\n"
+        "    Drag a clip          retime it\n"
+        "    Drag a clip edge     trim it\n"
+        "    Alt-drag             ignore snapping\n"
+        "    Drag the ruler       scrub\n"
+        "    Shift-scroll         scroll along\n"
+        "    Ctrl-scroll          zoom about the pointer\n"
+        "    Right-click          add, rename or delete a track\n"
+        "\n"
+        "Playback\n"
+        "    Space                play or pause\n"
+        "    Home / End           go to the start or the end"));
+    box.exec();
 }
 
 void ProjectWindow::updateHistoryActions()
@@ -918,6 +1036,20 @@ void ProjectWindow::advancePlayback()
         return;
     }
     m_state->setPlayhead(next);
+}
+
+void ProjectWindow::addSound()
+{
+    const QString chosen =
+        QFileDialog::getOpenFileName(this, tr("Add Sound"), m_layout.assetsDir,
+                                     tr("Audio (*.wav *.mp3 *.m4a *.aiff *.flac *.ogg)"));
+    if (chosen.isEmpty())
+        return;
+
+    if (m_state->addAudio(chosen) == kInvalidClipId) {
+        QMessageBox::warning(this, tr("Cannot add that"),
+                             tr("The file could not be copied into the project's assets."));
+    }
 }
 
 void ProjectWindow::revealProjectFolder()

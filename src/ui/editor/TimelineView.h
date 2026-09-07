@@ -25,6 +25,14 @@ public:
     double scale() const { return m_scale; }
     void setScale(double pixelsPerSecond);
 
+    /// How far the view is scrolled along, in pixels. Never negative: there is
+    /// nothing before zero.
+    double offset() const { return m_offset; }
+    void setOffset(double pixels);
+
+    /// Scroll so the playhead is on screen, if it is not already.
+    void revealPlayhead();
+
     QSize sizeHint() const override;
     QSize minimumSizeHint() const override;
 
@@ -32,6 +40,7 @@ Q_SIGNALS:
     void zoomChanged(double pixelsPerSecond);
 
 protected:
+    void contextMenuEvent(QContextMenuEvent *event) override;
     void paintEvent(QPaintEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
@@ -59,6 +68,7 @@ private:
 
     EditorState *m_state;
     double m_scale = 90.0;
+    double m_offset = 0.0;
 
     Grab m_grab = Grab::None;
     ClipId m_grabbed = kInvalidClipId;

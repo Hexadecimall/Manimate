@@ -24,10 +24,12 @@
 #include <QDir>
 #include <QLineEdit>
 #include <QTest>
+#include <QListWidget>
 #include <QTreeWidget>
 #include <QListView>
 #include <QTemporaryDir>
 #include <QTest>
+#include <QListWidget>
 #include <QTreeWidget>
 
 using namespace mn;
@@ -66,6 +68,8 @@ private slots:
     void solidsMakeItAThreeDScene();
     void pythonBlocksBecomeControlFlow();
     void groupsCarryTheirChildren();
+    void tracksCanBeAddedAndRemoved();
+    void listsDrawTheirOwnSelection();
     void audioBecomesAddSound();
     void codeRoundTripsBackIntoTheScene();
     void parserReportsWhatItCannotRead();
@@ -558,6 +562,67 @@ void LauncherTest::groupsCarryTheirChildren()
     QCOMPARE(state.document().objects.size(), 0);
 }
 
+void LauncherTest::tracksCanBeAddedAndRemoved()
+{
+    EditorState state;
+    state.setDocument(Document::createNew(QStringLiteral("Tracks")), {});
+
+    const ObjectId circle = state.addObject(QStringLiteral("manim.Circle"));
+    state.addTrack();
+    state.addTrack();
+    QCOMPARE(state.document().timeline.tracks.size(), 3);
+
+    const ClipId onFirst = state.addClip(circle, QStringLiteral("manim.Create"));
+    state.setClipTiming(onFirst, 0.0, 1.0, 0);
+    const ClipId onSecond = state.addClip(circle, QStringLiteral("manim.FadeIn"));
+    state.setClipTiming(onSecond, 2.0, 1.0, 1);
+    const ClipId onThird = state.addClip(circle, QStringLiteral("manim.Shift"));
+    state.setClipTiming(onThird, 4.0, 1.0, 2);
+
+    state.renameTrack(1, QStringLiteral("Middle"));
+    QCOMPARE(state.document().timeline.tracks.at(1).name, QStringLiteral("Middle"));
+
+    // Removing a track takes its clips and pulls the ones below it up, so no
+    // clip is left naming a lane that no longer exists.
+    state.removeTrack(1);
+    QCOMPARE(state.document().timeline.tracks.size(), 2);
+    QCOMPARE(state.document().timeline.clips.size(), 2);
+    QVERIFY(!state.document().findClip(onSecond));
+    QCOMPARE(state.document().findClip(onFirst)->track, 0);
+    QCOMPARE(state.document().findClip(onThird)->track, 1);
+
+    for (const Clip &clip : state.document().timeline.clips)
+        QVERIFY(clip.track < state.document().timeline.tracks.size());
+}
+
+void LauncherTest::listsDrawTheirOwnSelection()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+
+    ProjectLayout layout;
+    QVERIFY(project::create(dir.path(), QStringLiteral("Selection"), &layout, nullptr));
+
+    ProjectWindow window;
+    QVERIFY(window.openProject(layout.projectFile));
+
+    // The stylesheet paints each row. Anything the style would paint beside it,
+    // in the indentation column, comes from the palette's Highlight — which
+    // showed as a square block next to the rounded selection. It has to stay
+    // invisible in every list that styles its own rows.
+    const auto trees = window.findChildren<QTreeWidget *>();
+    QVERIFY(!trees.isEmpty());
+    for (const QTreeWidget *tree : trees) {
+        QCOMPARE(tree->palette().color(QPalette::Highlight).alpha(), 0);
+        QCOMPARE(tree->palette().color(QPalette::Inactive, QPalette::Highlight).alpha(), 0);
+    }
+
+    const auto lists = window.findChildren<QListWidget *>();
+    QVERIFY(!lists.isEmpty());
+    for (const QListWidget *list : lists)
+        QCOMPARE(list->palette().color(QPalette::Highlight).alpha(), 0);
+}
+
 void LauncherTest::audioBecomesAddSound()
 {
     QTemporaryDir dir;
@@ -916,6 +981,7 @@ void LauncherTest::projectSnapshot()
 
     state->selectClip(c5);
     state->setPlayhead(3.9);
+
 
 
     window.resize(1420, 900);

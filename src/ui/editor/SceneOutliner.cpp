@@ -42,6 +42,13 @@ SceneOutliner::SceneOutliner(EditorState *state, QWidget *parent)
     m_list->setContextMenuPolicy(Qt::CustomContextMenu);
     m_list->setUniformItemSizes(true);
     m_list->installEventFilter(this);
+
+    // As in the library: the stylesheet draws the row, so the style must not
+    // draw anything of its own beside it.
+    QPalette rowPalette = m_list->palette();
+    rowPalette.setColor(QPalette::Highlight, Qt::transparent);
+    rowPalette.setColor(QPalette::Inactive, QPalette::Highlight, Qt::transparent);
+    m_list->setPalette(rowPalette);
     layout->addWidget(m_list, 1);
 
     connect(m_list, &QListWidget::itemSelectionChanged, this, [this] {

@@ -5,7 +5,10 @@
 #include "EditorState.h"
 #include "Theme.h"
 
+#include <QContextMenuEvent>
+#include <QInputDialog>
 #include <QKeyEvent>
+#include <QMenu>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QPainterPath>
@@ -68,7 +71,10 @@ TimelineView::TimelineView(EditorState *state, QWidget *parent)
         update();
     });
     connect(m_state, &EditorState::selectionChanged, this, QOverload<>::of(&QWidget::update));
-    connect(m_state, &EditorState::playheadChanged, this, [this] { update(); });
+    connect(m_state, &EditorState::playheadChanged, this, [this] {
+        revealPlayhead();
+        update();
+    });
 }
 
 QSize TimelineView::sizeHint() const
@@ -96,12 +102,35 @@ void TimelineView::setScale(double pixelsPerSecond)
 
 double TimelineView::timeAt(double x) const
 {
-    return qMax(0.0, (x - kHeaderWidth - kLeftPadding) / m_scale);
+    return qMax(0.0, (x - kHeaderWidth - kLeftPadding + m_offset) / m_scale);
 }
 
 double TimelineView::xAt(double time) const
 {
-    return kHeaderWidth + kLeftPadding + time * m_scale;
+    return kHeaderWidth + kLeftPadding + time * m_scale - m_offset;
+}
+
+void TimelineView::setOffset(double pixels)
+{
+    // There is nothing before zero, and no point scrolling far past the end.
+    const double furthest = qMax(0.0, m_state->timelineDuration() * m_scale
+                                          - (width() - kHeaderWidth) * 0.5);
+    const double clamped = std::clamp(pixels, 0.0, qMax(0.0, furthest));
+    if (qFuzzyCompare(m_offset + 1.0, clamped + 1.0))
+        return;
+    m_offset = clamped;
+    update();
+}
+
+void TimelineView::revealPlayhead()
+{
+    const double x = xAt(m_state->playhead());
+    constexpr double kEdge = 60.0;
+
+    if (x < kHeaderWidth + kEdge)
+        setOffset(m_offset - (kHeaderWidth + kEdge - x));
+    else if (x > width() - kEdge)
+        setOffset(m_offset + (x - (width() - kEdge)));
 }
 
 int TimelineView::trackAt(double y) const
@@ -162,7 +191,8 @@ void TimelineView::paintEvent(QPaintEvent *)
     painter.setFont(rulerFont);
 
     const double step = rulerStep();
-    for (double t = 0.0; xAt(t) < width(); t += step) {
+    const double firstVisible = std::floor(timeAt(kHeaderWidth) / step) * step;
+    for (double t = qMax(0.0, firstVisible); xAt(t) < width(); t += step) {
         const double x = xAt(t);
         if (x < kHeaderWidth)
             continue;
@@ -319,7 +349,7 @@ void TimelineView::paintEvent(QPaintEvent *)
         painter.setPen(real ? p.text : p.textFaint);
         painter.drawText(header.adjusted(14, 4, -8, -header.height() / 2.0),
                          Qt::AlignVCenter | Qt::AlignLeft,
-                         real ? document.timeline.tracks.at(track).name : tr("New track"));
+                         real ? document.timeline.tracks.at(track).name : tr("+ Add track"));
 
         if (real) {
             QFont sub = theme::font(1);
@@ -381,6 +411,43 @@ void TimelineView::updateCursorFor(const QPointF &point)
     }
 }
 
+void TimelineView::contextMenuEvent(QContextMenuEvent *event)
+{
+    const QPointF point = event->pos();
+    const int track = trackAt(point.y());
+    const int trackCount = int(m_state->document().timeline.tracks.size());
+
+    QMenu menu(this);
+    QAction *add = menu.addAction(tr("Add Track"));
+
+    QAction *rename = nullptr;
+    QAction *remove = nullptr;
+    if (track >= 0 && track < trackCount) {
+        menu.addSeparator();
+        rename = menu.addAction(tr("Rename Track"));
+        remove = menu.addAction(tr("Delete Track"));
+        // The last track cannot go: a timeline needs somewhere to put a clip.
+        remove->setEnabled(trackCount > 1);
+    }
+
+    QAction *chosen = menu.exec(event->globalPos());
+    if (!chosen)
+        return;
+
+    if (chosen == add) {
+        m_state->addTrack();
+    } else if (chosen == rename) {
+        bool accepted = false;
+        const QString name = QInputDialog::getText(
+            this, tr("Rename Track"), tr("Name"), QLineEdit::Normal,
+            m_state->document().timeline.tracks.at(track).name, &accepted);
+        if (accepted)
+            m_state->renameTrack(track, name);
+    } else if (chosen == remove) {
+        m_state->removeTrack(track);
+    }
+}
+
 void TimelineView::mousePressEvent(QMouseEvent *event)
 {
     if (event->button() != Qt::LeftButton) {
@@ -395,6 +462,13 @@ void TimelineView::mousePressEvent(QMouseEvent *event)
     if (point.y() < kRulerHeight) {
         m_grab = Grab::Scrub;
         m_state->setPlayhead(timeAt(point.x()));
+        return;
+    }
+
+    // The empty lane under the last track is an invitation to add one.
+    const int trackCount = int(m_state->document().timeline.tracks.size());
+    if (point.x() < kHeaderWidth && trackAt(point.y()) == trackCount) {
+        m_state->addTrack();
         return;
     }
 
@@ -494,20 +568,31 @@ void TimelineView::leaveEvent(QEvent *event)
 
 void TimelineView::wheelEvent(QWheelEvent *event)
 {
-    if (!event->modifiers().testFlag(Qt::ControlModifier)
-        && !event->modifiers().testFlag(Qt::MetaModifier)) {
-        QWidget::wheelEvent(event);
+    const bool zooming = event->modifiers().testFlag(Qt::ControlModifier)
+                         || event->modifiers().testFlag(Qt::MetaModifier);
+
+    if (!zooming) {
+        // Scroll along the timeline: a trackpad's sideways swipe directly, and
+        // a wheel's vertical scroll with shift, as everywhere else.
+        const int sideways = event->angleDelta().x();
+        const int vertical = event->angleDelta().y();
+        const double by = sideways != 0
+                              ? -sideways
+                              : (event->modifiers().testFlag(Qt::ShiftModifier) ? -vertical : 0);
+
+        if (qFuzzyIsNull(by)) {
+            QWidget::wheelEvent(event);
+            return;
+        }
+        setOffset(m_offset + by);
+        event->accept();
         return;
     }
 
     // Zoom about the pointer, so the moment under it stays put.
     const double anchorTime = timeAt(event->position().x());
-    const double factor = event->angleDelta().y() > 0 ? 1.15 : 1.0 / 1.15;
-    setScale(m_scale * factor);
-
-    const double drift = xAt(anchorTime) - event->position().x();
-    if (qAbs(drift) > 0.5)
-        update();
+    setScale(m_scale * (event->angleDelta().y() > 0 ? 1.15 : 1.0 / 1.15));
+    setOffset(anchorTime * m_scale - (event->position().x() - kHeaderWidth - kLeftPadding));
 
     event->accept();
 }

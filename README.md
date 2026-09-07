@@ -5,7 +5,9 @@ canvas and a timeline, and export Python you can run with `manim` on its own.
 
 ## Status
 
-Early. The project model and the launcher are in place; the editor is next.
+Early, but the whole path works: build a scene on a canvas and a timeline,
+read the Python it generates, edit that Python and read it back, and render
+the result with Manim.
 
 ## Installing
 

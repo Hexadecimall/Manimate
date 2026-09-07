@@ -452,6 +452,51 @@ void EditorState::setCamera(const Camera3D &camera)
     commit();
 }
 
+void EditorState::addTrack()
+{
+    beginEdit();
+    Track track;
+    track.name = QStringLiteral("Track %1").arg(m_document.timeline.tracks.size() + 1);
+    m_document.timeline.tracks.append(track);
+    commit();
+}
+
+void EditorState::removeTrack(int track)
+{
+    if (track < 0 || track >= m_document.timeline.tracks.size())
+        return;
+
+    beginEdit();
+
+    // Everything on the track goes with it; everything below moves up, so no
+    // clip is left naming a lane that no longer exists.
+    m_document.timeline.clips.removeIf([track](const Clip &clip) { return clip.track == track; });
+    for (Clip &clip : m_document.timeline.clips) {
+        if (clip.track > track)
+            --clip.track;
+    }
+    m_document.timeline.tracks.remove(track);
+
+    if (!m_document.findClip(m_selectedClip)) {
+        m_selectedClip = kInvalidClipId;
+        Q_EMIT selectionChanged();
+    }
+
+    commit();
+}
+
+void EditorState::renameTrack(int track, const QString &name)
+{
+    if (track < 0 || track >= m_document.timeline.tracks.size())
+        return;
+    if (m_document.timeline.tracks.at(track).name == name || name.trimmed().isEmpty())
+        return;
+
+    beginEdit();
+    m_document.timeline.tracks[track].name = name.trimmed();
+    commit();
+}
+
 void EditorState::setTimelineDuration(double seconds)
 {
     const double clamped = qMax(1.0, seconds);

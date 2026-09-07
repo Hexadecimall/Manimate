@@ -17,6 +17,7 @@
 #include <QHeaderView>
 #include <QLabel>
 #include <QLineEdit>
+#include <QPalette>
 #include <QTreeWidget>
 #include <QVBoxLayout>
 
@@ -32,6 +33,15 @@ QTreeWidget *makeTree()
     auto *tree = new QTreeWidget;
     tree->setHeaderHidden(true);
     tree->setIconSize(QSize(kIconSize, kIconSize));
+
+    // The stylesheet paints the row's own background, but the indentation
+    // column beside it is painted by the style from the palette, and came out
+    // as a square block next to the rounded selection. Nothing should be drawn
+    // there, so the colour it would use is made invisible.
+    QPalette rowPalette = tree->palette();
+    rowPalette.setColor(QPalette::Highlight, Qt::transparent);
+    rowPalette.setColor(QPalette::Inactive, QPalette::Highlight, Qt::transparent);
+    tree->setPalette(rowPalette);
     tree->setIndentation(12);
     tree->setRootIsDecorated(true);
     tree->setFrameShape(QFrame::NoFrame);

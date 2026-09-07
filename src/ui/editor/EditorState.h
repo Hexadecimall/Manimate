@@ -83,6 +83,15 @@ public Q_SLOTS:
 
     void setCamera(const Camera3D &camera);
 
+    /// Add an empty track at the end.
+    void addTrack();
+
+    /// Remove a track and everything on it. Clips below it move up, so the
+    /// lanes stay contiguous and nothing is left pointing at a gap.
+    void removeTrack(int track);
+
+    void renameTrack(int track, const QString &name);
+
     void setTimelineDuration(double seconds);
 
     void undo();
