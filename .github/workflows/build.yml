@@ -22,8 +22,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { os: macos-14, platform: macos, arch: arm64 }
-          - { os: macos-13, platform: macos, arch: x86_64 }
+          - { os: macos-14, platform: macos, arch: universal }
           - { os: ubuntu-22.04, platform: linux, arch: x86_64 }
           - { os: windows-2022, platform: windows, arch: x86_64 }
 
@@ -67,9 +66,16 @@ jobs:
       - name: Configure
         shell: bash
         run: |
+          # Qt's macOS binaries are universal, so one build covers both
+          # Apple silicon and Intel.
+          extra=""
+          if [ "${{ matrix.platform }}" = macos ]; then
+            extra='-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64'
+          fi
           cmake -S . -B build \
             -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_OSX_DEPLOYMENT_TARGET=12.0
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=12.0 \
+            $extra
 
       - name: Build
         run: cmake --build build --config Release --parallel
@@ -90,7 +96,7 @@ jobs:
         if: matrix.platform == 'linux'
         shell: bash
         run: |
-          cmake --install build --prefix AppDir/usr
+          cmake --install build --prefix "$PWD/AppDir/usr"
 
           base="https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous"
           curl -fsSL -o linuxdeploy.AppImage "$base/linuxdeploy-x86_64.AppImage"
@@ -129,9 +135,32 @@ jobs:
           path: dist/*
           if-no-files-found: error
 
+  lint-installers:
+    name: lint installers
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check install.sh
+        run: |
+          sudo apt-get update && sudo apt-get install -y shellcheck
+          sh -n install.sh
+          shellcheck --shell=sh install.sh
+
+      - name: Check install.ps1
+        shell: pwsh
+        run: |
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            (Resolve-Path ./install.ps1), [ref]$null, [ref]$errors) | Out-Null
+          if ($errors) { $errors | ForEach-Object { $_.Message }; exit 1 }
+          Invoke-ScriptAnalyzer -Path ./install.ps1 -Severity Error,Warning `
+            -ErrorAction SilentlyContinue | Tee-Object -Variable found
+          if ($found | Where-Object { $_.Severity -eq 'Error' }) { exit 1 }
+
   release:
     name: release ${{ matrix.platform }} ${{ matrix.arch }}
-    needs: build
+    needs: [build, lint-installers]
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     strategy:
@@ -139,8 +168,7 @@ jobs:
       max-parallel: 1
       matrix:
         include:
-          - { platform: macos, arch: arm64 }
-          - { platform: macos, arch: x86_64 }
+          - { platform: macos, arch: universal }
           - { platform: linux, arch: x86_64 }
           - { platform: windows, arch: x86_64 }
 

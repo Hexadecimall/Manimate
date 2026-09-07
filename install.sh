@@ -118,7 +118,14 @@ pick_asset() {
 step "Looking for a $PLATFORM $ARCH build"
 
 RELEASES=$(fetch_releases)
-CANDIDATES=$(printf '%s' "$RELEASES" | asset_urls | grep -i -- "-${PLATFORM}-${ARCH}\." || true)
+# macOS ships one universal build that serves both architectures.
+if [ "$PLATFORM" = macos ]; then
+    MATCH="-macos-\\(${ARCH}\\|universal\\)\\."
+else
+    MATCH="-${PLATFORM}-${ARCH}\\."
+fi
+
+CANDIDATES=$(printf '%s' "$RELEASES" | asset_urls | grep -i -- "$MATCH" || true)
 
 if [ "$CHANNEL" = stable ]; then
     CANDIDATES=$(printf '%s\n' "$CANDIDATES" | grep -v -- '-dev/' || true)
