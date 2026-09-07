@@ -1,5 +1,6 @@
 #include "AppWindow.h"
 
+#include "MacWindow.h"
 #include "Theme.h"
 #include "TitleBar.h"
 
@@ -140,6 +141,18 @@ void AppWindow::applyMaximisedState()
                                .arg(p.window.name())
                                .arg(filling ? 0 : kCornerRadius));
     update();
+}
+
+void AppWindow::showEvent(QShowEvent *event)
+{
+    QMainWindow::showEvent(event);
+
+    // Done once the window exists natively, and only then.
+    if (!m_nativeShadowDisabled) {
+        m_nativeShadowDisabled = true;
+        mac::disableNativeShadow(this);
+    }
+    rebuildShadow();
 }
 
 void AppWindow::resizeEvent(QResizeEvent *event)

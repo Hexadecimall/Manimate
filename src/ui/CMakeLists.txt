@@ -37,4 +37,11 @@ target_include_directories(manimation_ui PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/export
 )
 
+# The only Objective-C++ in the project: macOS draws a window shadow of its
+# own, and it has to be told not to.
+if(APPLE)
+    target_sources(manimation_ui PRIVATE widgets/MacWindow.mm)
+    target_link_libraries(manimation_ui PRIVATE "-framework AppKit")
+endif()
+
 target_link_libraries(manimation_ui PUBLIC Manimation::Core Qt6::Widgets)

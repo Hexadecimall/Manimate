@@ -58,6 +58,7 @@ public:
 protected:
     void paintEvent(QPaintEvent *event) override;
     void resizeEvent(QResizeEvent *event) override;
+    void showEvent(QShowEvent *event) override;
     void changeEvent(QEvent *event) override;
     bool eventFilter(QObject *watched, QEvent *event) override;
 
@@ -69,6 +70,7 @@ private:
     void rebuildShadow();
 
     QPixmap m_shadow;
+    bool m_nativeShadowDisabled = false;
     Qt::Edges edgesAt(const QPoint &position) const;
     static Qt::CursorShape cursorForEdges(Qt::Edges edges);
 
