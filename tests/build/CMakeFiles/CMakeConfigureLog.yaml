@@ -1,0 +1,1868 @@
+
+---
+events:
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/opt/homebrew/share/cmake/Modules/CMakeDetermineSystem.cmake:12 (find_program)"
+      - "CMakeLists.txt"
+    mode: "program"
+    variable: "CMAKE_UNAME"
+    description: "Path to a program."
+    settings:
+      SearchFramework: "FIRST"
+      SearchAppBundle: "FIRST"
+      CMAKE_FIND_USE_CMAKE_PATH: true
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "uname"
+    candidate_directories:
+      - "/opt/homebrew/opt/qt/bin/"
+      - "/opt/homebrew/opt/qt/sbin/"
+      - "/opt/homebrew/opt/qt/"
+      - "/opt/homebrew/opt/qtbase/bin/"
+      - "/opt/homebrew/opt/qtbase/sbin/"
+      - "/opt/homebrew/opt/qtbase/"
+      - "/Users/gideoncox/.cargo/bin/"
+      - "/Users/gideoncox/.local/bin/"
+      - "/usr/local/share/dotnet/"
+      - "/opt/pulse/bin/"
+      - "/opt/homebrew/opt/qtbase/bin/"
+      - "/usr/local/bin/"
+      - "/opt/homebrew/bin/"
+      - "/opt/homebrew/sbin/"
+      - "/usr/bin/"
+      - "/bin/"
+      - "/usr/sbin/"
+      - "/sbin/"
+      - "/Applications/Ghostty.app/Contents/MacOS/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0/bin/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/swift-lsp/1.0.0/bin/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/rust-analyzer-lsp/1.0.0/bin/"
+    searched_directories:
+      - "/opt/homebrew/opt/qt/bin/uname"
+      - "/opt/homebrew/opt/qt/sbin/uname"
+      - "/opt/homebrew/opt/qt/uname"
+      - "/opt/homebrew/opt/qtbase/bin/uname"
+      - "/opt/homebrew/opt/qtbase/sbin/uname"
+      - "/opt/homebrew/opt/qtbase/uname"
+      - "/Users/gideoncox/.cargo/bin/uname"
+      - "/Users/gideoncox/.local/bin/uname"
+      - "/usr/local/share/dotnet/uname"
+      - "/opt/pulse/bin/uname"
+      - "/opt/homebrew/opt/qtbase/bin/uname"
+      - "/usr/local/bin/uname"
+      - "/opt/homebrew/bin/uname"
+      - "/opt/homebrew/sbin/uname"
+    found: "/usr/bin/uname"
+    search_context:
+      CMAKE_PREFIX_PATH:
+        - "/opt/homebrew/opt/qt"
+      ENV{CMAKE_PREFIX_PATH}:
+        - "/opt/homebrew/opt/qtbase"
+      ENV{PATH}:
+        - "/Users/gideoncox/.cargo/bin"
+        - "/Users/gideoncox/.local/bin"
+        - "/usr/local/share/dotnet"
+        - "/opt/pulse/bin"
+        - "/opt/homebrew/opt/qtbase/bin"
+        - "/usr/local/bin"
+        - "/opt/homebrew/bin"
+        - "/opt/homebrew/sbin"
+        - "/usr/bin"
+        - "/bin"
+        - "/usr/sbin"
+        - "/sbin"
+        - "/Applications/Ghostty.app/Contents/MacOS"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/swift-lsp/1.0.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/rust-analyzer-lsp/1.0.0/bin"
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/opt/homebrew/share/cmake/Modules/CMakeDetermineSystem.cmake:218 (message)"
+      - "CMakeLists.txt"
+    message: |
+      The system is: Darwin - 27.0.0 - arm64
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/opt/homebrew/share/cmake/Modules/CMakeUnixFindMake.cmake:5 (find_program)"
+      - "CMakeLists.txt"
+    mode: "program"
+    variable: "CMAKE_MAKE_PROGRAM"
+    description: "Path to a program."
+    settings:
+      SearchFramework: "FIRST"
+      SearchAppBundle: "FIRST"
+      CMAKE_FIND_USE_CMAKE_PATH: true
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "gmake"
+      - "make"
+      - "smake"
+    candidate_directories:
+      - "/opt/homebrew/opt/qt/bin/"
+      - "/opt/homebrew/opt/qt/sbin/"
+      - "/opt/homebrew/opt/qt/"
+      - "/opt/homebrew/opt/qtbase/bin/"
+      - "/opt/homebrew/opt/qtbase/sbin/"
+      - "/opt/homebrew/opt/qtbase/"
+      - "/Users/gideoncox/.cargo/bin/"
+      - "/Users/gideoncox/.local/bin/"
+      - "/usr/local/share/dotnet/"
+      - "/opt/pulse/bin/"
+      - "/opt/homebrew/opt/qtbase/bin/"
+      - "/usr/local/bin/"
+      - "/opt/homebrew/bin/"
+      - "/opt/homebrew/sbin/"
+      - "/usr/bin/"
+      - "/bin/"
+      - "/usr/sbin/"
+      - "/sbin/"
+      - "/Applications/Ghostty.app/Contents/MacOS/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0/bin/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/swift-lsp/1.0.0/bin/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/rust-analyzer-lsp/1.0.0/bin/"
+    searched_directories:
+      - "/opt/homebrew/opt/qt/bin/gmake"
+      - "/opt/homebrew/opt/qt/sbin/gmake"
+      - "/opt/homebrew/opt/qt/gmake"
+      - "/opt/homebrew/opt/qtbase/bin/gmake"
+      - "/opt/homebrew/opt/qtbase/sbin/gmake"
+      - "/opt/homebrew/opt/qtbase/gmake"
+      - "/Users/gideoncox/.cargo/bin/gmake"
+      - "/Users/gideoncox/.local/bin/gmake"
+      - "/usr/local/share/dotnet/gmake"
+      - "/opt/pulse/bin/gmake"
+      - "/opt/homebrew/opt/qtbase/bin/gmake"
+      - "/usr/local/bin/gmake"
+      - "/opt/homebrew/bin/gmake"
+      - "/opt/homebrew/sbin/gmake"
+      - "/usr/bin/gmake"
+      - "/bin/gmake"
+      - "/usr/sbin/gmake"
+      - "/sbin/gmake"
+      - "/Applications/Ghostty.app/Contents/MacOS/gmake"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/gmake"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0/bin/gmake"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/swift-lsp/1.0.0/bin/gmake"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/rust-analyzer-lsp/1.0.0/bin/gmake"
+      - "/opt/homebrew/opt/qt/bin/make"
+      - "/opt/homebrew/opt/qt/sbin/make"
+      - "/opt/homebrew/opt/qt/make"
+      - "/opt/homebrew/opt/qtbase/bin/make"
+      - "/opt/homebrew/opt/qtbase/sbin/make"
+      - "/opt/homebrew/opt/qtbase/make"
+      - "/Users/gideoncox/.cargo/bin/make"
+      - "/Users/gideoncox/.local/bin/make"
+      - "/usr/local/share/dotnet/make"
+      - "/opt/pulse/bin/make"
+      - "/opt/homebrew/opt/qtbase/bin/make"
+      - "/usr/local/bin/make"
+      - "/opt/homebrew/bin/make"
+      - "/opt/homebrew/sbin/make"
+    found: "/usr/bin/make"
+    search_context:
+      CMAKE_PREFIX_PATH:
+        - "/opt/homebrew/opt/qt"
+      ENV{CMAKE_PREFIX_PATH}:
+        - "/opt/homebrew/opt/qtbase"
+      ENV{PATH}:
+        - "/Users/gideoncox/.cargo/bin"
+        - "/Users/gideoncox/.local/bin"
+        - "/usr/local/share/dotnet"
+        - "/opt/pulse/bin"
+        - "/opt/homebrew/opt/qtbase/bin"
+        - "/usr/local/bin"
+        - "/opt/homebrew/bin"
+        - "/opt/homebrew/sbin"
+        - "/usr/bin"
+        - "/bin"
+        - "/usr/sbin"
+        - "/sbin"
+        - "/Applications/Ghostty.app/Contents/MacOS"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/swift-lsp/1.0.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/rust-analyzer-lsp/1.0.0/bin"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/opt/homebrew/share/cmake/Modules/CMakeDetermineCompiler.cmake:73 (find_program)"
+      - "/opt/homebrew/share/cmake/Modules/CMakeDetermineCCompiler.cmake:64 (_cmake_find_compiler)"
+      - "CMakeLists.txt"
+    mode: "program"
+    variable: "CMAKE_C_COMPILER"
+    description: "C compiler"
+    settings:
+      SearchFramework: "FIRST"
+      SearchAppBundle: "FIRST"
+      CMAKE_FIND_USE_CMAKE_PATH: true
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "cc"
+      - "gcc"
+      - "cl"
+      - "bcc"
+      - "xlc"
+      - "icx"
+      - "clang"
+    candidate_directories:
+      - "/opt/homebrew/opt/qt/bin/"
+      - "/opt/homebrew/opt/qt/sbin/"
+      - "/opt/homebrew/opt/qt/"
+      - "/opt/homebrew/opt/qtbase/bin/"
+      - "/opt/homebrew/opt/qtbase/sbin/"
+      - "/opt/homebrew/opt/qtbase/"
+      - "/Users/gideoncox/.cargo/bin/"
+      - "/Users/gideoncox/.local/bin/"
+      - "/usr/local/share/dotnet/"
+      - "/opt/pulse/bin/"
+      - "/opt/homebrew/opt/qtbase/bin/"
+      - "/usr/local/bin/"
+      - "/opt/homebrew/bin/"
+      - "/opt/homebrew/sbin/"
+      - "/usr/bin/"
+      - "/bin/"
+      - "/usr/sbin/"
+      - "/sbin/"
+      - "/Applications/Ghostty.app/Contents/MacOS/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0/bin/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/swift-lsp/1.0.0/bin/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/rust-analyzer-lsp/1.0.0/bin/"
+    searched_directories:
+      - "/opt/homebrew/opt/qt/bin/cc"
+      - "/opt/homebrew/opt/qt/sbin/cc"
+      - "/opt/homebrew/opt/qt/cc"
+      - "/opt/homebrew/opt/qtbase/bin/cc"
+      - "/opt/homebrew/opt/qtbase/sbin/cc"
+      - "/opt/homebrew/opt/qtbase/cc"
+      - "/Users/gideoncox/.cargo/bin/cc"
+      - "/Users/gideoncox/.local/bin/cc"
+      - "/usr/local/share/dotnet/cc"
+      - "/opt/pulse/bin/cc"
+      - "/opt/homebrew/opt/qtbase/bin/cc"
+    found: "/usr/local/bin/cc"
+    search_context:
+      CMAKE_PREFIX_PATH:
+        - "/opt/homebrew/opt/qt"
+      ENV{CMAKE_PREFIX_PATH}:
+        - "/opt/homebrew/opt/qtbase"
+      ENV{PATH}:
+        - "/Users/gideoncox/.cargo/bin"
+        - "/Users/gideoncox/.local/bin"
+        - "/usr/local/share/dotnet"
+        - "/opt/pulse/bin"
+        - "/opt/homebrew/opt/qtbase/bin"
+        - "/usr/local/bin"
+        - "/opt/homebrew/bin"
+        - "/opt/homebrew/sbin"
+        - "/usr/bin"
+        - "/bin"
+        - "/usr/sbin"
+        - "/sbin"
+        - "/Applications/Ghostty.app/Contents/MacOS"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/swift-lsp/1.0.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/rust-analyzer-lsp/1.0.0/bin"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/opt/homebrew/share/cmake/Modules/CMakeDetermineCompilerId.cmake:501 (find_file)"
+      - "/opt/homebrew/share/cmake/Modules/CMakeDetermineCompilerId.cmake:538 (CMAKE_DETERMINE_COMPILER_ID_WRITE)"
+      - "/opt/homebrew/share/cmake/Modules/CMakeDetermineCompilerId.cmake:8 (CMAKE_DETERMINE_COMPILER_ID_BUILD)"
+      - "/opt/homebrew/share/cmake/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "/opt/homebrew/share/cmake/Modules/CMakeDetermineCCompiler.cmake:122 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt"
+    mode: "file"
+    variable: "src_in"
+    description: "Path to a file."
+    settings:
+      SearchFramework: "FIRST"
+      SearchAppBundle: "FIRST"
+      CMAKE_FIND_USE_CMAKE_PATH: true
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "CMakeCCompilerId.c.in"
+    candidate_directories:
+      - "/opt/homebrew/share/cmake/Modules/"
+    found: "/opt/homebrew/share/cmake/Modules/CMakeCCompilerId.c.in"
+    search_context:
+      CMAKE_PREFIX_PATH:
+        - "/opt/homebrew/opt/qt"
+      ENV{CMAKE_PREFIX_PATH}:
+        - "/opt/homebrew/opt/qtbase"
+      ENV{PATH}:
+        - "/Users/gideoncox/.cargo/bin"
+        - "/Users/gideoncox/.local/bin"
+        - "/usr/local/share/dotnet"
+        - "/opt/pulse/bin"
+        - "/opt/homebrew/opt/qtbase/bin"
+        - "/usr/local/bin"
+        - "/opt/homebrew/bin"
+        - "/opt/homebrew/sbin"
+        - "/usr/bin"
+        - "/bin"
+        - "/usr/sbin"
+        - "/sbin"
+        - "/Applications/Ghostty.app/Contents/MacOS"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/swift-lsp/1.0.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/rust-analyzer-lsp/1.0.0/bin"
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/opt/homebrew/share/cmake/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "/opt/homebrew/share/cmake/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "/opt/homebrew/share/cmake/Modules/CMakeDetermineCCompiler.cmake:122 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt"
+    message: |
+      Compiling the C compiler identification source file "CMakeCCompilerId.c" succeeded.
+      Compiler: /usr/local/bin/cc 
+      Build flags: 
+      Id flags:  
+      
+      The output was:
+      0
+      
+      
+      Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "a.out"
+      
+      The C compiler identification is AppleClang, found in:
+        /Volumes/DevAPFS/Manimate/tests/build/CMakeFiles/4.4.3/CompilerIdC/a.out
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/opt/homebrew/share/cmake/Modules/CMakeDetermineCompilerId.cmake:323 (message)"
+      - "/opt/homebrew/share/cmake/Modules/CMakeDetermineCCompiler.cmake:122 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt"
+    message: |
+      Detecting C compiler apple sysroot: "/usr/local/bin/cc" "-E" "apple-sdk.c"
+        clang: warning: argument unused during compilation: '-L/opt/homebrew/lib' [-Wunused-command-line-argument]
+        # 1 "apple-sdk.c"
+        # 1 "<built-in>" 1
+        # 1 "<built-in>" 3
+        # 484 "<built-in>" 3
+        # 1 "<command line>" 1
+        # 1 "<built-in>" 2
+        # 1 "apple-sdk.c" 2
+        # 1 "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/AvailabilityMacros.h" 1 3 4
+        # 89 "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/AvailabilityMacros.h" 3 4
+        # 1 "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/AvailabilityVersions.h" 1 3 4
+        # 90 "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/AvailabilityMacros.h" 2 3 4
+        # 1 "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/TargetConditionals.h" 1 3 4
+        # 91 "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/AvailabilityMacros.h" 2 3 4
+        # 207 "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/AvailabilityMacros.h" 3 4
+        # 1 "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/Availability.h" 1 3 4
+        # 196 "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/Availability.h" 3 4
+        # 1 "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/AvailabilityVersions.h" 1 3 4
+        # 197 "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/Availability.h" 2 3 4
+        # 1 "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/AvailabilityInternal.h" 1 3 4
+        # 33 "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/AvailabilityInternal.h" 3 4
+        # 1 "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/AvailabilityVersions.h" 1 3 4
+        # 34 "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/AvailabilityInternal.h" 2 3 4
+        # 198 "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/Availability.h" 2 3 4
+        # 1 "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/AvailabilityInternalLegacy.h" 1 3 4
+        # 34 "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/AvailabilityInternalLegacy.h" 3 4
+        # 1 "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/AvailabilityInternal.h" 1 3 4
+        # 35 "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/AvailabilityInternalLegacy.h" 2 3 4
+        # 199 "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/Availability.h" 2 3 4
+        # 208 "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/AvailabilityMacros.h" 2 3 4
+        # 2 "apple-sdk.c" 2
+        
+        
+      Found apple sysroot: /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/opt/homebrew/share/cmake/Modules/CMakeFindBinUtils.cmake:247 (find_program)"
+      - "/opt/homebrew/share/cmake/Modules/CMakeDetermineCCompiler.cmake:200 (include)"
+      - "CMakeLists.txt"
+    mode: "program"
+    variable: "CMAKE_AR"
+    description: "Path to a program."
+    settings:
+      SearchFramework: "FIRST"
+      SearchAppBundle: "FIRST"
+      CMAKE_FIND_USE_CMAKE_PATH: false
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: false
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "ar"
+    candidate_directories:
+      - "/usr/local/bin/"
+      - "/Users/gideoncox/.cargo/bin/"
+      - "/Users/gideoncox/.local/bin/"
+      - "/usr/local/share/dotnet/"
+      - "/opt/pulse/bin/"
+      - "/opt/homebrew/opt/qtbase/bin/"
+      - "/opt/homebrew/bin/"
+      - "/opt/homebrew/sbin/"
+      - "/usr/bin/"
+      - "/bin/"
+      - "/usr/sbin/"
+      - "/sbin/"
+      - "/Applications/Ghostty.app/Contents/MacOS/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0/bin/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/swift-lsp/1.0.0/bin/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/rust-analyzer-lsp/1.0.0/bin/"
+    searched_directories:
+      - "/usr/local/bin/ar"
+      - "/Users/gideoncox/.cargo/bin/ar"
+      - "/Users/gideoncox/.local/bin/ar"
+      - "/usr/local/share/dotnet/ar"
+      - "/opt/pulse/bin/ar"
+      - "/opt/homebrew/opt/qtbase/bin/ar"
+      - "/opt/homebrew/bin/ar"
+      - "/opt/homebrew/sbin/ar"
+    found: "/usr/bin/ar"
+    search_context:
+      CMAKE_PREFIX_PATH:
+        - "/opt/homebrew/opt/qt"
+      ENV{CMAKE_PREFIX_PATH}:
+        - "/opt/homebrew/opt/qtbase"
+      ENV{PATH}:
+        - "/Users/gideoncox/.cargo/bin"
+        - "/Users/gideoncox/.local/bin"
+        - "/usr/local/share/dotnet"
+        - "/opt/pulse/bin"
+        - "/opt/homebrew/opt/qtbase/bin"
+        - "/usr/local/bin"
+        - "/opt/homebrew/bin"
+        - "/opt/homebrew/sbin"
+        - "/usr/bin"
+        - "/bin"
+        - "/usr/sbin"
+        - "/sbin"
+        - "/Applications/Ghostty.app/Contents/MacOS"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/swift-lsp/1.0.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/rust-analyzer-lsp/1.0.0/bin"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/opt/homebrew/share/cmake/Modules/CMakeFindBinUtils.cmake:247 (find_program)"
+      - "/opt/homebrew/share/cmake/Modules/CMakeDetermineCCompiler.cmake:200 (include)"
+      - "CMakeLists.txt"
+    mode: "program"
+    variable: "CMAKE_RANLIB"
+    description: "Path to a program."
+    settings:
+      SearchFramework: "FIRST"
+      SearchAppBundle: "FIRST"
+      CMAKE_FIND_USE_CMAKE_PATH: false
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: false
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "ranlib"
+    candidate_directories:
+      - "/usr/local/bin/"
+      - "/Users/gideoncox/.cargo/bin/"
+      - "/Users/gideoncox/.local/bin/"
+      - "/usr/local/share/dotnet/"
+      - "/opt/pulse/bin/"
+      - "/opt/homebrew/opt/qtbase/bin/"
+      - "/opt/homebrew/bin/"
+      - "/opt/homebrew/sbin/"
+      - "/usr/bin/"
+      - "/bin/"
+      - "/usr/sbin/"
+      - "/sbin/"
+      - "/Applications/Ghostty.app/Contents/MacOS/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0/bin/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/swift-lsp/1.0.0/bin/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/rust-analyzer-lsp/1.0.0/bin/"
+    searched_directories:
+      - "/usr/local/bin/ranlib"
+      - "/Users/gideoncox/.cargo/bin/ranlib"
+      - "/Users/gideoncox/.local/bin/ranlib"
+      - "/usr/local/share/dotnet/ranlib"
+      - "/opt/pulse/bin/ranlib"
+      - "/opt/homebrew/opt/qtbase/bin/ranlib"
+      - "/opt/homebrew/bin/ranlib"
+      - "/opt/homebrew/sbin/ranlib"
+    found: "/usr/bin/ranlib"
+    search_context:
+      CMAKE_PREFIX_PATH:
+        - "/opt/homebrew/opt/qt"
+      ENV{CMAKE_PREFIX_PATH}:
+        - "/opt/homebrew/opt/qtbase"
+      ENV{PATH}:
+        - "/Users/gideoncox/.cargo/bin"
+        - "/Users/gideoncox/.local/bin"
+        - "/usr/local/share/dotnet"
+        - "/opt/pulse/bin"
+        - "/opt/homebrew/opt/qtbase/bin"
+        - "/usr/local/bin"
+        - "/opt/homebrew/bin"
+        - "/opt/homebrew/sbin"
+        - "/usr/bin"
+        - "/bin"
+        - "/usr/sbin"
+        - "/sbin"
+        - "/Applications/Ghostty.app/Contents/MacOS"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/swift-lsp/1.0.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/rust-analyzer-lsp/1.0.0/bin"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/opt/homebrew/share/cmake/Modules/CMakeFindBinUtils.cmake:247 (find_program)"
+      - "/opt/homebrew/share/cmake/Modules/CMakeDetermineCCompiler.cmake:200 (include)"
+      - "CMakeLists.txt"
+    mode: "program"
+    variable: "CMAKE_STRIP"
+    description: "Path to a program."
+    settings:
+      SearchFramework: "FIRST"
+      SearchAppBundle: "FIRST"
+      CMAKE_FIND_USE_CMAKE_PATH: false
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: false
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "strip"
+    candidate_directories:
+      - "/usr/local/bin/"
+      - "/Users/gideoncox/.cargo/bin/"
+      - "/Users/gideoncox/.local/bin/"
+      - "/usr/local/share/dotnet/"
+      - "/opt/pulse/bin/"
+      - "/opt/homebrew/opt/qtbase/bin/"
+      - "/opt/homebrew/bin/"
+      - "/opt/homebrew/sbin/"
+      - "/usr/bin/"
+      - "/bin/"
+      - "/usr/sbin/"
+      - "/sbin/"
+      - "/Applications/Ghostty.app/Contents/MacOS/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0/bin/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/swift-lsp/1.0.0/bin/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/rust-analyzer-lsp/1.0.0/bin/"
+    searched_directories:
+      - "/usr/local/bin/strip"
+      - "/Users/gideoncox/.cargo/bin/strip"
+      - "/Users/gideoncox/.local/bin/strip"
+      - "/usr/local/share/dotnet/strip"
+      - "/opt/pulse/bin/strip"
+      - "/opt/homebrew/opt/qtbase/bin/strip"
+      - "/opt/homebrew/bin/strip"
+      - "/opt/homebrew/sbin/strip"
+    found: "/usr/bin/strip"
+    search_context:
+      CMAKE_PREFIX_PATH:
+        - "/opt/homebrew/opt/qt"
+      ENV{CMAKE_PREFIX_PATH}:
+        - "/opt/homebrew/opt/qtbase"
+      ENV{PATH}:
+        - "/Users/gideoncox/.cargo/bin"
+        - "/Users/gideoncox/.local/bin"
+        - "/usr/local/share/dotnet"
+        - "/opt/pulse/bin"
+        - "/opt/homebrew/opt/qtbase/bin"
+        - "/usr/local/bin"
+        - "/opt/homebrew/bin"
+        - "/opt/homebrew/sbin"
+        - "/usr/bin"
+        - "/bin"
+        - "/usr/sbin"
+        - "/sbin"
+        - "/Applications/Ghostty.app/Contents/MacOS"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/swift-lsp/1.0.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/rust-analyzer-lsp/1.0.0/bin"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/opt/homebrew/share/cmake/Modules/CMakeFindBinUtils.cmake:247 (find_program)"
+      - "/opt/homebrew/share/cmake/Modules/CMakeDetermineCCompiler.cmake:200 (include)"
+      - "CMakeLists.txt"
+    mode: "program"
+    variable: "CMAKE_LINKER"
+    description: "Path to a program."
+    settings:
+      SearchFramework: "FIRST"
+      SearchAppBundle: "FIRST"
+      CMAKE_FIND_USE_CMAKE_PATH: false
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: false
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "ld"
+    candidate_directories:
+      - "/usr/local/bin/"
+      - "/Users/gideoncox/.cargo/bin/"
+      - "/Users/gideoncox/.local/bin/"
+      - "/usr/local/share/dotnet/"
+      - "/opt/pulse/bin/"
+      - "/opt/homebrew/opt/qtbase/bin/"
+      - "/opt/homebrew/bin/"
+      - "/opt/homebrew/sbin/"
+      - "/usr/bin/"
+      - "/bin/"
+      - "/usr/sbin/"
+      - "/sbin/"
+      - "/Applications/Ghostty.app/Contents/MacOS/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0/bin/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/swift-lsp/1.0.0/bin/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/rust-analyzer-lsp/1.0.0/bin/"
+    searched_directories:
+      - "/usr/local/bin/ld"
+      - "/Users/gideoncox/.cargo/bin/ld"
+      - "/Users/gideoncox/.local/bin/ld"
+      - "/usr/local/share/dotnet/ld"
+      - "/opt/pulse/bin/ld"
+      - "/opt/homebrew/opt/qtbase/bin/ld"
+      - "/opt/homebrew/bin/ld"
+      - "/opt/homebrew/sbin/ld"
+    found: "/usr/bin/ld"
+    search_context:
+      CMAKE_PREFIX_PATH:
+        - "/opt/homebrew/opt/qt"
+      ENV{CMAKE_PREFIX_PATH}:
+        - "/opt/homebrew/opt/qtbase"
+      ENV{PATH}:
+        - "/Users/gideoncox/.cargo/bin"
+        - "/Users/gideoncox/.local/bin"
+        - "/usr/local/share/dotnet"
+        - "/opt/pulse/bin"
+        - "/opt/homebrew/opt/qtbase/bin"
+        - "/usr/local/bin"
+        - "/opt/homebrew/bin"
+        - "/opt/homebrew/sbin"
+        - "/usr/bin"
+        - "/bin"
+        - "/usr/sbin"
+        - "/sbin"
+        - "/Applications/Ghostty.app/Contents/MacOS"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/swift-lsp/1.0.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/rust-analyzer-lsp/1.0.0/bin"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/opt/homebrew/share/cmake/Modules/CMakeFindBinUtils.cmake:247 (find_program)"
+      - "/opt/homebrew/share/cmake/Modules/CMakeDetermineCCompiler.cmake:200 (include)"
+      - "CMakeLists.txt"
+    mode: "program"
+    variable: "CMAKE_NM"
+    description: "Path to a program."
+    settings:
+      SearchFramework: "FIRST"
+      SearchAppBundle: "FIRST"
+      CMAKE_FIND_USE_CMAKE_PATH: false
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: false
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "nm"
+    candidate_directories:
+      - "/usr/local/bin/"
+      - "/Users/gideoncox/.cargo/bin/"
+      - "/Users/gideoncox/.local/bin/"
+      - "/usr/local/share/dotnet/"
+      - "/opt/pulse/bin/"
+      - "/opt/homebrew/opt/qtbase/bin/"
+      - "/opt/homebrew/bin/"
+      - "/opt/homebrew/sbin/"
+      - "/usr/bin/"
+      - "/bin/"
+      - "/usr/sbin/"
+      - "/sbin/"
+      - "/Applications/Ghostty.app/Contents/MacOS/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0/bin/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/swift-lsp/1.0.0/bin/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/rust-analyzer-lsp/1.0.0/bin/"
+    searched_directories:
+      - "/usr/local/bin/nm"
+      - "/Users/gideoncox/.cargo/bin/nm"
+      - "/Users/gideoncox/.local/bin/nm"
+      - "/usr/local/share/dotnet/nm"
+      - "/opt/pulse/bin/nm"
+      - "/opt/homebrew/opt/qtbase/bin/nm"
+      - "/opt/homebrew/bin/nm"
+      - "/opt/homebrew/sbin/nm"
+    found: "/usr/bin/nm"
+    search_context:
+      CMAKE_PREFIX_PATH:
+        - "/opt/homebrew/opt/qt"
+      ENV{CMAKE_PREFIX_PATH}:
+        - "/opt/homebrew/opt/qtbase"
+      ENV{PATH}:
+        - "/Users/gideoncox/.cargo/bin"
+        - "/Users/gideoncox/.local/bin"
+        - "/usr/local/share/dotnet"
+        - "/opt/pulse/bin"
+        - "/opt/homebrew/opt/qtbase/bin"
+        - "/usr/local/bin"
+        - "/opt/homebrew/bin"
+        - "/opt/homebrew/sbin"
+        - "/usr/bin"
+        - "/bin"
+        - "/usr/sbin"
+        - "/sbin"
+        - "/Applications/Ghostty.app/Contents/MacOS"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/swift-lsp/1.0.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/rust-analyzer-lsp/1.0.0/bin"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/opt/homebrew/share/cmake/Modules/CMakeFindBinUtils.cmake:247 (find_program)"
+      - "/opt/homebrew/share/cmake/Modules/CMakeDetermineCCompiler.cmake:200 (include)"
+      - "CMakeLists.txt"
+    mode: "program"
+    variable: "CMAKE_OBJDUMP"
+    description: "Path to a program."
+    settings:
+      SearchFramework: "FIRST"
+      SearchAppBundle: "FIRST"
+      CMAKE_FIND_USE_CMAKE_PATH: false
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: false
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "objdump"
+    candidate_directories:
+      - "/usr/local/bin/"
+      - "/Users/gideoncox/.cargo/bin/"
+      - "/Users/gideoncox/.local/bin/"
+      - "/usr/local/share/dotnet/"
+      - "/opt/pulse/bin/"
+      - "/opt/homebrew/opt/qtbase/bin/"
+      - "/opt/homebrew/bin/"
+      - "/opt/homebrew/sbin/"
+      - "/usr/bin/"
+      - "/bin/"
+      - "/usr/sbin/"
+      - "/sbin/"
+      - "/Applications/Ghostty.app/Contents/MacOS/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0/bin/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/swift-lsp/1.0.0/bin/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/rust-analyzer-lsp/1.0.0/bin/"
+    searched_directories:
+      - "/usr/local/bin/objdump"
+      - "/Users/gideoncox/.cargo/bin/objdump"
+      - "/Users/gideoncox/.local/bin/objdump"
+      - "/usr/local/share/dotnet/objdump"
+      - "/opt/pulse/bin/objdump"
+      - "/opt/homebrew/opt/qtbase/bin/objdump"
+      - "/opt/homebrew/bin/objdump"
+      - "/opt/homebrew/sbin/objdump"
+    found: "/usr/bin/objdump"
+    search_context:
+      CMAKE_PREFIX_PATH:
+        - "/opt/homebrew/opt/qt"
+      ENV{CMAKE_PREFIX_PATH}:
+        - "/opt/homebrew/opt/qtbase"
+      ENV{PATH}:
+        - "/Users/gideoncox/.cargo/bin"
+        - "/Users/gideoncox/.local/bin"
+        - "/usr/local/share/dotnet"
+        - "/opt/pulse/bin"
+        - "/opt/homebrew/opt/qtbase/bin"
+        - "/usr/local/bin"
+        - "/opt/homebrew/bin"
+        - "/opt/homebrew/sbin"
+        - "/usr/bin"
+        - "/bin"
+        - "/usr/sbin"
+        - "/sbin"
+        - "/Applications/Ghostty.app/Contents/MacOS"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/swift-lsp/1.0.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/rust-analyzer-lsp/1.0.0/bin"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/opt/homebrew/share/cmake/Modules/CMakeFindBinUtils.cmake:247 (find_program)"
+      - "/opt/homebrew/share/cmake/Modules/CMakeDetermineCCompiler.cmake:200 (include)"
+      - "CMakeLists.txt"
+    mode: "program"
+    variable: "CMAKE_OBJCOPY"
+    description: "Path to a program."
+    settings:
+      SearchFramework: "FIRST"
+      SearchAppBundle: "FIRST"
+      CMAKE_FIND_USE_CMAKE_PATH: false
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: false
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "objcopy"
+    candidate_directories:
+      - "/usr/local/bin/"
+      - "/Users/gideoncox/.cargo/bin/"
+      - "/Users/gideoncox/.local/bin/"
+      - "/usr/local/share/dotnet/"
+      - "/opt/pulse/bin/"
+      - "/opt/homebrew/opt/qtbase/bin/"
+      - "/opt/homebrew/bin/"
+      - "/opt/homebrew/sbin/"
+      - "/usr/bin/"
+      - "/bin/"
+      - "/usr/sbin/"
+      - "/sbin/"
+      - "/Applications/Ghostty.app/Contents/MacOS/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0/bin/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/swift-lsp/1.0.0/bin/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/rust-analyzer-lsp/1.0.0/bin/"
+    searched_directories:
+      - "/usr/local/bin/objcopy"
+      - "/Users/gideoncox/.cargo/bin/objcopy"
+      - "/Users/gideoncox/.local/bin/objcopy"
+      - "/usr/local/share/dotnet/objcopy"
+      - "/opt/pulse/bin/objcopy"
+      - "/opt/homebrew/opt/qtbase/bin/objcopy"
+      - "/opt/homebrew/bin/objcopy"
+      - "/opt/homebrew/sbin/objcopy"
+      - "/usr/bin/objcopy"
+      - "/bin/objcopy"
+      - "/usr/sbin/objcopy"
+      - "/sbin/objcopy"
+      - "/Applications/Ghostty.app/Contents/MacOS/objcopy"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/objcopy"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0/bin/objcopy"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/swift-lsp/1.0.0/bin/objcopy"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/rust-analyzer-lsp/1.0.0/bin/objcopy"
+    found: false
+    search_context:
+      CMAKE_PREFIX_PATH:
+        - "/opt/homebrew/opt/qt"
+      ENV{CMAKE_PREFIX_PATH}:
+        - "/opt/homebrew/opt/qtbase"
+      ENV{PATH}:
+        - "/Users/gideoncox/.cargo/bin"
+        - "/Users/gideoncox/.local/bin"
+        - "/usr/local/share/dotnet"
+        - "/opt/pulse/bin"
+        - "/opt/homebrew/opt/qtbase/bin"
+        - "/usr/local/bin"
+        - "/opt/homebrew/bin"
+        - "/opt/homebrew/sbin"
+        - "/usr/bin"
+        - "/bin"
+        - "/usr/sbin"
+        - "/sbin"
+        - "/Applications/Ghostty.app/Contents/MacOS"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/swift-lsp/1.0.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/rust-analyzer-lsp/1.0.0/bin"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/opt/homebrew/share/cmake/Modules/CMakeFindBinUtils.cmake:247 (find_program)"
+      - "/opt/homebrew/share/cmake/Modules/CMakeDetermineCCompiler.cmake:200 (include)"
+      - "CMakeLists.txt"
+    mode: "program"
+    variable: "CMAKE_READELF"
+    description: "Path to a program."
+    settings:
+      SearchFramework: "FIRST"
+      SearchAppBundle: "FIRST"
+      CMAKE_FIND_USE_CMAKE_PATH: false
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: false
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "readelf"
+    candidate_directories:
+      - "/usr/local/bin/"
+      - "/Users/gideoncox/.cargo/bin/"
+      - "/Users/gideoncox/.local/bin/"
+      - "/usr/local/share/dotnet/"
+      - "/opt/pulse/bin/"
+      - "/opt/homebrew/opt/qtbase/bin/"
+      - "/opt/homebrew/bin/"
+      - "/opt/homebrew/sbin/"
+      - "/usr/bin/"
+      - "/bin/"
+      - "/usr/sbin/"
+      - "/sbin/"
+      - "/Applications/Ghostty.app/Contents/MacOS/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0/bin/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/swift-lsp/1.0.0/bin/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/rust-analyzer-lsp/1.0.0/bin/"
+    searched_directories:
+      - "/usr/local/bin/readelf"
+      - "/Users/gideoncox/.cargo/bin/readelf"
+      - "/Users/gideoncox/.local/bin/readelf"
+      - "/usr/local/share/dotnet/readelf"
+      - "/opt/pulse/bin/readelf"
+      - "/opt/homebrew/opt/qtbase/bin/readelf"
+      - "/opt/homebrew/bin/readelf"
+      - "/opt/homebrew/sbin/readelf"
+      - "/usr/bin/readelf"
+      - "/bin/readelf"
+      - "/usr/sbin/readelf"
+      - "/sbin/readelf"
+      - "/Applications/Ghostty.app/Contents/MacOS/readelf"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/readelf"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0/bin/readelf"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/swift-lsp/1.0.0/bin/readelf"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/rust-analyzer-lsp/1.0.0/bin/readelf"
+    found: false
+    search_context:
+      CMAKE_PREFIX_PATH:
+        - "/opt/homebrew/opt/qt"
+      ENV{CMAKE_PREFIX_PATH}:
+        - "/opt/homebrew/opt/qtbase"
+      ENV{PATH}:
+        - "/Users/gideoncox/.cargo/bin"
+        - "/Users/gideoncox/.local/bin"
+        - "/usr/local/share/dotnet"
+        - "/opt/pulse/bin"
+        - "/opt/homebrew/opt/qtbase/bin"
+        - "/usr/local/bin"
+        - "/opt/homebrew/bin"
+        - "/opt/homebrew/sbin"
+        - "/usr/bin"
+        - "/bin"
+        - "/usr/sbin"
+        - "/sbin"
+        - "/Applications/Ghostty.app/Contents/MacOS"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/swift-lsp/1.0.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/rust-analyzer-lsp/1.0.0/bin"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/opt/homebrew/share/cmake/Modules/CMakeFindBinUtils.cmake:247 (find_program)"
+      - "/opt/homebrew/share/cmake/Modules/CMakeDetermineCCompiler.cmake:200 (include)"
+      - "CMakeLists.txt"
+    mode: "program"
+    variable: "CMAKE_DLLTOOL"
+    description: "Path to a program."
+    settings:
+      SearchFramework: "FIRST"
+      SearchAppBundle: "FIRST"
+      CMAKE_FIND_USE_CMAKE_PATH: false
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: false
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "dlltool"
+    candidate_directories:
+      - "/usr/local/bin/"
+      - "/Users/gideoncox/.cargo/bin/"
+      - "/Users/gideoncox/.local/bin/"
+      - "/usr/local/share/dotnet/"
+      - "/opt/pulse/bin/"
+      - "/opt/homebrew/opt/qtbase/bin/"
+      - "/opt/homebrew/bin/"
+      - "/opt/homebrew/sbin/"
+      - "/usr/bin/"
+      - "/bin/"
+      - "/usr/sbin/"
+      - "/sbin/"
+      - "/Applications/Ghostty.app/Contents/MacOS/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0/bin/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/swift-lsp/1.0.0/bin/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/rust-analyzer-lsp/1.0.0/bin/"
+    searched_directories:
+      - "/usr/local/bin/dlltool"
+      - "/Users/gideoncox/.cargo/bin/dlltool"
+      - "/Users/gideoncox/.local/bin/dlltool"
+      - "/usr/local/share/dotnet/dlltool"
+      - "/opt/pulse/bin/dlltool"
+      - "/opt/homebrew/opt/qtbase/bin/dlltool"
+      - "/opt/homebrew/bin/dlltool"
+      - "/opt/homebrew/sbin/dlltool"
+      - "/usr/bin/dlltool"
+      - "/bin/dlltool"
+      - "/usr/sbin/dlltool"
+      - "/sbin/dlltool"
+      - "/Applications/Ghostty.app/Contents/MacOS/dlltool"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/dlltool"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0/bin/dlltool"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/swift-lsp/1.0.0/bin/dlltool"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/rust-analyzer-lsp/1.0.0/bin/dlltool"
+    found: false
+    search_context:
+      CMAKE_PREFIX_PATH:
+        - "/opt/homebrew/opt/qt"
+      ENV{CMAKE_PREFIX_PATH}:
+        - "/opt/homebrew/opt/qtbase"
+      ENV{PATH}:
+        - "/Users/gideoncox/.cargo/bin"
+        - "/Users/gideoncox/.local/bin"
+        - "/usr/local/share/dotnet"
+        - "/opt/pulse/bin"
+        - "/opt/homebrew/opt/qtbase/bin"
+        - "/usr/local/bin"
+        - "/opt/homebrew/bin"
+        - "/opt/homebrew/sbin"
+        - "/usr/bin"
+        - "/bin"
+        - "/usr/sbin"
+        - "/sbin"
+        - "/Applications/Ghostty.app/Contents/MacOS"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/swift-lsp/1.0.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/rust-analyzer-lsp/1.0.0/bin"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/opt/homebrew/share/cmake/Modules/CMakeFindBinUtils.cmake:247 (find_program)"
+      - "/opt/homebrew/share/cmake/Modules/CMakeDetermineCCompiler.cmake:200 (include)"
+      - "CMakeLists.txt"
+    mode: "program"
+    variable: "CMAKE_ADDR2LINE"
+    description: "Path to a program."
+    settings:
+      SearchFramework: "FIRST"
+      SearchAppBundle: "FIRST"
+      CMAKE_FIND_USE_CMAKE_PATH: false
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: false
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "addr2line"
+    candidate_directories:
+      - "/usr/local/bin/"
+      - "/Users/gideoncox/.cargo/bin/"
+      - "/Users/gideoncox/.local/bin/"
+      - "/usr/local/share/dotnet/"
+      - "/opt/pulse/bin/"
+      - "/opt/homebrew/opt/qtbase/bin/"
+      - "/opt/homebrew/bin/"
+      - "/opt/homebrew/sbin/"
+      - "/usr/bin/"
+      - "/bin/"
+      - "/usr/sbin/"
+      - "/sbin/"
+      - "/Applications/Ghostty.app/Contents/MacOS/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0/bin/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/swift-lsp/1.0.0/bin/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/rust-analyzer-lsp/1.0.0/bin/"
+    searched_directories:
+      - "/usr/local/bin/addr2line"
+      - "/Users/gideoncox/.cargo/bin/addr2line"
+      - "/Users/gideoncox/.local/bin/addr2line"
+      - "/usr/local/share/dotnet/addr2line"
+      - "/opt/pulse/bin/addr2line"
+      - "/opt/homebrew/opt/qtbase/bin/addr2line"
+      - "/opt/homebrew/bin/addr2line"
+      - "/opt/homebrew/sbin/addr2line"
+      - "/usr/bin/addr2line"
+      - "/bin/addr2line"
+      - "/usr/sbin/addr2line"
+      - "/sbin/addr2line"
+      - "/Applications/Ghostty.app/Contents/MacOS/addr2line"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/addr2line"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0/bin/addr2line"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/swift-lsp/1.0.0/bin/addr2line"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/rust-analyzer-lsp/1.0.0/bin/addr2line"
+    found: false
+    search_context:
+      CMAKE_PREFIX_PATH:
+        - "/opt/homebrew/opt/qt"
+      ENV{CMAKE_PREFIX_PATH}:
+        - "/opt/homebrew/opt/qtbase"
+      ENV{PATH}:
+        - "/Users/gideoncox/.cargo/bin"
+        - "/Users/gideoncox/.local/bin"
+        - "/usr/local/share/dotnet"
+        - "/opt/pulse/bin"
+        - "/opt/homebrew/opt/qtbase/bin"
+        - "/usr/local/bin"
+        - "/opt/homebrew/bin"
+        - "/opt/homebrew/sbin"
+        - "/usr/bin"
+        - "/bin"
+        - "/usr/sbin"
+        - "/sbin"
+        - "/Applications/Ghostty.app/Contents/MacOS"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/swift-lsp/1.0.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/rust-analyzer-lsp/1.0.0/bin"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/opt/homebrew/share/cmake/Modules/CMakeFindBinUtils.cmake:247 (find_program)"
+      - "/opt/homebrew/share/cmake/Modules/CMakeDetermineCCompiler.cmake:200 (include)"
+      - "CMakeLists.txt"
+    mode: "program"
+    variable: "CMAKE_TAPI"
+    description: "Path to a program."
+    settings:
+      SearchFramework: "FIRST"
+      SearchAppBundle: "FIRST"
+      CMAKE_FIND_USE_CMAKE_PATH: false
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: false
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "tapi"
+    candidate_directories:
+      - "/usr/local/bin/"
+      - "/Users/gideoncox/.cargo/bin/"
+      - "/Users/gideoncox/.local/bin/"
+      - "/usr/local/share/dotnet/"
+      - "/opt/pulse/bin/"
+      - "/opt/homebrew/opt/qtbase/bin/"
+      - "/opt/homebrew/bin/"
+      - "/opt/homebrew/sbin/"
+      - "/usr/bin/"
+      - "/bin/"
+      - "/usr/sbin/"
+      - "/sbin/"
+      - "/Applications/Ghostty.app/Contents/MacOS/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0/bin/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/swift-lsp/1.0.0/bin/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/rust-analyzer-lsp/1.0.0/bin/"
+    searched_directories:
+      - "/usr/local/bin/tapi"
+      - "/Users/gideoncox/.cargo/bin/tapi"
+      - "/Users/gideoncox/.local/bin/tapi"
+      - "/usr/local/share/dotnet/tapi"
+      - "/opt/pulse/bin/tapi"
+      - "/opt/homebrew/opt/qtbase/bin/tapi"
+      - "/opt/homebrew/bin/tapi"
+      - "/opt/homebrew/sbin/tapi"
+      - "/usr/bin/tapi"
+      - "/bin/tapi"
+      - "/usr/sbin/tapi"
+      - "/sbin/tapi"
+      - "/Applications/Ghostty.app/Contents/MacOS/tapi"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/tapi"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0/bin/tapi"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/swift-lsp/1.0.0/bin/tapi"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/rust-analyzer-lsp/1.0.0/bin/tapi"
+    found: false
+    search_context:
+      CMAKE_PREFIX_PATH:
+        - "/opt/homebrew/opt/qt"
+      ENV{CMAKE_PREFIX_PATH}:
+        - "/opt/homebrew/opt/qtbase"
+      ENV{PATH}:
+        - "/Users/gideoncox/.cargo/bin"
+        - "/Users/gideoncox/.local/bin"
+        - "/usr/local/share/dotnet"
+        - "/opt/pulse/bin"
+        - "/opt/homebrew/opt/qtbase/bin"
+        - "/usr/local/bin"
+        - "/opt/homebrew/bin"
+        - "/opt/homebrew/sbin"
+        - "/usr/bin"
+        - "/bin"
+        - "/usr/sbin"
+        - "/sbin"
+        - "/Applications/Ghostty.app/Contents/MacOS"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/swift-lsp/1.0.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/rust-analyzer-lsp/1.0.0/bin"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/opt/homebrew/share/cmake/Modules/CMakeDetermineCompiler.cmake:54 (find_program)"
+      - "/opt/homebrew/share/cmake/Modules/CMakeDetermineCXXCompiler.cmake:69 (_cmake_find_compiler)"
+      - "CMakeLists.txt"
+    mode: "program"
+    variable: "CMAKE_CXX_COMPILER"
+    description: "CXX compiler"
+    settings:
+      SearchFramework: "FIRST"
+      SearchAppBundle: "FIRST"
+      CMAKE_FIND_USE_CMAKE_PATH: true
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "c++"
+      - "g++"
+      - "cl"
+      - "bcc"
+      - "icpx"
+      - "icx"
+      - "clang++"
+    candidate_directories:
+      - "/usr/local/bin/"
+    found: "/usr/local/bin/c++"
+    search_context:
+      CMAKE_PREFIX_PATH:
+        - "/opt/homebrew/opt/qt"
+      ENV{CMAKE_PREFIX_PATH}:
+        - "/opt/homebrew/opt/qtbase"
+      ENV{PATH}:
+        - "/Users/gideoncox/.cargo/bin"
+        - "/Users/gideoncox/.local/bin"
+        - "/usr/local/share/dotnet"
+        - "/opt/pulse/bin"
+        - "/opt/homebrew/opt/qtbase/bin"
+        - "/usr/local/bin"
+        - "/opt/homebrew/bin"
+        - "/opt/homebrew/sbin"
+        - "/usr/bin"
+        - "/bin"
+        - "/usr/sbin"
+        - "/sbin"
+        - "/Applications/Ghostty.app/Contents/MacOS"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/swift-lsp/1.0.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/rust-analyzer-lsp/1.0.0/bin"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/opt/homebrew/share/cmake/Modules/CMakeDetermineCompilerId.cmake:501 (find_file)"
+      - "/opt/homebrew/share/cmake/Modules/CMakeDetermineCompilerId.cmake:538 (CMAKE_DETERMINE_COMPILER_ID_WRITE)"
+      - "/opt/homebrew/share/cmake/Modules/CMakeDetermineCompilerId.cmake:8 (CMAKE_DETERMINE_COMPILER_ID_BUILD)"
+      - "/opt/homebrew/share/cmake/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "/opt/homebrew/share/cmake/Modules/CMakeDetermineCXXCompiler.cmake:125 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt"
+    mode: "file"
+    variable: "src_in"
+    description: "Path to a file."
+    settings:
+      SearchFramework: "FIRST"
+      SearchAppBundle: "FIRST"
+      CMAKE_FIND_USE_CMAKE_PATH: true
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "CMakeCXXCompilerId.cpp.in"
+    candidate_directories:
+      - "/opt/homebrew/share/cmake/Modules/"
+    found: "/opt/homebrew/share/cmake/Modules/CMakeCXXCompilerId.cpp.in"
+    search_context:
+      CMAKE_PREFIX_PATH:
+        - "/opt/homebrew/opt/qt"
+      ENV{CMAKE_PREFIX_PATH}:
+        - "/opt/homebrew/opt/qtbase"
+      ENV{PATH}:
+        - "/Users/gideoncox/.cargo/bin"
+        - "/Users/gideoncox/.local/bin"
+        - "/usr/local/share/dotnet"
+        - "/opt/pulse/bin"
+        - "/opt/homebrew/opt/qtbase/bin"
+        - "/usr/local/bin"
+        - "/opt/homebrew/bin"
+        - "/opt/homebrew/sbin"
+        - "/usr/bin"
+        - "/bin"
+        - "/usr/sbin"
+        - "/sbin"
+        - "/Applications/Ghostty.app/Contents/MacOS"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/swift-lsp/1.0.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/rust-analyzer-lsp/1.0.0/bin"
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/opt/homebrew/share/cmake/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "/opt/homebrew/share/cmake/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "/opt/homebrew/share/cmake/Modules/CMakeDetermineCXXCompiler.cmake:125 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt"
+    message: |
+      Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" succeeded.
+      Compiler: /usr/local/bin/c++ 
+      Build flags: 
+      Id flags:  
+      
+      The output was:
+      0
+      
+      
+      Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "a.out"
+      
+      The CXX compiler identification is AppleClang, found in:
+        /Volumes/DevAPFS/Manimate/tests/build/CMakeFiles/4.4.3/CompilerIdCXX/a.out
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/opt/homebrew/share/cmake/Modules/CMakeDetermineCompilerId.cmake:323 (message)"
+      - "/opt/homebrew/share/cmake/Modules/CMakeDetermineCXXCompiler.cmake:125 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt"
+    message: |
+      Detecting CXX compiler apple sysroot: "/usr/local/bin/c++" "-E" "apple-sdk.cpp"
+        clang++: warning: argument unused during compilation: '-L/opt/homebrew/lib' [-Wunused-command-line-argument]
+        # 1 "apple-sdk.cpp"
+        # 1 "<built-in>" 1
+        # 1 "<built-in>" 3
+        # 533 "<built-in>" 3
+        # 1 "<command line>" 1
+        # 1 "<built-in>" 2
+        # 1 "apple-sdk.cpp" 2
+        # 1 "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/AvailabilityMacros.h" 1 3 4
+        # 89 "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/AvailabilityMacros.h" 3 4
+        # 1 "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/AvailabilityVersions.h" 1 3 4
+        # 90 "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/AvailabilityMacros.h" 2 3 4
+        # 1 "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/TargetConditionals.h" 1 3 4
+        # 91 "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/AvailabilityMacros.h" 2 3 4
+        # 207 "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/AvailabilityMacros.h" 3 4
+        # 1 "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/Availability.h" 1 3 4
+        # 196 "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/Availability.h" 3 4
+        # 1 "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/AvailabilityVersions.h" 1 3 4
+        # 197 "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/Availability.h" 2 3 4
+        # 1 "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/AvailabilityInternal.h" 1 3 4
+        # 33 "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/AvailabilityInternal.h" 3 4
+        # 1 "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/AvailabilityVersions.h" 1 3 4
+        # 34 "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/AvailabilityInternal.h" 2 3 4
+        # 198 "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/Availability.h" 2 3 4
+        # 1 "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/AvailabilityInternalLegacy.h" 1 3 4
+        # 34 "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/AvailabilityInternalLegacy.h" 3 4
+        # 1 "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/AvailabilityInternal.h" 1 3 4
+        # 35 "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/AvailabilityInternalLegacy.h" 2 3 4
+        # 199 "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/Availability.h" 2 3 4
+        # 208 "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/AvailabilityMacros.h" 2 3 4
+        # 2 "apple-sdk.cpp" 2
+        
+        
+      Found apple sysroot: /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/opt/homebrew/share/cmake/Modules/Platform/Darwin.cmake:66 (find_program)"
+      - "/opt/homebrew/share/cmake/Modules/CMakeSystemSpecificInformation.cmake:32 (include)"
+      - "CMakeLists.txt"
+    mode: "program"
+    variable: "CMAKE_INSTALL_NAME_TOOL"
+    description: "Path to a program."
+    settings:
+      SearchFramework: "FIRST"
+      SearchAppBundle: "FIRST"
+      CMAKE_FIND_USE_CMAKE_PATH: true
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "install_name_tool"
+    candidate_directories:
+      - "/opt/homebrew/opt/qt/bin/"
+      - "/opt/homebrew/opt/qt/sbin/"
+      - "/opt/homebrew/opt/qt/"
+      - "/opt/homebrew/opt/qtbase/bin/"
+      - "/opt/homebrew/opt/qtbase/sbin/"
+      - "/opt/homebrew/opt/qtbase/"
+      - "/Users/gideoncox/.cargo/bin/"
+      - "/Users/gideoncox/.local/bin/"
+      - "/usr/local/share/dotnet/"
+      - "/opt/pulse/bin/"
+      - "/opt/homebrew/opt/qtbase/bin/"
+      - "/usr/local/bin/"
+      - "/opt/homebrew/bin/"
+      - "/opt/homebrew/sbin/"
+      - "/usr/bin/"
+      - "/bin/"
+      - "/usr/sbin/"
+      - "/sbin/"
+      - "/Applications/Ghostty.app/Contents/MacOS/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0/bin/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/swift-lsp/1.0.0/bin/"
+      - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/rust-analyzer-lsp/1.0.0/bin/"
+    searched_directories:
+      - "/opt/homebrew/opt/qt/bin/install_name_tool"
+      - "/opt/homebrew/opt/qt/sbin/install_name_tool"
+      - "/opt/homebrew/opt/qt/install_name_tool"
+      - "/opt/homebrew/opt/qtbase/bin/install_name_tool"
+      - "/opt/homebrew/opt/qtbase/sbin/install_name_tool"
+      - "/opt/homebrew/opt/qtbase/install_name_tool"
+      - "/Users/gideoncox/.cargo/bin/install_name_tool"
+      - "/Users/gideoncox/.local/bin/install_name_tool"
+      - "/usr/local/share/dotnet/install_name_tool"
+      - "/opt/pulse/bin/install_name_tool"
+      - "/opt/homebrew/opt/qtbase/bin/install_name_tool"
+      - "/usr/local/bin/install_name_tool"
+      - "/opt/homebrew/bin/install_name_tool"
+      - "/opt/homebrew/sbin/install_name_tool"
+    found: "/usr/bin/install_name_tool"
+    search_context:
+      CMAKE_PREFIX_PATH:
+        - "/opt/homebrew/opt/qt"
+      ENV{CMAKE_PREFIX_PATH}:
+        - "/opt/homebrew/opt/qtbase"
+      ENV{PATH}:
+        - "/Users/gideoncox/.cargo/bin"
+        - "/Users/gideoncox/.local/bin"
+        - "/usr/local/share/dotnet"
+        - "/opt/pulse/bin"
+        - "/opt/homebrew/opt/qtbase/bin"
+        - "/usr/local/bin"
+        - "/opt/homebrew/bin"
+        - "/opt/homebrew/sbin"
+        - "/usr/bin"
+        - "/bin"
+        - "/usr/sbin"
+        - "/sbin"
+        - "/Applications/Ghostty.app/Contents/MacOS"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/swift-lsp/1.0.0/bin"
+        - "/Users/gideoncox/.claude/plugins/cache/claude-plugins-official/rust-analyzer-lsp/1.0.0/bin"
+      CMAKE_INSTALL_PREFIX: "/usr/local"
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/opt/homebrew/share/cmake/Modules/CMakeDetermineCompilerABI.cmake:123 (try_compile)"
+      - "/opt/homebrew/share/cmake/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt"
+    checks:
+      - "Detecting C compiler ABI info"
+    directories:
+      source: "/Volumes/DevAPFS/Manimate/tests/build/CMakeFiles/CMakeScratch/TryCompile-GEma6Z"
+      binary: "/Volumes/DevAPFS/Manimate/tests/build/CMakeFiles/CMakeScratch/TryCompile-GEma6Z"
+    cmakeVariables:
+      CMAKE_CXX_STDLIB_MODULES_JSON: ""
+      CMAKE_C_FLAGS: ""
+      CMAKE_EXE_LINKER_FLAGS: ""
+      CMAKE_OSX_ARCHITECTURES: ""
+      CMAKE_OSX_DEPLOYMENT_TARGET: ""
+      CMAKE_OSX_SYSROOT: ""
+    buildResult:
+      variable: "CMAKE_C_ABI_COMPILED"
+      cached: false
+      stdout: |
+        Change Dir: '/Volumes/DevAPFS/Manimate/tests/build/CMakeFiles/CMakeScratch/TryCompile-GEma6Z'
+        
+        Run Build Command(s): /opt/homebrew/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_e49e8/fast
+        /Applications/Xcode-beta.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_e49e8.dir/build.make CMakeFiles/cmTC_e49e8.dir/build
+        Building C object CMakeFiles/cmTC_e49e8.dir/CMakeCCompilerABI.c.o
+        /usr/local/bin/cc   -arch arm64   -v -Wl,-v -MD -MT CMakeFiles/cmTC_e49e8.dir/CMakeCCompilerABI.c.o -MF CMakeFiles/cmTC_e49e8.dir/CMakeCCompilerABI.c.o.d -o CMakeFiles/cmTC_e49e8.dir/CMakeCCompilerABI.c.o -c /opt/homebrew/share/cmake/Modules/CMakeCCompilerABI.c
+        Apple clang version 21.0.0 (clang-2100.3.25.1)
+        Target: arm64-apple-darwin27.0.0
+        Thread model: posix
+        InstalledDir: /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin
+        clang: warning: -Wl,-v: 'linker' input unused [-Wunused-command-line-argument]
+        clang: warning: argument unused during compilation: '-L/opt/homebrew/lib' [-Wunused-command-line-argument]
+         "/Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang" -cc1 -triple arm64-apple-macosx27.0.0 -Wundef-prefix=TARGET_OS_ -Wdeprecated-objc-isa-usage -Werror=deprecated-objc-isa-usage -Werror=implicit-function-declaration -emit-obj -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCCompilerABI.c -mrelocation-model pic -pic-level 2 -mframe-pointer=non-leaf -fno-strict-return -ffp-contract=on -fno-rounding-math -funwind-tables=1 -fobjc-msgsend-selector-stubs -fno-sized-deallocation -target-sdk-version=27.0 -fdepfile-entry=/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/SDKSettings.json -fvisibility-inlines-hidden-static-local-var -fno-modulemap-allow-subdirectory-search -fdefine-target-os-macros -fno-assume-unique-vtables -fno-modulemap-allow-subdirectory-search -enable-tlsdesc -target-cpu apple-m1 -target-feature +v8.5a -target-feature +aes -target-feature +altnzcv -target-feature +ccdp -target-feature +ccpp -target-feature +complxnum -target-feature +crc -target-feature +dotprod -target-feature +flagm -target-feature +fp-armv8 -target-feature +fp16fml -target-feature +fptoint -target-feature +fullfp16 -target-feature +jsconv -target-feature +lse -target-feature +neon -target-feature +pauth -target-feature +perfmon -target-feature +predres -target-feature +ras -target-feature +rcpc -target-feature +rdm -target-feature +sb -target-feature +sha2 -target-feature +sha3 -target-feature +specrestrict -target-feature +ssbs -target-abi darwinpcs -debugger-tuning=lldb -fdebug-compilation-dir=/Volumes/DevAPFS/Manimate/tests/build/CMakeFiles/CMakeScratch/TryCompile-GEma6Z -target-linker-version 1166.2 -v -fcoverage-compilation-dir=/Volumes/DevAPFS/Manimate/tests/build/CMakeFiles/CMakeScratch/TryCompile-GEma6Z -resource-dir /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21 -dependency-file CMakeFiles/cmTC_e49e8.dir/CMakeCCompilerABI.c.o.d -skip-unused-modulemap-deps -MT CMakeFiles/cmTC_e49e8.dir/CMakeCCompilerABI.c.o -sys-header-deps -isysroot /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -I /opt/homebrew/include -I/usr/local/include -internal-isystem /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/local/include -internal-isystem /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include -internal-externc-isystem /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include -internal-externc-isystem /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -internal-iframework /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks -internal-iframework /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/SubFrameworks -internal-iframework /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/Library/Frameworks -Wno-elaborated-enum-base -ferror-limit 19 -stack-protector 1 -fstack-check -mdarwin-stkchk-strong-link -fblocks -fencode-extended-block-signature -fregister-global-dtors-with-atexit -fgnuc-version=4.2.1 -fskip-odr-check-in-gmf -fmax-type-align=16 -fcommon -clang-vendor-feature=+disableNonDependentMemberExprInCurrentInstantiation -fno-odr-hash-protocols -clang-vendor-feature=+enableAggressiveVLAFolding -clang-vendor-feature=+revert09abecef7bbf -clang-vendor-feature=+thisNoAlignAttr -clang-vendor-feature=+thisNoNullAttr -clang-vendor-feature=+disableAtImportPrivateFrameworkInImplementationError -Wno-error=allocator-wrappers -fdwarf2-cfi-asm -o CMakeFiles/cmTC_e49e8.dir/CMakeCCompilerABI.c.o -x c /opt/homebrew/share/cmake/Modules/CMakeCCompilerABI.c
+        clang -cc1 version 21.0.0 (clang-2100.3.25.1) default target arm64-apple-darwin27.0.0
+        ignoring nonexistent directory "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/local/include"
+        ignoring nonexistent directory "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/Library/Frameworks"
+        #include "..." search starts here:
+        #include <...> search starts here:
+         /opt/homebrew/include
+         /usr/local/include
+         /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include
+         /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include
+         /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include
+         /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks (framework directory)
+         /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/SubFrameworks (framework directory)
+        End of search list.
+        Linking C executable cmTC_e49e8
+        /opt/homebrew/bin/cmake -E cmake_link_script CMakeFiles/cmTC_e49e8.dir/link.txt --verbose=1
+        Apple clang version 21.0.0 (clang-2100.3.25.1)
+        Target: arm64-apple-darwin27.0.0
+        Thread model: posix
+        InstalledDir: /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin
+         "/Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" -demangle -lto_library /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libLTO.dylib -dynamic -arch arm64 -platform_version macos 27.0.0 27.0 -syslibroot /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -mllvm -enable-linkonceodr-outlining -o cmTC_e49e8 -L/opt/homebrew/lib -L/usr/local/lib -v CMakeFiles/cmTC_e49e8.dir/CMakeCCompilerABI.c.o -lSystem /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/lib/darwin/libclang_rt.osx.a
+        @(#)PROGRAM:ld PROJECT:ld-27034
+        BUILD 04:09:10 Jun 25 2026
+        configured to support archs: armv6 armv7 armv7s arm64 arm64e arm64_32 i386 x86_64 x86_64h armv6m armv7k armv7m armv7em armv8m.main armv8.1m.main
+        LTO support using: LLVM version 21.0.0 (static support for 30, runtime is 30)
+        TAPI support using: Apple TAPI version 21.0.0 (tapi-2100.3.7)
+        Library search paths:
+        	/opt/homebrew/lib
+        	/usr/local/lib
+        	/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib
+        	/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/swift
+        Framework search paths:
+        	/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks
+        /usr/local/bin/cc  -arch arm64  -v -Wl,-v CMakeFiles/cmTC_e49e8.dir/CMakeCCompilerABI.c.o -o cmTC_e49e8
+        
+      exitCode: 0
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/opt/homebrew/share/cmake/Modules/CMakeDetermineCompilerABI.cmake:160 (message)"
+      - "/opt/homebrew/share/cmake/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt"
+    message: |
+      Effective list of requested architectures (possibly empty)  : ""
+      Effective list of architectures found in the ABI info binary: "arm64"
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/opt/homebrew/share/cmake/Modules/CMakeDetermineCompilerABI.cmake:255 (message)"
+      - "/opt/homebrew/share/cmake/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt"
+    message: |
+      Parsed C implicit include dir info: rv=done
+        found start of include info
+        found start of implicit include info
+          add: [/opt/homebrew/include]
+          add: [/usr/local/include]
+          add: [/Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include]
+          add: [/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include]
+          add: [/Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include]
+        end of search list found
+        collapse include dir [/opt/homebrew/include] ==> [/opt/homebrew/include]
+        collapse include dir [/usr/local/include] ==> [/usr/local/include]
+        collapse include dir [/Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include] ==> [/Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include]
+        collapse include dir [/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include] ==> [/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include]
+        collapse include dir [/Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include] ==> [/Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include]
+        implicit include dirs: [/opt/homebrew/include;/usr/local/include;/Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include;/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include;/Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include]
+      
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/opt/homebrew/share/cmake/Modules/CMakeDetermineCompilerABI.cmake:291 (message)"
+      - "/opt/homebrew/share/cmake/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt"
+    message: |
+      Parsed C implicit link information:
+        link line regex: [^( *|.*[/\\])(ld[0-9]*(|\\.[a-rt-z][a-z]*|\\.s[a-np-z][a-z]*|\\.so[a-z]+)|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\\]+-)?ld|collect2)[^/\\]*( |$)]
+        linker tool regex: [^[ 	]*(->|"|[0-9]+>[ 	-]*Build:[ 	0-9]+ ms[ 	]*)?[ 	]*(([^"]*[/\\])?(ld[0-9]*(|\\.[a-rt-z][a-z]*|\\.s[a-np-z][a-z]*|\\.so[a-z]+)))("|,| |$)]
+        ignore line: [Change Dir: '/Volumes/DevAPFS/Manimate/tests/build/CMakeFiles/CMakeScratch/TryCompile-GEma6Z']
+        ignore line: []
+        ignore line: [Run Build Command(s): /opt/homebrew/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_e49e8/fast]
+        ignore line: [/Applications/Xcode-beta.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_e49e8.dir/build.make CMakeFiles/cmTC_e49e8.dir/build]
+        ignore line: [Building C object CMakeFiles/cmTC_e49e8.dir/CMakeCCompilerABI.c.o]
+        ignore line: [/usr/local/bin/cc   -arch arm64   -v -Wl -v -MD -MT CMakeFiles/cmTC_e49e8.dir/CMakeCCompilerABI.c.o -MF CMakeFiles/cmTC_e49e8.dir/CMakeCCompilerABI.c.o.d -o CMakeFiles/cmTC_e49e8.dir/CMakeCCompilerABI.c.o -c /opt/homebrew/share/cmake/Modules/CMakeCCompilerABI.c]
+        ignore line: [Apple clang version 21.0.0 (clang-2100.3.25.1)]
+        ignore line: [Target: arm64-apple-darwin27.0.0]
+        ignore line: [Thread model: posix]
+        ignore line: [InstalledDir: /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin]
+        ignore line: [clang: warning: -Wl -v: 'linker' input unused [-Wunused-command-line-argument]]
+        ignore line: [clang: warning: argument unused during compilation: '-L/opt/homebrew/lib' [-Wunused-command-line-argument]]
+        ignore line: [ "/Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang" -cc1 -triple arm64-apple-macosx27.0.0 -Wundef-prefix=TARGET_OS_ -Wdeprecated-objc-isa-usage -Werror=deprecated-objc-isa-usage -Werror=implicit-function-declaration -emit-obj -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCCompilerABI.c -mrelocation-model pic -pic-level 2 -mframe-pointer=non-leaf -fno-strict-return -ffp-contract=on -fno-rounding-math -funwind-tables=1 -fobjc-msgsend-selector-stubs -fno-sized-deallocation -target-sdk-version=27.0 -fdepfile-entry=/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/SDKSettings.json -fvisibility-inlines-hidden-static-local-var -fno-modulemap-allow-subdirectory-search -fdefine-target-os-macros -fno-assume-unique-vtables -fno-modulemap-allow-subdirectory-search -enable-tlsdesc -target-cpu apple-m1 -target-feature +v8.5a -target-feature +aes -target-feature +altnzcv -target-feature +ccdp -target-feature +ccpp -target-feature +complxnum -target-feature +crc -target-feature +dotprod -target-feature +flagm -target-feature +fp-armv8 -target-feature +fp16fml -target-feature +fptoint -target-feature +fullfp16 -target-feature +jsconv -target-feature +lse -target-feature +neon -target-feature +pauth -target-feature +perfmon -target-feature +predres -target-feature +ras -target-feature +rcpc -target-feature +rdm -target-feature +sb -target-feature +sha2 -target-feature +sha3 -target-feature +specrestrict -target-feature +ssbs -target-abi darwinpcs -debugger-tuning=lldb -fdebug-compilation-dir=/Volumes/DevAPFS/Manimate/tests/build/CMakeFiles/CMakeScratch/TryCompile-GEma6Z -target-linker-version 1166.2 -v -fcoverage-compilation-dir=/Volumes/DevAPFS/Manimate/tests/build/CMakeFiles/CMakeScratch/TryCompile-GEma6Z -resource-dir /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21 -dependency-file CMakeFiles/cmTC_e49e8.dir/CMakeCCompilerABI.c.o.d -skip-unused-modulemap-deps -MT CMakeFiles/cmTC_e49e8.dir/CMakeCCompilerABI.c.o -sys-header-deps -isysroot /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -I /opt/homebrew/include -I/usr/local/include -internal-isystem /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/local/include -internal-isystem /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include -internal-externc-isystem /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include -internal-externc-isystem /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -internal-iframework /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks -internal-iframework /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/SubFrameworks -internal-iframework /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/Library/Frameworks -Wno-elaborated-enum-base -ferror-limit 19 -stack-protector 1 -fstack-check -mdarwin-stkchk-strong-link -fblocks -fencode-extended-block-signature -fregister-global-dtors-with-atexit -fgnuc-version=4.2.1 -fskip-odr-check-in-gmf -fmax-type-align=16 -fcommon -clang-vendor-feature=+disableNonDependentMemberExprInCurrentInstantiation -fno-odr-hash-protocols -clang-vendor-feature=+enableAggressiveVLAFolding -clang-vendor-feature=+revert09abecef7bbf -clang-vendor-feature=+thisNoAlignAttr -clang-vendor-feature=+thisNoNullAttr -clang-vendor-feature=+disableAtImportPrivateFrameworkInImplementationError -Wno-error=allocator-wrappers -fdwarf2-cfi-asm -o CMakeFiles/cmTC_e49e8.dir/CMakeCCompilerABI.c.o -x c /opt/homebrew/share/cmake/Modules/CMakeCCompilerABI.c]
+        ignore line: [clang -cc1 version 21.0.0 (clang-2100.3.25.1) default target arm64-apple-darwin27.0.0]
+        ignore line: [ignoring nonexistent directory "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/local/include"]
+        ignore line: [ignoring nonexistent directory "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/Library/Frameworks"]
+        ignore line: [#include "..." search starts here:]
+        ignore line: [#include <...> search starts here:]
+        ignore line: [ /opt/homebrew/include]
+        ignore line: [ /usr/local/include]
+        ignore line: [ /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include]
+        ignore line: [ /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include]
+        ignore line: [ /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include]
+        ignore line: [ /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks (framework directory)]
+        ignore line: [ /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/SubFrameworks (framework directory)]
+        ignore line: [End of search list.]
+        ignore line: [Linking C executable cmTC_e49e8]
+        ignore line: [/opt/homebrew/bin/cmake -E cmake_link_script CMakeFiles/cmTC_e49e8.dir/link.txt --verbose=1]
+        ignore line: [Apple clang version 21.0.0 (clang-2100.3.25.1)]
+        ignore line: [Target: arm64-apple-darwin27.0.0]
+        ignore line: [Thread model: posix]
+        ignore line: [InstalledDir: /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin]
+        link line: [ "/Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" -demangle -lto_library /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libLTO.dylib -dynamic -arch arm64 -platform_version macos 27.0.0 27.0 -syslibroot /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -mllvm -enable-linkonceodr-outlining -o cmTC_e49e8 -L/opt/homebrew/lib -L/usr/local/lib -v CMakeFiles/cmTC_e49e8.dir/CMakeCCompilerABI.c.o -lSystem /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/lib/darwin/libclang_rt.osx.a] ==> linker [/Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld]
+        link line: [ "/Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" -demangle -lto_library /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libLTO.dylib -dynamic -arch arm64 -platform_version macos 27.0.0 27.0 -syslibroot /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -mllvm -enable-linkonceodr-outlining -o cmTC_e49e8 -L/opt/homebrew/lib -L/usr/local/lib -v CMakeFiles/cmTC_e49e8.dir/CMakeCCompilerABI.c.o -lSystem /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/lib/darwin/libclang_rt.osx.a]
+          arg [/Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld] ==> ignore
+          arg [-demangle] ==> ignore
+          arg [-lto_library] ==> ignore, skip following value
+          arg [/Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libLTO.dylib] ==> skip value of -lto_library
+          arg [-dynamic] ==> ignore
+          arg [-arch] ==> ignore
+          arg [arm64] ==> ignore
+          arg [-platform_version] ==> ignore
+          arg [macos] ==> ignore
+          arg [27.0.0] ==> ignore
+          arg [27.0] ==> ignore
+          arg [-syslibroot] ==> ignore
+          arg [/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk] ==> ignore
+          arg [-mllvm] ==> ignore
+          arg [-enable-linkonceodr-outlining] ==> ignore
+          arg [-o] ==> ignore
+          arg [cmTC_e49e8] ==> ignore
+          arg [-L/opt/homebrew/lib] ==> dir [/opt/homebrew/lib]
+          arg [-L/usr/local/lib] ==> dir [/usr/local/lib]
+          arg [-v] ==> ignore
+          arg [CMakeFiles/cmTC_e49e8.dir/CMakeCCompilerABI.c.o] ==> ignore
+          arg [-lSystem] ==> lib [System]
+          arg [/Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/lib/darwin/libclang_rt.osx.a] ==> lib [/Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/lib/darwin/libclang_rt.osx.a]
+        linker tool for 'C': /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld 
+        Library search paths: [;/opt/homebrew/lib;/usr/local/lib;/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib;/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/swift]
+        Framework search paths: [;/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks]
+        remove lib [System]
+        remove lib [/Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/lib/darwin/libclang_rt.osx.a]
+        collapse library dir [/opt/homebrew/lib] ==> [/opt/homebrew/lib]
+        collapse library dir [/usr/local/lib] ==> [/usr/local/lib]
+        collapse library dir [/opt/homebrew/lib] ==> [/opt/homebrew/lib]
+        collapse library dir [/usr/local/lib] ==> [/usr/local/lib]
+        collapse library dir [/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib] ==> [/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib]
+        collapse library dir [/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/swift] ==> [/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/swift]
+        collapse framework dir [/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks] ==> [/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks]
+        implicit libs: []
+        implicit objs: []
+        implicit dirs: [/opt/homebrew/lib;/usr/local/lib;/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib;/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/swift]
+        implicit fwks: [/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks]
+      
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/opt/homebrew/share/cmake/Modules/Internal/CMakeDetermineLinkerId.cmake:41 (message)"
+      - "/opt/homebrew/share/cmake/Modules/CMakeDetermineCompilerABI.cmake:337 (cmake_determine_linker_id)"
+      - "/opt/homebrew/share/cmake/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt"
+    message: |
+      Running the C compiler's linker: "/Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" "-v"
+      @(#)PROGRAM:ld PROJECT:ld-27034
+      BUILD 04:09:10 Jun 25 2026
+      configured to support archs: armv6 armv7 armv7s arm64 arm64e arm64_32 i386 x86_64 x86_64h armv6m armv7k armv7m armv7em armv8m.main armv8.1m.main
+      LTO support using: LLVM version 21.0.0 (static support for 30, runtime is 30)
+      TAPI support using: Apple TAPI version 21.0.0 (tapi-2100.3.7)
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/opt/homebrew/share/cmake/Modules/CMakeDetermineCompilerABI.cmake:123 (try_compile)"
+      - "/opt/homebrew/share/cmake/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt"
+    checks:
+      - "Detecting CXX compiler ABI info"
+    directories:
+      source: "/Volumes/DevAPFS/Manimate/tests/build/CMakeFiles/CMakeScratch/TryCompile-ZADkAC"
+      binary: "/Volumes/DevAPFS/Manimate/tests/build/CMakeFiles/CMakeScratch/TryCompile-ZADkAC"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: ""
+      CMAKE_CXX_SCAN_FOR_MODULES: "OFF"
+      CMAKE_CXX_STDLIB_MODULES_JSON: ""
+      CMAKE_EXE_LINKER_FLAGS: ""
+      CMAKE_OSX_ARCHITECTURES: ""
+      CMAKE_OSX_DEPLOYMENT_TARGET: ""
+      CMAKE_OSX_SYSROOT: ""
+    buildResult:
+      variable: "CMAKE_CXX_ABI_COMPILED"
+      cached: false
+      stdout: |
+        Change Dir: '/Volumes/DevAPFS/Manimate/tests/build/CMakeFiles/CMakeScratch/TryCompile-ZADkAC'
+        
+        Run Build Command(s): /opt/homebrew/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_73a2c/fast
+        /Applications/Xcode-beta.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_73a2c.dir/build.make CMakeFiles/cmTC_73a2c.dir/build
+        Building CXX object CMakeFiles/cmTC_73a2c.dir/CMakeCXXCompilerABI.cpp.o
+        /usr/local/bin/c++   -arch arm64   -v -Wl,-v -MD -MT CMakeFiles/cmTC_73a2c.dir/CMakeCXXCompilerABI.cpp.o -MF CMakeFiles/cmTC_73a2c.dir/CMakeCXXCompilerABI.cpp.o.d -o CMakeFiles/cmTC_73a2c.dir/CMakeCXXCompilerABI.cpp.o -c /opt/homebrew/share/cmake/Modules/CMakeCXXCompilerABI.cpp
+        Apple clang version 21.0.0 (clang-2100.3.25.1)
+        Target: arm64-apple-darwin27.0.0
+        Thread model: posix
+        InstalledDir: /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin
+        clang++: warning: -Wl,-v: 'linker' input unused [-Wunused-command-line-argument]
+        ignoring nonexistent directory "/Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../include/c++/v1"
+        clang++: warning: argument unused during compilation: '-L/opt/homebrew/lib' [-Wunused-command-line-argument]
+         "/Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang" -cc1 -triple arm64-apple-macosx27.0.0 -Wundef-prefix=TARGET_OS_ -Wdeprecated-objc-isa-usage -Werror=deprecated-objc-isa-usage -Werror=implicit-function-declaration -emit-obj -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCXXCompilerABI.cpp -mrelocation-model pic -pic-level 2 -mframe-pointer=non-leaf -fno-strict-return -ffp-contract=on -fno-rounding-math -funwind-tables=1 -fobjc-msgsend-selector-stubs -fno-sized-deallocation -target-sdk-version=27.0 -fdepfile-entry=/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/SDKSettings.json -fvisibility-inlines-hidden-static-local-var -fno-modulemap-allow-subdirectory-search -fdefine-target-os-macros -fno-assume-unique-vtables -fno-modulemap-allow-subdirectory-search -enable-tlsdesc -target-cpu apple-m1 -target-feature +v8.5a -target-feature +aes -target-feature +altnzcv -target-feature +ccdp -target-feature +ccpp -target-feature +complxnum -target-feature +crc -target-feature +dotprod -target-feature +flagm -target-feature +fp-armv8 -target-feature +fp16fml -target-feature +fptoint -target-feature +fullfp16 -target-feature +jsconv -target-feature +lse -target-feature +neon -target-feature +pauth -target-feature +perfmon -target-feature +predres -target-feature +ras -target-feature +rcpc -target-feature +rdm -target-feature +sb -target-feature +sha2 -target-feature +sha3 -target-feature +specrestrict -target-feature +ssbs -target-abi darwinpcs -debugger-tuning=lldb -fdebug-compilation-dir=/Volumes/DevAPFS/Manimate/tests/build/CMakeFiles/CMakeScratch/TryCompile-ZADkAC -target-linker-version 1166.2 -v -fcoverage-compilation-dir=/Volumes/DevAPFS/Manimate/tests/build/CMakeFiles/CMakeScratch/TryCompile-ZADkAC -resource-dir /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21 -dependency-file CMakeFiles/cmTC_73a2c.dir/CMakeCXXCompilerABI.cpp.o.d -skip-unused-modulemap-deps -MT CMakeFiles/cmTC_73a2c.dir/CMakeCXXCompilerABI.cpp.o -sys-header-deps -isysroot /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -I /opt/homebrew/include -I/usr/local/include -internal-isystem /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1 -internal-isystem /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/local/include -internal-isystem /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include -internal-externc-isystem /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include -internal-externc-isystem /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -internal-iframework /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks -internal-iframework /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/SubFrameworks -internal-iframework /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/Library/Frameworks -Wno-elaborated-enum-base -fdeprecated-macro -ferror-limit 19 -stack-protector 1 -fstack-check -mdarwin-stkchk-strong-link -fblocks -fencode-extended-block-signature -fregister-global-dtors-with-atexit -fgnuc-version=4.2.1 -fskip-odr-check-in-gmf -fcxx-exceptions -fexceptions -fmax-type-align=16 -fcommon -clang-vendor-feature=+disableNonDependentMemberExprInCurrentInstantiation -fno-odr-hash-protocols -clang-vendor-feature=+enableAggressiveVLAFolding -clang-vendor-feature=+revert09abecef7bbf -clang-vendor-feature=+thisNoAlignAttr -clang-vendor-feature=+thisNoNullAttr -clang-vendor-feature=+disableAtImportPrivateFrameworkInImplementationError -Wno-error=allocator-wrappers -fdwarf2-cfi-asm -o CMakeFiles/cmTC_73a2c.dir/CMakeCXXCompilerABI.cpp.o -x c++ /opt/homebrew/share/cmake/Modules/CMakeCXXCompilerABI.cpp
+        clang -cc1 version 21.0.0 (clang-2100.3.25.1) default target arm64-apple-darwin27.0.0
+        ignoring nonexistent directory "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/local/include"
+        ignoring nonexistent directory "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/Library/Frameworks"
+        #include "..." search starts here:
+        #include <...> search starts here:
+         /opt/homebrew/include
+         /usr/local/include
+         /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1
+         /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include
+         /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include
+         /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include
+         /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks (framework directory)
+         /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/SubFrameworks (framework directory)
+        End of search list.
+        Linking CXX executable cmTC_73a2c
+        /opt/homebrew/bin/cmake -E cmake_link_script CMakeFiles/cmTC_73a2c.dir/link.txt --verbose=1
+        Apple clang version 21.0.0 (clang-2100.3.25.1)
+        Target: arm64-apple-darwin27.0.0
+        Thread model: posix
+        InstalledDir: /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin
+         "/Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" -demangle -lto_library /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libLTO.dylib -dynamic -arch arm64 -platform_version macos 27.0.0 27.0 -syslibroot /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -mllvm -enable-linkonceodr-outlining -o cmTC_73a2c -L/opt/homebrew/lib -L/usr/local/lib -v CMakeFiles/cmTC_73a2c.dir/CMakeCXXCompilerABI.cpp.o -lc++ -lSystem /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/lib/darwin/libclang_rt.osx.a
+        @(#)PROGRAM:ld PROJECT:ld-27034
+        BUILD 04:09:10 Jun 25 2026
+        configured to support archs: armv6 armv7 armv7s arm64 arm64e arm64_32 i386 x86_64 x86_64h armv6m armv7k armv7m armv7em armv8m.main armv8.1m.main
+        LTO support using: LLVM version 21.0.0 (static support for 30, runtime is 30)
+        TAPI support using: Apple TAPI version 21.0.0 (tapi-2100.3.7)
+        Library search paths:
+        	/opt/homebrew/lib
+        	/usr/local/lib
+        	/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib
+        	/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/swift
+        Framework search paths:
+        	/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks
+        /usr/local/bin/c++  -arch arm64  -v -Wl,-v CMakeFiles/cmTC_73a2c.dir/CMakeCXXCompilerABI.cpp.o -o cmTC_73a2c
+        
+      exitCode: 0
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/opt/homebrew/share/cmake/Modules/CMakeDetermineCompilerABI.cmake:160 (message)"
+      - "/opt/homebrew/share/cmake/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt"
+    message: |
+      Effective list of requested architectures (possibly empty)  : ""
+      Effective list of architectures found in the ABI info binary: "arm64"
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/opt/homebrew/share/cmake/Modules/CMakeDetermineCompilerABI.cmake:255 (message)"
+      - "/opt/homebrew/share/cmake/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt"
+    message: |
+      Parsed CXX implicit include dir info: rv=done
+        found start of include info
+        found start of implicit include info
+          add: [/opt/homebrew/include]
+          add: [/usr/local/include]
+          add: [/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1]
+          add: [/Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include]
+          add: [/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include]
+          add: [/Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include]
+        end of search list found
+        collapse include dir [/opt/homebrew/include] ==> [/opt/homebrew/include]
+        collapse include dir [/usr/local/include] ==> [/usr/local/include]
+        collapse include dir [/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1] ==> [/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1]
+        collapse include dir [/Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include] ==> [/Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include]
+        collapse include dir [/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include] ==> [/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include]
+        collapse include dir [/Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include] ==> [/Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include]
+        implicit include dirs: [/opt/homebrew/include;/usr/local/include;/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1;/Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include;/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include;/Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include]
+      
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/opt/homebrew/share/cmake/Modules/CMakeDetermineCompilerABI.cmake:291 (message)"
+      - "/opt/homebrew/share/cmake/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt"
+    message: |
+      Parsed CXX implicit link information:
+        link line regex: [^( *|.*[/\\])(ld[0-9]*(|\\.[a-rt-z][a-z]*|\\.s[a-np-z][a-z]*|\\.so[a-z]+)|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\\]+-)?ld|collect2)[^/\\]*( |$)]
+        linker tool regex: [^[ 	]*(->|"|[0-9]+>[ 	-]*Build:[ 	0-9]+ ms[ 	]*)?[ 	]*(([^"]*[/\\])?(ld[0-9]*(|\\.[a-rt-z][a-z]*|\\.s[a-np-z][a-z]*|\\.so[a-z]+)))("|,| |$)]
+        ignore line: [Change Dir: '/Volumes/DevAPFS/Manimate/tests/build/CMakeFiles/CMakeScratch/TryCompile-ZADkAC']
+        ignore line: []
+        ignore line: [Run Build Command(s): /opt/homebrew/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_73a2c/fast]
+        ignore line: [/Applications/Xcode-beta.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_73a2c.dir/build.make CMakeFiles/cmTC_73a2c.dir/build]
+        ignore line: [Building CXX object CMakeFiles/cmTC_73a2c.dir/CMakeCXXCompilerABI.cpp.o]
+        ignore line: [/usr/local/bin/c++   -arch arm64   -v -Wl -v -MD -MT CMakeFiles/cmTC_73a2c.dir/CMakeCXXCompilerABI.cpp.o -MF CMakeFiles/cmTC_73a2c.dir/CMakeCXXCompilerABI.cpp.o.d -o CMakeFiles/cmTC_73a2c.dir/CMakeCXXCompilerABI.cpp.o -c /opt/homebrew/share/cmake/Modules/CMakeCXXCompilerABI.cpp]
+        ignore line: [Apple clang version 21.0.0 (clang-2100.3.25.1)]
+        ignore line: [Target: arm64-apple-darwin27.0.0]
+        ignore line: [Thread model: posix]
+        ignore line: [InstalledDir: /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin]
+        ignore line: [clang++: warning: -Wl -v: 'linker' input unused [-Wunused-command-line-argument]]
+        ignore line: [ignoring nonexistent directory "/Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../include/c++/v1"]
+        ignore line: [clang++: warning: argument unused during compilation: '-L/opt/homebrew/lib' [-Wunused-command-line-argument]]
+        ignore line: [ "/Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang" -cc1 -triple arm64-apple-macosx27.0.0 -Wundef-prefix=TARGET_OS_ -Wdeprecated-objc-isa-usage -Werror=deprecated-objc-isa-usage -Werror=implicit-function-declaration -emit-obj -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCXXCompilerABI.cpp -mrelocation-model pic -pic-level 2 -mframe-pointer=non-leaf -fno-strict-return -ffp-contract=on -fno-rounding-math -funwind-tables=1 -fobjc-msgsend-selector-stubs -fno-sized-deallocation -target-sdk-version=27.0 -fdepfile-entry=/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/SDKSettings.json -fvisibility-inlines-hidden-static-local-var -fno-modulemap-allow-subdirectory-search -fdefine-target-os-macros -fno-assume-unique-vtables -fno-modulemap-allow-subdirectory-search -enable-tlsdesc -target-cpu apple-m1 -target-feature +v8.5a -target-feature +aes -target-feature +altnzcv -target-feature +ccdp -target-feature +ccpp -target-feature +complxnum -target-feature +crc -target-feature +dotprod -target-feature +flagm -target-feature +fp-armv8 -target-feature +fp16fml -target-feature +fptoint -target-feature +fullfp16 -target-feature +jsconv -target-feature +lse -target-feature +neon -target-feature +pauth -target-feature +perfmon -target-feature +predres -target-feature +ras -target-feature +rcpc -target-feature +rdm -target-feature +sb -target-feature +sha2 -target-feature +sha3 -target-feature +specrestrict -target-feature +ssbs -target-abi darwinpcs -debugger-tuning=lldb -fdebug-compilation-dir=/Volumes/DevAPFS/Manimate/tests/build/CMakeFiles/CMakeScratch/TryCompile-ZADkAC -target-linker-version 1166.2 -v -fcoverage-compilation-dir=/Volumes/DevAPFS/Manimate/tests/build/CMakeFiles/CMakeScratch/TryCompile-ZADkAC -resource-dir /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21 -dependency-file CMakeFiles/cmTC_73a2c.dir/CMakeCXXCompilerABI.cpp.o.d -skip-unused-modulemap-deps -MT CMakeFiles/cmTC_73a2c.dir/CMakeCXXCompilerABI.cpp.o -sys-header-deps -isysroot /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -I /opt/homebrew/include -I/usr/local/include -internal-isystem /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1 -internal-isystem /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/local/include -internal-isystem /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include -internal-externc-isystem /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include -internal-externc-isystem /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -internal-iframework /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks -internal-iframework /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/SubFrameworks -internal-iframework /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/Library/Frameworks -Wno-elaborated-enum-base -fdeprecated-macro -ferror-limit 19 -stack-protector 1 -fstack-check -mdarwin-stkchk-strong-link -fblocks -fencode-extended-block-signature -fregister-global-dtors-with-atexit -fgnuc-version=4.2.1 -fskip-odr-check-in-gmf -fcxx-exceptions -fexceptions -fmax-type-align=16 -fcommon -clang-vendor-feature=+disableNonDependentMemberExprInCurrentInstantiation -fno-odr-hash-protocols -clang-vendor-feature=+enableAggressiveVLAFolding -clang-vendor-feature=+revert09abecef7bbf -clang-vendor-feature=+thisNoAlignAttr -clang-vendor-feature=+thisNoNullAttr -clang-vendor-feature=+disableAtImportPrivateFrameworkInImplementationError -Wno-error=allocator-wrappers -fdwarf2-cfi-asm -o CMakeFiles/cmTC_73a2c.dir/CMakeCXXCompilerABI.cpp.o -x c++ /opt/homebrew/share/cmake/Modules/CMakeCXXCompilerABI.cpp]
+        ignore line: [clang -cc1 version 21.0.0 (clang-2100.3.25.1) default target arm64-apple-darwin27.0.0]
+        ignore line: [ignoring nonexistent directory "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/local/include"]
+        ignore line: [ignoring nonexistent directory "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/Library/Frameworks"]
+        ignore line: [#include "..." search starts here:]
+        ignore line: [#include <...> search starts here:]
+        ignore line: [ /opt/homebrew/include]
+        ignore line: [ /usr/local/include]
+        ignore line: [ /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1]
+        ignore line: [ /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include]
+        ignore line: [ /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include]
+        ignore line: [ /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include]
+        ignore line: [ /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks (framework directory)]
+        ignore line: [ /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/SubFrameworks (framework directory)]
+        ignore line: [End of search list.]
+        ignore line: [Linking CXX executable cmTC_73a2c]
+        ignore line: [/opt/homebrew/bin/cmake -E cmake_link_script CMakeFiles/cmTC_73a2c.dir/link.txt --verbose=1]
+        ignore line: [Apple clang version 21.0.0 (clang-2100.3.25.1)]
+        ignore line: [Target: arm64-apple-darwin27.0.0]
+        ignore line: [Thread model: posix]
+        ignore line: [InstalledDir: /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin]
+        link line: [ "/Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" -demangle -lto_library /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libLTO.dylib -dynamic -arch arm64 -platform_version macos 27.0.0 27.0 -syslibroot /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -mllvm -enable-linkonceodr-outlining -o cmTC_73a2c -L/opt/homebrew/lib -L/usr/local/lib -v CMakeFiles/cmTC_73a2c.dir/CMakeCXXCompilerABI.cpp.o -lc++ -lSystem /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/lib/darwin/libclang_rt.osx.a] ==> linker [/Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld]
+        link line: [ "/Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" -demangle -lto_library /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libLTO.dylib -dynamic -arch arm64 -platform_version macos 27.0.0 27.0 -syslibroot /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -mllvm -enable-linkonceodr-outlining -o cmTC_73a2c -L/opt/homebrew/lib -L/usr/local/lib -v CMakeFiles/cmTC_73a2c.dir/CMakeCXXCompilerABI.cpp.o -lc++ -lSystem /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/lib/darwin/libclang_rt.osx.a]
+          arg [/Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld] ==> ignore
+          arg [-demangle] ==> ignore
+          arg [-lto_library] ==> ignore, skip following value
+          arg [/Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libLTO.dylib] ==> skip value of -lto_library
+          arg [-dynamic] ==> ignore
+          arg [-arch] ==> ignore
+          arg [arm64] ==> ignore
+          arg [-platform_version] ==> ignore
+          arg [macos] ==> ignore
+          arg [27.0.0] ==> ignore
+          arg [27.0] ==> ignore
+          arg [-syslibroot] ==> ignore
+          arg [/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk] ==> ignore
+          arg [-mllvm] ==> ignore
+          arg [-enable-linkonceodr-outlining] ==> ignore
+          arg [-o] ==> ignore
+          arg [cmTC_73a2c] ==> ignore
+          arg [-L/opt/homebrew/lib] ==> dir [/opt/homebrew/lib]
+          arg [-L/usr/local/lib] ==> dir [/usr/local/lib]
+          arg [-v] ==> ignore
+          arg [CMakeFiles/cmTC_73a2c.dir/CMakeCXXCompilerABI.cpp.o] ==> ignore
+          arg [-lc++] ==> lib [c++]
+          arg [-lSystem] ==> lib [System]
+          arg [/Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/lib/darwin/libclang_rt.osx.a] ==> lib [/Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/lib/darwin/libclang_rt.osx.a]
+        linker tool for 'CXX': /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld 
+        Library search paths: [;/opt/homebrew/lib;/usr/local/lib;/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib;/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/swift]
+        Framework search paths: [;/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks]
+        remove lib [System]
+        remove lib [/Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/lib/darwin/libclang_rt.osx.a]
+        collapse library dir [/opt/homebrew/lib] ==> [/opt/homebrew/lib]
+        collapse library dir [/usr/local/lib] ==> [/usr/local/lib]
+        collapse library dir [/opt/homebrew/lib] ==> [/opt/homebrew/lib]
+        collapse library dir [/usr/local/lib] ==> [/usr/local/lib]
+        collapse library dir [/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib] ==> [/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib]
+        collapse library dir [/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/swift] ==> [/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/swift]
+        collapse framework dir [/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks] ==> [/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks]
+        implicit libs: [c++]
+        implicit objs: []
+        implicit dirs: [/opt/homebrew/lib;/usr/local/lib;/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib;/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/swift]
+        implicit fwks: [/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks]
+      
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/opt/homebrew/share/cmake/Modules/Internal/CMakeDetermineLinkerId.cmake:41 (message)"
+      - "/opt/homebrew/share/cmake/Modules/CMakeDetermineCompilerABI.cmake:337 (cmake_determine_linker_id)"
+      - "/opt/homebrew/share/cmake/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt"
+    message: |
+      Running the CXX compiler's linker: "/Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" "-v"
+      @(#)PROGRAM:ld PROJECT:ld-27034
+      BUILD 04:09:10 Jun 25 2026
+      configured to support archs: armv6 armv7 armv7s arm64 arm64e arm64_32 i386 x86_64 x86_64h armv6m armv7k armv7m armv7em armv8m.main armv8.1m.main
+      LTO support using: LLVM version 21.0.0 (static support for 30, runtime is 30)
+      TAPI support using: Apple TAPI version 21.0.0 (tapi-2100.3.7)
+...

@@ -1,0 +1,20 @@
+#pragma once
+
+#include <QString>
+
+namespace mn::version {
+
+inline constexpr int kMajor = @PROJECT_VERSION_MAJOR@;
+inline constexpr int kMinor = @PROJECT_VERSION_MINOR@;
+inline constexpr int kPatch = @PROJECT_VERSION_PATCH@;
+
+/// Human-readable application version, e.g. "0.1.0".
+inline QString string()
+{
+    return QStringLiteral("@PROJECT_VERSION@");
+}
+
+/// Version of the .manproj on-disk format. Bumped only on breaking changes.
+inline constexpr int kProjectFormat = 1;
+
+} // namespace mn::version
