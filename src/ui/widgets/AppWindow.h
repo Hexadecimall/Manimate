@@ -10,9 +10,13 @@ namespace mn::ui {
 
 class TitleBar;
 
-/// Base window for the application: frameless on every platform, with a title
-/// bar the application draws itself so its colours and controls match the rest
-/// of the interface.
+/// Base window for the application: frameless on every platform, with rounded
+/// corners, a soft drop shadow and a title bar the application draws itself.
+///
+/// Being frameless means the window has to provide what the system frame
+/// normally would. The shadow and the rounded shape are painted here; the
+/// margin they occupy doubles as the band that starts an edge resize, since it
+/// is the one part of the window no child widget covers.
 ///
 /// Menus are the one thing that changes by platform. On macOS a menu belongs in
 /// the screen's menu bar, so setMenus() puts them there; on Windows and Linux
@@ -38,19 +42,28 @@ public:
     /// True when menus go to a system-wide menu bar rather than the title bar.
     static bool usesNativeMenuBar();
 
-    /// Width of the invisible band along each edge that starts a resize.
-    static constexpr int kResizeMargin = 6;
+    /// Margin round the window holding the shadow, and the band that starts a
+    /// resize. Collapses to nothing while maximised.
+    static constexpr int kShadowMargin = 10;
+
+    /// Corner radius of the window itself.
+    static constexpr int kCornerRadius = 10;
 
 protected:
     void paintEvent(QPaintEvent *event) override;
+    void changeEvent(QEvent *event) override;
     bool eventFilter(QObject *watched, QEvent *event) override;
 
 private:
+    void applyMaximisedState();
     Qt::Edges edgesAt(const QPoint &position) const;
     static Qt::CursorShape cursorForEdges(Qt::Edges edges);
 
+    /// The rounded panel everything is drawn inside.
+    QWidget *m_shell = nullptr;
+    QVBoxLayout *m_outerLayout = nullptr;
+    QVBoxLayout *m_shellLayout = nullptr;
     TitleBar *m_titleBar = nullptr;
-    QVBoxLayout *m_layout = nullptr;
     QWidget *m_content = nullptr;
 };
 

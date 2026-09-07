@@ -5,6 +5,7 @@
 #include "Project.h"
 #include "ProjectCardDelegate.h"
 #include "RecentProjectsModel.h"
+#include "AppWindow.h"
 #include "Theme.h"
 #include "TitleBar.h"
 #include "Version.h"
@@ -87,8 +88,12 @@ void LauncherWindow::buildMenus()
                                              &LauncherWindow::newProject);
     QAction *openAction = fileMenu->addAction(tr("Open Project…"), QKeySequence::Open, this,
                                               &LauncherWindow::openProjectFromDisk);
+    QAction *importAction = fileMenu->addAction(tr("Import from Python…"),
+                                                QKeySequence(tr("Ctrl+Shift+I")), this,
+                                                &LauncherWindow::importFromPython);
     newAction->setMenuRole(QAction::NoRole);
     openAction->setMenuRole(QAction::NoRole);
+    importAction->setMenuRole(QAction::NoRole);
     fileMenu->addSeparator();
     fileMenu->addAction(tr("Quit"), QKeySequence::Quit, qApp, &QApplication::quit);
 
@@ -113,9 +118,15 @@ QWidget *LauncherWindow::buildSidebar()
     auto *sidebar = new QFrame;
     sidebar->setObjectName(QStringLiteral("sidebar"));
     sidebar->setFixedWidth(kSidebarWidth);
-    // Scoped to the object name so the rule cannot leak onto child frames.
-    sidebar->setStyleSheet(QStringLiteral("QFrame#sidebar { background: %1; border-right: 1px solid %2; }")
-                               .arg(p.surface.name(), p.border.name()));
+    // Scoped to the object name so the rule cannot leak onto child frames. The
+    // bottom-left corner is rounded to match the window it sits inside.
+    sidebar->setStyleSheet(QStringLiteral("QFrame#sidebar {"
+                                          "  background: %1;"
+                                          "  border-right: 1px solid %2;"
+                                          "  border-bottom-left-radius: %3px;"
+                                          "}")
+                               .arg(p.surface.name(), p.border.name())
+                               .arg(AppWindow::kCornerRadius));
 
     auto *layout = new QVBoxLayout(sidebar);
     layout->setContentsMargins(28, 34, 28, 24);
@@ -130,9 +141,12 @@ QWidget *LauncherWindow::buildSidebar()
 
     auto *newButton = sidebarButton(tr("New Project"), QStringLiteral("primary"));
     auto *openButton = sidebarButton(tr("Open Project…"), QString());
+    auto *importButton = sidebarButton(tr("Import from Python…"), QString());
     layout->addWidget(newButton);
     layout->addSpacing(10);
     layout->addWidget(openButton);
+    layout->addSpacing(10);
+    layout->addWidget(importButton);
 
     layout->addStretch(1);
 
@@ -150,6 +164,7 @@ QWidget *LauncherWindow::buildSidebar()
 
     connect(newButton, &QPushButton::clicked, this, &LauncherWindow::newProject);
     connect(openButton, &QPushButton::clicked, this, &LauncherWindow::openProjectFromDisk);
+    connect(importButton, &QPushButton::clicked, this, &LauncherWindow::importFromPython);
 
     return sidebar;
 }
@@ -252,6 +267,18 @@ void LauncherWindow::refreshRecents()
 void LauncherWindow::newProject()
 {
     NewProjectDialog dialog(this);
+    if (dialog.exec() != QDialog::Accepted)
+        return;
+    openProject(dialog.layout().projectFile);
+}
+
+void LauncherWindow::importFromPython()
+{
+    const QString script = NewProjectDialog::askForPythonFile(this);
+    if (script.isEmpty())
+        return;
+
+    NewProjectDialog dialog(this, script);
     if (dialog.exec() != QDialog::Accepted)
         return;
     openProject(dialog.layout().projectFile);

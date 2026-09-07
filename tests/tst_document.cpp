@@ -1,6 +1,7 @@
 #include "Document.h"
 #include "Json.h"
 #include "Project.h"
+#include "PythonImport.h"
 #include "Version.h"
 
 #include <QDir>
@@ -34,6 +35,12 @@ private slots:
     void createRefusesToOverwriteExistingFolder();
     void resolveFindsProjectFromFileOrFolder();
     void ensureDirectoriesRestoresDeletedFolders();
+
+    void scanFindsSceneSubclasses();
+    void scanIgnoresClassesThatAreNotScenes();
+    void scanDetectsManimImports();
+    void importCopiesScriptAndAdoptsItsScene();
+    void importRefusesAMissingFile();
 };
 
 void DocumentTest::newDocumentHasIdentityAndOneTrack()
@@ -355,6 +362,107 @@ void DocumentTest::ensureDirectoriesRestoresDeletedFolders()
     QVERIFY2(project::ensureDirectories(layout, &error), qPrintable(error));
     QVERIFY(QFileInfo(layout.cacheDir).isDir());
     QVERIFY(QFileInfo(layout.backupsDir).isDir());
+}
+
+void DocumentTest::scanFindsSceneSubclasses()
+{
+    const QString source = QStringLiteral(R"(
+from manim import *
+
+
+class Intro(Scene):
+    def construct(self):
+        self.play(Create(Circle()))
+
+
+class Spinning(ThreeDScene):
+    def construct(self):
+        pass
+
+
+class Custom(manim.MovingCameraScene):
+    pass
+)");
+
+    const auto found = python_import::scan(source);
+    QCOMPARE(found.sceneClasses,
+             QStringList({QStringLiteral("Intro"), QStringLiteral("Spinning"), QStringLiteral("Custom")}));
+    QVERIFY(found.importsManim);
+    QVERIFY(found.looksLikeManim());
+}
+
+void DocumentTest::scanIgnoresClassesThatAreNotScenes()
+{
+    const QString source = QStringLiteral(R"(
+class Helper:
+    pass
+
+
+class Config(dict):
+    pass
+
+
+class Widget(QWidget):
+    pass
+)");
+
+    const auto found = python_import::scan(source);
+    QVERIFY(found.sceneClasses.isEmpty());
+    QVERIFY(!found.looksLikeManim());
+}
+
+void DocumentTest::scanDetectsManimImports()
+{
+    QVERIFY(python_import::scan(QStringLiteral("from manim import *")).importsManim);
+    QVERIFY(python_import::scan(QStringLiteral("import manim")).importsManim);
+    QVERIFY(python_import::scan(QStringLiteral("from manim.animation.creation import Create")).importsManim);
+    QVERIFY(!python_import::scan(QStringLiteral("import manimation")).importsManim);
+    QVERIFY(!python_import::scan(QStringLiteral("# from manim import *")).importsManim);
+}
+
+void DocumentTest::importCopiesScriptAndAdoptsItsScene()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+
+    const QString script = QDir(dir.path()).filePath(QStringLiteral("My Sketch.py"));
+    const QByteArray contents =
+        "from manim import *\n\n\nclass SquareWave(Scene):\n    def construct(self):\n        pass\n";
+    QFile file(script);
+    QVERIFY(file.open(QIODevice::WriteOnly));
+    file.write(contents);
+    file.close();
+
+    ProjectLayout layout;
+    QString error;
+    QVERIFY2(project::create(dir.path(), QStringLiteral("Imported"), &layout, &error), qPrintable(error));
+
+    Document document;
+    QVERIFY(Document::load(layout.projectFile, &document, &error));
+    QVERIFY2(python_import::into(layout, script, &document, &error), qPrintable(error));
+
+    // Copied verbatim into export/, under a legal module name.
+    const QString copied = QDir(layout.exportDir).filePath(QStringLiteral("my_sketch.py"));
+    QVERIFY(QFileInfo(copied).isFile());
+    QFile written(copied);
+    QVERIFY(written.open(QIODevice::ReadOnly));
+    QCOMPARE(written.readAll(), contents);
+
+    QCOMPARE(document.sceneClassName, QStringLiteral("SquareWave"));
+}
+
+void DocumentTest::importRefusesAMissingFile()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+
+    ProjectLayout layout;
+    QVERIFY(project::create(dir.path(), QStringLiteral("Empty"), &layout, nullptr));
+
+    QString error;
+    QVERIFY(!python_import::into(layout, QDir(dir.path()).filePath(QStringLiteral("nope.py")),
+                                 nullptr, &error));
+    QVERIFY(!error.isEmpty());
 }
 
 QTEST_MAIN(DocumentTest)

@@ -7,6 +7,7 @@
 #include <QMenuBar>
 #include <QMouseEvent>
 #include <QPainter>
+#include <QPainterPath>
 #include <QToolButton>
 #include <QVBoxLayout>
 #include <QWindow>
@@ -25,34 +26,56 @@ bool AppWindow::usesNativeMenuBar()
 AppWindow::AppWindow(QWidget *parent)
     : QMainWindow(parent)
 {
+    const theme::Palette &p = theme::palette();
+
     setWindowFlag(Qt::FramelessWindowHint, true);
-
-    auto *central = new QWidget(this);
-    m_layout = new QVBoxLayout(central);
-    // The margin is the band left uncovered by children, so the window itself
-    // still receives the mouse events that start an edge resize.
-    m_layout->setContentsMargins(kResizeMargin, kResizeMargin, kResizeMargin, kResizeMargin);
-    m_layout->setSpacing(0);
-
-    m_titleBar = new TitleBar(central);
-    m_layout->addWidget(m_titleBar);
-    setCentralWidget(central);
-
+    // A frameless window is square and shadowless by default. Painting the
+    // shape here needs the area outside it to be genuinely transparent.
+    setAttribute(Qt::WA_TranslucentBackground);
     setAttribute(Qt::WA_Hover);
     setMouseTracking(true);
+
+    auto *central = new QWidget(this);
+    central->setAttribute(Qt::WA_TranslucentBackground);
     central->setMouseTracking(true);
+
+    m_outerLayout = new QVBoxLayout(central);
+    m_outerLayout->setContentsMargins(kShadowMargin, kShadowMargin, kShadowMargin, kShadowMargin);
+    m_outerLayout->setSpacing(0);
+
+    m_shell = new QWidget(central);
+    m_shell->setObjectName(QStringLiteral("shell"));
+    m_shell->setAttribute(Qt::WA_StyledBackground, true);
+    m_shell->setStyleSheet(QStringLiteral("QWidget#shell {"
+                                          "  background: %1;"
+                                          "  border: 1px solid %2;"
+                                          "  border-radius: %3px;"
+                                          "}")
+                               .arg(p.window.name(), p.border.name())
+                               .arg(kCornerRadius));
+
+    m_shellLayout = new QVBoxLayout(m_shell);
+    m_shellLayout->setContentsMargins(0, 0, 0, 0);
+    m_shellLayout->setSpacing(0);
+
+    m_titleBar = new TitleBar(m_shell);
+    m_shellLayout->addWidget(m_titleBar);
+
+    m_outerLayout->addWidget(m_shell);
+    setCentralWidget(central);
+
     installEventFilter(this);
 }
 
 void AppWindow::setContent(QWidget *content)
 {
     if (m_content) {
-        m_layout->removeWidget(m_content);
+        m_shellLayout->removeWidget(m_content);
         m_content->deleteLater();
     }
     m_content = content;
     if (m_content)
-        m_layout->addWidget(m_content, 1);
+        m_shellLayout->addWidget(m_content, 1);
 }
 
 void AppWindow::setMenus(const QList<QMenu *> &menus)
@@ -83,27 +106,73 @@ void AppWindow::setWindowTitle(const QString &title)
     m_titleBar->setTitle(title);
 }
 
+void AppWindow::changeEvent(QEvent *event)
+{
+    QMainWindow::changeEvent(event);
+    if (event->type() == QEvent::WindowStateChange)
+        applyMaximisedState();
+}
+
+void AppWindow::applyMaximisedState()
+{
+    const theme::Palette &p = theme::palette();
+    const bool filling = isMaximized() || isFullScreen();
+
+    // A window filling the screen has no corners to round and nowhere to cast
+    // a shadow, so it should meet the screen edges exactly.
+    const int margin = filling ? 0 : kShadowMargin;
+    m_outerLayout->setContentsMargins(margin, margin, margin, margin);
+
+    m_shell->setStyleSheet(QStringLiteral("QWidget#shell {"
+                                          "  background: %1;"
+                                          "  border: %2;"
+                                          "  border-radius: %3px;"
+                                          "}")
+                               .arg(p.window.name(),
+                                    filling ? QStringLiteral("none")
+                                            : QStringLiteral("1px solid %1").arg(p.border.name()))
+                               .arg(filling ? 0 : kCornerRadius));
+    update();
+}
+
 void AppWindow::paintEvent(QPaintEvent *event)
 {
     QMainWindow::paintEvent(event);
 
-    const theme::Palette &p = theme::palette();
+    if (isMaximized() || isFullScreen())
+        return;
+
     QPainter painter(this);
-    painter.fillRect(rect(), p.window);
-    painter.setPen(QPen(p.border, 1.0));
-    painter.drawRect(QRectF(rect()).adjusted(0.5, 0.5, -0.5, -0.5));
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.setBrush(Qt::NoBrush);
+
+    // A soft shadow, drawn as concentric rounded outlines fading outwards.
+    // Cheaper than a blur and indistinguishable at this size.
+    const QRectF panel = QRectF(m_shell->geometry());
+    for (int i = kShadowMargin; i > 0; --i) {
+        const qreal t = qreal(i) / kShadowMargin;
+        QColor shade(0, 0, 0);
+        shade.setAlphaF(0.16 * (1.0 - t) * (1.0 - t));
+        painter.setPen(QPen(shade, 1.0));
+        painter.drawRoundedRect(panel.adjusted(-i, -i + 1, i, i + 1),
+                                kCornerRadius + i, kCornerRadius + i);
+    }
 }
 
 Qt::Edges AppWindow::edgesAt(const QPoint &position) const
 {
+    // The grab band is the shadow margin: the only part of the window that no
+    // child widget sits on top of.
+    const int band = kShadowMargin;
+
     Qt::Edges edges;
-    if (position.x() <= kResizeMargin)
+    if (position.x() <= band)
         edges |= Qt::LeftEdge;
-    if (position.x() >= width() - kResizeMargin)
+    if (position.x() >= width() - band)
         edges |= Qt::RightEdge;
-    if (position.y() <= kResizeMargin)
+    if (position.y() <= band)
         edges |= Qt::TopEdge;
-    if (position.y() >= height() - kResizeMargin)
+    if (position.y() >= height() - band)
         edges |= Qt::BottomEdge;
     return edges;
 }

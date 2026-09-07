@@ -123,25 +123,39 @@ void WindowButton::paintTraffic(QPainter &painter)
     if (!lit)
         return;
 
-    // The glyph only appears once the group is hovered, as on macOS.
-    painter.setBrush(Qt::NoBrush);
-    painter.setPen(QPen(QColor(0, 0, 0, 160), 1.2, Qt::SolidLine, Qt::RoundCap));
-
+    // The glyph only appears once the cluster is hovered, as on macOS.
+    const QColor ink(0, 0, 0, 170);
     const QPointF center = disc.center();
-    constexpr qreal arm = 2.6;
+    constexpr qreal arm = 2.7;
+
+    painter.setBrush(Qt::NoBrush);
+    painter.setPen(QPen(ink, 1.3, Qt::SolidLine, Qt::RoundCap));
+
     switch (m_kind) {
     case Kind::Close:
         painter.drawLine(QPointF(center.x() - arm, center.y() - arm), QPointF(center.x() + arm, center.y() + arm));
         painter.drawLine(QPointF(center.x() - arm, center.y() + arm), QPointF(center.x() + arm, center.y() - arm));
         break;
     case Kind::Minimize:
-        painter.drawLine(QPointF(center.x() - arm - 0.6, center.y()), QPointF(center.x() + arm + 0.6, center.y()));
+        painter.drawLine(QPointF(center.x() - arm - 0.8, center.y()), QPointF(center.x() + arm + 0.8, center.y()));
         break;
-    case Kind::Maximize:
-        painter.drawLine(QPointF(center.x() - arm, center.y() + arm), QPointF(center.x() + arm, center.y() - arm));
-        painter.drawLine(QPointF(center.x() - arm, center.y() + arm), QPointF(center.x() - arm, center.y() - 0.4));
-        painter.drawLine(QPointF(center.x() - arm, center.y() + arm), QPointF(center.x() + 0.4, center.y() + arm));
+    case Kind::Maximize: {
+        // Two filled triangles pointing away from each other, the way the
+        // system zoom glyph is drawn.
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(ink);
+
+        const qreal g = 0.7;   // the gap down the middle
+        QPolygonF upperLeft({QPointF(center.x() - arm, center.y() - arm),
+                             QPointF(center.x() + arm - g, center.y() - arm),
+                             QPointF(center.x() - arm, center.y() + arm - g)});
+        QPolygonF lowerRight({QPointF(center.x() + arm, center.y() + arm),
+                              QPointF(center.x() - arm + g, center.y() + arm),
+                              QPointF(center.x() + arm, center.y() - arm + g)});
+        painter.drawPolygon(upperLeft);
+        painter.drawPolygon(lowerRight);
         break;
+    }
     }
 }
 

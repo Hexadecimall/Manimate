@@ -24,9 +24,26 @@ TitleBar::TitleBar(QWidget *parent)
     const WindowButton::Appearance appearance = WindowButton::nativeAppearance();
     const bool controlsOnLeft = appearance == WindowButton::Appearance::Traffic;
 
-    m_close = new WindowButton(WindowButton::Kind::Close, appearance, this);
-    m_minimize = new WindowButton(WindowButton::Kind::Minimize, appearance, this);
-    m_maximize = new WindowButton(WindowButton::Kind::Maximize, appearance, this);
+    m_controls = new QWidget(this);
+    m_controls->setAttribute(Qt::WA_Hover);
+    m_controls->installEventFilter(this);
+
+    m_close = new WindowButton(WindowButton::Kind::Close, appearance, m_controls);
+    m_minimize = new WindowButton(WindowButton::Kind::Minimize, appearance, m_controls);
+    m_maximize = new WindowButton(WindowButton::Kind::Maximize, appearance, m_controls);
+
+    auto *controlsLayout = new QHBoxLayout(m_controls);
+    controlsLayout->setContentsMargins(0, 0, 0, 0);
+    controlsLayout->setSpacing(0);
+    if (controlsOnLeft) {
+        controlsLayout->addWidget(m_close);
+        controlsLayout->addWidget(m_minimize);
+        controlsLayout->addWidget(m_maximize);
+    } else {
+        controlsLayout->addWidget(m_minimize);
+        controlsLayout->addWidget(m_maximize);
+        controlsLayout->addWidget(m_close);
+    }
 
     m_titleLabel = new QLabel(this);
     m_titleLabel->setAttribute(Qt::WA_TransparentForMouseEvents);
@@ -49,9 +66,7 @@ TitleBar::TitleBar(QWidget *parent)
     layout->setSpacing(0);
 
     if (controlsOnLeft) {
-        layout->addWidget(m_close);
-        layout->addWidget(m_minimize);
-        layout->addWidget(m_maximize);
+        layout->addWidget(m_controls);
         layout->addSpacing(18);
         layout->addWidget(m_titleLabel);
         layout->addSpacing(14);
@@ -65,9 +80,7 @@ TitleBar::TitleBar(QWidget *parent)
         layout->addStretch(1);
         layout->addLayout(m_trailingLayout);
         layout->addSpacing(12);
-        layout->addWidget(m_minimize);
-        layout->addWidget(m_maximize);
-        layout->addWidget(m_close);
+        layout->addWidget(m_controls);
     }
 
     connect(m_close, &QAbstractButton::clicked, this, [this] { window()->close(); });
@@ -97,16 +110,15 @@ void TitleBar::setGroupHovered(bool hovered)
     m_maximize->setGroupHovered(hovered);
 }
 
-void TitleBar::enterEvent(QEnterEvent *event)
+bool TitleBar::eventFilter(QObject *watched, QEvent *event)
 {
-    QWidget::enterEvent(event);
-    setGroupHovered(true);
-}
-
-void TitleBar::leaveEvent(QEvent *event)
-{
-    QWidget::leaveEvent(event);
-    setGroupHovered(false);
+    if (watched == m_controls) {
+        if (event->type() == QEvent::Enter)
+            setGroupHovered(true);
+        else if (event->type() == QEvent::Leave)
+            setGroupHovered(false);
+    }
+    return QWidget::eventFilter(watched, event);
 }
 
 bool TitleBar::event(QEvent *event)
@@ -158,10 +170,10 @@ void TitleBar::paintEvent(QPaintEvent *)
 {
     const theme::Palette &p = theme::palette();
 
+    // Left transparent so the window's rounded top corners show through.
     QPainter painter(this);
-    painter.fillRect(rect(), p.window);
     painter.setPen(QPen(p.border, 1.0));
-    painter.drawLine(QPointF(0, height() - 0.5), QPointF(width(), height() - 0.5));
+    painter.drawLine(QPointF(1, height() - 0.5), QPointF(width() - 1, height() - 0.5));
 }
 
 } // namespace mn::ui

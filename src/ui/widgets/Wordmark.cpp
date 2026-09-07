@@ -100,7 +100,17 @@ void Wordmark::paintEvent(QPaintEvent *)
 
     x += size + kTextGap;
 
-    const QFont nameFont = wordmarkFont(m_glyphSize);
+    // Shrink the name rather than let it run off the edge when the widget is
+    // narrower than the text would like to be.
+    QFont nameFont = wordmarkFont(m_glyphSize);
+    const qreal available = width() - x;
+    if (available > 0) {
+        qreal needed = QFontMetrics(nameFont).horizontalAdvance(QStringLiteral("MANIMATION"));
+        while (needed > available && nameFont.pixelSize() > 9) {
+            nameFont.setPixelSize(nameFont.pixelSize() - 1);
+            needed = QFontMetrics(nameFont).horizontalAdvance(QStringLiteral("MANIMATION"));
+        }
+    }
     const QFontMetrics nameMetrics(nameFont);
 
     qreal textTop = y;

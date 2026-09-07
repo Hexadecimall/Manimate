@@ -28,6 +28,7 @@ Q_SIGNALS:
 public Q_SLOTS:
     void newProject();
     void openProjectFromDisk();
+    void importFromPython();
 
     /// Open `path`, which may be a .manproj file or a project folder.
     void openProject(const QString &path);

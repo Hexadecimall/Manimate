@@ -21,7 +21,12 @@ class NewProjectDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit NewProjectDialog(QWidget *parent = nullptr);
+    /// `importSource`, when given, is a .py file the new project starts from.
+    explicit NewProjectDialog(QWidget *parent = nullptr, const QString &importSource = {});
+
+    /// Ask for a .py file and return its path, or an empty string if the user
+    /// backed out. The caller passes the result to the constructor.
+    static QString askForPythonFile(QWidget *parent);
 
     /// Valid only after the dialog was accepted.
     ProjectLayout layout() const { return m_layout; }
@@ -41,6 +46,7 @@ private:
     QComboBox *m_resolutionCombo = nullptr;
     QComboBox *m_fpsCombo = nullptr;
     QLabel *m_previewLabel = nullptr;
+    QString m_importSource;
     QLabel *m_errorLabel = nullptr;
     QPushButton *m_createButton = nullptr;
 

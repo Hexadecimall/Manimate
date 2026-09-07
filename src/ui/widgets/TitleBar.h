@@ -38,14 +38,16 @@ protected:
     void paintEvent(QPaintEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;
     void mouseDoubleClickEvent(QMouseEvent *event) override;
-    void enterEvent(QEnterEvent *event) override;
-    void leaveEvent(QEvent *event) override;
     bool event(QEvent *event) override;
+    bool eventFilter(QObject *watched, QEvent *event) override;
 
 private:
     void toggleMaximised();
     void setGroupHovered(bool hovered);
 
+    /// The three window controls, grouped so hovering any of them lights all
+    /// three, and hovering the rest of the bar does not.
+    QWidget *m_controls = nullptr;
     QLabel *m_titleLabel = nullptr;
     QHBoxLayout *m_actionLayout = nullptr;
     QHBoxLayout *m_trailingLayout = nullptr;

@@ -1,11 +1,13 @@
 #include "NewProjectDialog.h"
 
 #include "Document.h"
+#include "PythonImport.h"
 #include "Theme.h"
 
 #include <QComboBox>
 #include <QDir>
 #include <QFileDialog>
+#include <QFileInfo>
 #include <QFormLayout>
 #include <QHBoxLayout>
 #include <QLabel>
@@ -62,10 +64,19 @@ void NewProjectDialog::setDefaultLocation(const QString &path)
     settings.setValue(QLatin1String(kLocationKey), path);
 }
 
-NewProjectDialog::NewProjectDialog(QWidget *parent)
-    : QDialog(parent)
+QString NewProjectDialog::askForPythonFile(QWidget *parent)
 {
-    setWindowTitle(tr("New Project"));
+    return QFileDialog::getOpenFileName(parent, tr("Import from Python"), defaultLocation(),
+                                        tr("Python script (*.py)"));
+}
+
+NewProjectDialog::NewProjectDialog(QWidget *parent, const QString &importSource)
+    : QDialog(parent)
+    , m_importSource(importSource)
+{
+    const bool importing = !m_importSource.isEmpty();
+
+    setWindowTitle(importing ? tr("Import from Python") : tr("New Project"));
     setModal(true);
     setMinimumWidth(560);
 
@@ -73,12 +84,15 @@ NewProjectDialog::NewProjectDialog(QWidget *parent)
     root->setContentsMargins(28, 24, 28, 22);
     root->setSpacing(18);
 
-    auto *title = new QLabel(tr("New project"));
+    auto *title = new QLabel(importing ? tr("Import from Python") : tr("New project"));
     title->setProperty("role", "title");
     root->addWidget(title);
 
-    auto *subtitle = new QLabel(tr("Manimation creates a folder holding the project, its exported "
-                                   "Python, its rendered video and its assets."));
+    auto *subtitle = new QLabel(importing
+                                    ? tr("Builds a project round an existing script. The file is "
+                                         "copied into the project's export folder untouched.")
+                                    : tr("Manimation creates a folder holding the project, its "
+                                         "exported Python, its rendered video and its assets."));
     subtitle->setProperty("role", "subtitle");
     subtitle->setWordWrap(true);
     root->addWidget(subtitle);
@@ -88,8 +102,36 @@ NewProjectDialog::NewProjectDialog(QWidget *parent)
     form->setLabelAlignment(Qt::AlignLeft | Qt::AlignVCenter);
     form->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
 
+    if (importing) {
+        const QFileInfo info(m_importSource);
+        const python_import::Scan found = python_import::scanFile(m_importSource);
+
+        auto *sourceLabel = new QLabel(info.fileName());
+        sourceLabel->setToolTip(QDir::toNativeSeparators(m_importSource));
+
+        QString summary;
+        if (found.sceneClasses.isEmpty()) {
+            summary = tr("No Scene subclass found — importing it anyway.");
+        } else if (found.sceneClasses.size() == 1) {
+            summary = tr("Scene: %1").arg(found.sceneClasses.first());
+        } else {
+            summary = tr("Scenes: %1").arg(found.sceneClasses.join(QStringLiteral(", ")));
+        }
+        auto *summaryLabel = new QLabel(summary);
+        summaryLabel->setProperty("role", "subtitle");
+        summaryLabel->setWordWrap(true);
+
+        auto *sourceColumn = new QVBoxLayout;
+        sourceColumn->setSpacing(2);
+        sourceColumn->addWidget(sourceLabel);
+        sourceColumn->addWidget(summaryLabel);
+        form->addRow(sectionLabel(tr("SCRIPT")), sourceColumn);
+    }
+
     m_nameEdit = new QLineEdit;
     m_nameEdit->setPlaceholderText(tr("Fourier Series"));
+    if (importing)
+        m_nameEdit->setText(QFileInfo(m_importSource).completeBaseName());
     form->addRow(sectionLabel(tr("NAME")), m_nameEdit);
 
     m_locationEdit = new QLineEdit(defaultLocation());
@@ -137,7 +179,7 @@ NewProjectDialog::NewProjectDialog(QWidget *parent)
     root->addStretch(1);
 
     auto *cancelButton = new QPushButton(tr("Cancel"));
-    m_createButton = new QPushButton(tr("Create Project"));
+    m_createButton = new QPushButton(importing ? tr("Import Project") : tr("Create Project"));
     m_createButton->setProperty("role", "primary");
     m_createButton->setDefault(true);
     m_createButton->setEnabled(false);
@@ -158,6 +200,7 @@ NewProjectDialog::NewProjectDialog(QWidget *parent)
 
     refreshPreview();
     m_nameEdit->setFocus();
+    m_nameEdit->selectAll();
 }
 
 void NewProjectDialog::browseForLocation()
@@ -217,6 +260,14 @@ void NewProjectDialog::createProject()
         document.render.fps = m_fpsCombo->currentData().toInt();
         document.metadata.description = m_descriptionEdit->text().trimmed();
         document.metadata.revision = 0;
+
+        if (!m_importSource.isEmpty()
+            && !python_import::into(layout, m_importSource, &document, &error)) {
+            m_errorLabel->setText(error);
+            m_errorLabel->show();
+            return;
+        }
+
         if (!document.save(layout.projectFile, &error)) {
             m_errorLabel->setText(error);
             m_errorLabel->show();

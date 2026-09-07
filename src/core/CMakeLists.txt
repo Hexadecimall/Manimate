@@ -6,6 +6,7 @@ add_library(manimation_core STATIC
     Timeline.cpp
     Document.cpp
     Project.cpp
+    PythonImport.cpp
     RecentProjects.cpp
 )
 
