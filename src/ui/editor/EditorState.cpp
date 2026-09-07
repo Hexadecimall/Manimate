@@ -445,6 +445,13 @@ void EditorState::removeAudio(ClipId id)
     commit();
 }
 
+void EditorState::setCamera(const Camera3D &camera)
+{
+    beginEdit();
+    m_document.camera = camera;
+    commit();
+}
+
 void EditorState::setTimelineDuration(double seconds)
 {
     const double clamped = qMax(1.0, seconds);

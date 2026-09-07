@@ -81,6 +81,8 @@ public Q_SLOTS:
     void setAudioGain(ClipId id, double gain);
     void removeAudio(ClipId id);
 
+    void setCamera(const Camera3D &camera);
+
     void setTimelineDuration(double seconds);
 
     void undo();

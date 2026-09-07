@@ -109,7 +109,8 @@ void CanvasView::paintEvent(QPaintEvent *)
         const evaluator::ObjectState state =
             evaluator::evaluateObject(document, selected, m_state->playhead());
         const QTransform toPixels = SceneRenderer::sceneToPixels(document, frame);
-        const QRectF bounds = SceneRenderer::boundsInPixels(state, toPixels);
+        const QRectF bounds = SceneRenderer::boundsInPixels(state, toPixels,
+                                                            m_state->document().camera);
 
         if (!bounds.isNull()) {
             const QRectF outline = bounds.adjusted(-4, -4, 4, 4);
@@ -145,7 +146,8 @@ QRectF CanvasView::selectionOutline() const
     const evaluator::ObjectState state =
         evaluator::evaluateObject(m_state->document(), selected, m_state->playhead());
     const QTransform toPixels = SceneRenderer::sceneToPixels(m_state->document(), frameRect());
-    const QRectF bounds = SceneRenderer::boundsInPixels(state, toPixels);
+    const QRectF bounds =
+        SceneRenderer::boundsInPixels(state, toPixels, m_state->document().camera);
     if (bounds.isNull())
         return {};
     return bounds.adjusted(-4, -4, 4, 4);
@@ -274,7 +276,7 @@ void CanvasView::mousePressEvent(QMouseEvent *event)
     if (const Handle handle = handleAt(event->position()); handle != Handle::None) {
         const evaluator::ObjectState state = evaluator::evaluateObject(
             m_state->document(), m_state->selectedObject(), m_state->playhead());
-        const QPainterPath shape = SceneRenderer::shapeOf(state);
+        const QPainterPath shape = SceneRenderer::shapeOf(state, m_state->document().camera);
         const QRectF bounds = shape.boundingRect();
 
         m_resizing = handle;
@@ -286,7 +288,7 @@ void CanvasView::mousePressEvent(QMouseEvent *event)
 
     const QPointF scenePoint = toScene(event->position());
     const auto states = evaluator::evaluate(m_state->document(), m_state->playhead());
-    const ObjectId hit = SceneRenderer::objectAt(states, scenePoint);
+    const ObjectId hit = SceneRenderer::objectAt(states, scenePoint, m_state->document().camera);
 
     if (hit == kInvalidObjectId) {
         m_state->clearSelection();

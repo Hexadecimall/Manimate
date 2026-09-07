@@ -387,6 +387,57 @@ void InspectorPanel::addSceneSection(QVBoxLayout *layout)
     auto *clips = new QLabel(QString::number(document.timeline.clips.size()));
     clips->setProperty("role", "subtitle");
     form->addRow(fieldLabel(tr("Animations")), clips);
+
+    // ------------------------------------------------------------- camera ---
+    QFormLayout *cameraForm = addGroup(layout, tr("Camera"),
+                                       tr("Turning the camera makes this a ThreeDScene."));
+
+    auto *threeD = new QCheckBox;
+    threeD->setChecked(document.camera.enabled);
+    connect(threeD, &QCheckBox::toggled, this, [this](bool on) {
+        Camera3D camera = m_state->document().camera;
+        camera.enabled = on;
+        m_state->setCamera(camera);
+    });
+    cameraForm->addRow(fieldLabel(tr("3D")), threeD);
+
+    QDoubleSpinBox *phi = makeDoubleBox();
+    phi->setRange(-180, 180);
+    phi->setSingleStep(5);
+    phi->setDecimals(1);
+    phi->setSuffix(QStringLiteral("°"));
+    phi->setValue(document.camera.phi);
+    phi->setEnabled(document.camera.enabled);
+    connect(phi, &QDoubleSpinBox::valueChanged, this, [this](double value) {
+        Camera3D camera = m_state->document().camera;
+        camera.phi = value;
+        m_state->setCamera(camera);
+    });
+    cameraForm->addRow(fieldLabel(tr("Tilt")), phi);
+
+    QDoubleSpinBox *theta = makeDoubleBox();
+    theta->setRange(-360, 360);
+    theta->setSingleStep(5);
+    theta->setDecimals(1);
+    theta->setSuffix(QStringLiteral("°"));
+    theta->setValue(document.camera.theta);
+    theta->setEnabled(document.camera.enabled);
+    connect(theta, &QDoubleSpinBox::valueChanged, this, [this](double value) {
+        Camera3D camera = m_state->document().camera;
+        camera.theta = value;
+        m_state->setCamera(camera);
+    });
+    cameraForm->addRow(fieldLabel(tr("Turn")), theta);
+
+    auto *spin = new QCheckBox;
+    spin->setChecked(document.camera.ambientRotation);
+    spin->setEnabled(document.camera.enabled);
+    connect(spin, &QCheckBox::toggled, this, [this](bool on) {
+        Camera3D camera = m_state->document().camera;
+        camera.ambientRotation = on;
+        m_state->setCamera(camera);
+    });
+    cameraForm->addRow(fieldLabel(tr("Spin")), spin);
 }
 
 void InspectorPanel::addEmptyState(QVBoxLayout *layout, const QString &message)

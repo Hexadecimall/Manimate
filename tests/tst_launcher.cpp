@@ -62,6 +62,8 @@ private slots:
     void generatesRunnablePython();
     void solverExpressesOverlapExactly();
     void positionCentresTheBoundingBox();
+    void cameraMatchesManimsOwnProjection();
+    void solidsMakeItAThreeDScene();
     void pythonBlocksBecomeControlFlow();
     void groupsCarryTheirChildren();
     void audioBecomesAddSound();
@@ -421,6 +423,73 @@ void LauncherTest::positionCentresTheBoundingBox()
     const QString withLine = codegen::constructBody(state.document(), 0);
     QVERIFY(withLine.contains(QStringLiteral("line.shift([2, 1, 0])")));
     QVERIFY(!withLine.contains(QStringLiteral("line.move_to")));
+}
+
+void LauncherTest::cameraMatchesManimsOwnProjection()
+{
+    // Measured from a real render: markers placed at (2,0,0), (0,2,0) and
+    // (0,0,2) with the camera at phi=70, theta=-45, then located in the image.
+    // Manim's camera is perspective, so these are deliberately not symmetric.
+    Camera3D camera;
+    camera.enabled = true;
+    camera.phi = 70.0;
+    camera.theta = -45.0;
+
+    const struct {
+        double x, y, z;
+        QPointF expected;
+    } samples[] = {
+        {2, 0, 0, QPointF(1.5181, -0.5279)},
+        {0, 2, 0, QPointF(1.3347, 0.4408)},
+        {0, 0, 2, QPointF(0.0075, 1.9362)},
+    };
+
+    for (const auto &sample : samples) {
+        const QPointF mine = SceneRenderer::project(camera, sample.x, sample.y, sample.z);
+        const double error = QLineF(mine, sample.expected).length();
+        QVERIFY2(error < 0.03,
+                 qPrintable(QStringLiteral("(%1,%2,%3): got (%4,%5), Manim gives (%6,%7)")
+                                .arg(sample.x).arg(sample.y).arg(sample.z)
+                                .arg(mine.x()).arg(mine.y())
+                                .arg(sample.expected.x()).arg(sample.expected.y())));
+    }
+
+    // A flat camera leaves the scene exactly as it was, so a 2D project is
+    // untouched by any of this.
+    Camera3D flat;
+    QCOMPARE(SceneRenderer::project(flat, 1.5, -2.5, 3.0), QPointF(1.5, -2.5));
+}
+
+void LauncherTest::solidsMakeItAThreeDScene()
+{
+    EditorState state;
+    state.setDocument(Document::createNew(QStringLiteral("Solid")), {});
+    state.documentForWriting().sceneClassName = QStringLiteral("Solid");
+
+    // A flat scene stays a plain Scene.
+    state.addObject(QStringLiteral("manim.Circle"));
+    QVERIFY(codegen::generate(state.document()).contains(QStringLiteral("class Solid(Scene):")));
+
+    // One solid is enough to need the three-dimensional camera.
+    state.addObject(QStringLiteral("manim.Cube"));
+    const QString code = codegen::generate(state.document());
+    QVERIFY(code.contains(QStringLiteral("class Solid(ThreeDScene):")));
+    QVERIFY(code.contains(QStringLiteral("self.set_camera_orientation(")));
+
+    // Turning the camera on carries its angles through.
+    Camera3D camera;
+    camera.enabled = true;
+    camera.phi = 65.0;
+    camera.theta = -30.0;
+    camera.ambientRotation = true;
+    camera.rotationRate = 0.15;
+    state.setCamera(camera);
+
+    const QString turned = codegen::generate(state.document());
+    QVERIFY(turned.contains(QStringLiteral("phi=65 * DEGREES")));
+    QVERIFY(turned.contains(QStringLiteral("theta=-30 * DEGREES")));
+    QVERIFY(turned.contains(QStringLiteral("self.begin_ambient_camera_rotation(rate=0.15)")));
+    QVERIFY(turned.contains(QStringLiteral("self.stop_ambient_camera_rotation()")));
 }
 
 void LauncherTest::pythonBlocksBecomeControlFlow()

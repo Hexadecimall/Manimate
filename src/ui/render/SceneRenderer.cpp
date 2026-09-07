@@ -183,14 +183,54 @@ QPainterPath gridPath(double xRange, double yRange, bool axesOnly, bool tips)
     return path;
 }
 
-/// An isometric projection, so a solid reads as a solid on a flat canvas.
-/// The canvas stands in for the render rather than reproducing it: Manim's own
-/// camera decides the real view, and only the render knows where that is.
-QPointF isometric(double x, double y, double z)
+/// A point in the scene's own three dimensions, before the camera sees it.
+struct Point3D
 {
-    constexpr double kCos = 0.8660254;   // cos(30 degrees)
-    constexpr double kSin = 0.5;
-    return QPointF((x - z) * kCos, y + (x + z) * kSin);
+    double x = 0;
+    double y = 0;
+    double z = 0;
+};
+
+/// The camera a solid is being drawn for. Set while a shape is built, because
+/// the geometry has to be projected as it is generated rather than afterwards.
+thread_local Camera3D t_camera;
+
+QPointF flatten(const Point3D &point)
+{
+    return SceneRenderer::project(t_camera, point.x, point.y, point.z);
+}
+
+void addEdges(QPainterPath &path, const QVector<Point3D> &vertices,
+              const QVector<QPair<int, int>> &edges)
+{
+    for (const auto &edge : edges) {
+        path.moveTo(flatten(vertices.at(edge.first)));
+        path.lineTo(flatten(vertices.at(edge.second)));
+    }
+}
+
+/// A circle lying in three dimensions, sampled and projected.
+void addRing(QPainterPath &path, const Point3D &centre, double radius, int axis, int samples = 48)
+{
+    for (int i = 0; i <= samples; ++i) {
+        const double t = 2.0 * M_PI * (double(i) / samples);
+        Point3D point = centre;
+        // axis names the direction the ring is perpendicular to.
+        if (axis == 0) {
+            point.y += radius * std::cos(t);
+            point.z += radius * std::sin(t);
+        } else if (axis == 1) {
+            point.x += radius * std::cos(t);
+            point.z += radius * std::sin(t);
+        } else {
+            point.x += radius * std::cos(t);
+            point.y += radius * std::sin(t);
+        }
+        if (i == 0)
+            path.moveTo(flatten(point));
+        else
+            path.lineTo(flatten(point));
+    }
 }
 
 QPainterPath boxWireframe(double width, double height, double depth)
@@ -199,30 +239,107 @@ QPainterPath boxWireframe(double width, double height, double depth)
     const double hh = height / 2.0;
     const double hd = depth / 2.0;
 
-    const QPointF corners[8] = {
-        isometric(-hw, -hh, -hd), isometric(hw, -hh, -hd),
-        isometric(hw, hh, -hd),   isometric(-hw, hh, -hd),
-        isometric(-hw, -hh, hd),  isometric(hw, -hh, hd),
-        isometric(hw, hh, hd),    isometric(-hw, hh, hd),
+    const QVector<Point3D> corners = {
+        {-hw, -hh, -hd}, {hw, -hh, -hd}, {hw, hh, -hd}, {-hw, hh, -hd},
+        {-hw, -hh, hd},  {hw, -hh, hd},  {hw, hh, hd},  {-hw, hh, hd},
     };
+    const QVector<QPair<int, int>> edges = {{0, 1}, {1, 2}, {2, 3}, {3, 0}, {4, 5}, {5, 6},
+                                            {6, 7}, {7, 4}, {0, 4}, {1, 5}, {2, 6}, {3, 7}};
 
     QPainterPath path;
-    const int edges[12][2] = {{0, 1}, {1, 2}, {2, 3}, {3, 0}, {4, 5}, {5, 6},
-                              {6, 7}, {7, 4}, {0, 4}, {1, 5}, {2, 6}, {3, 7}};
-    for (const auto &edge : edges) {
-        path.moveTo(corners[edge[0]]);
-        path.lineTo(corners[edge[1]]);
+    addEdges(path, corners, edges);
+    return path;
+}
+
+/// A sphere as a set of latitude and longitude rings, projected. Unlike a fixed
+/// pair of ellipses this actually turns when the camera does.
+QPainterPath sphereWireframe(double radius)
+{
+    QPainterPath path;
+    constexpr int kRings = 4;
+    for (int i = 1; i < kRings; ++i) {
+        const double phi = M_PI * (double(i) / kRings);
+        addRing(path, {0, 0, radius * std::cos(phi)}, radius * std::sin(phi), 2);
+    }
+    for (int i = 0; i < kRings; ++i) {
+        const double theta = M_PI * (double(i) / kRings);
+        // A meridian: a full circle tilted round the z axis.
+        for (int j = 0; j <= 48; ++j) {
+            const double t = 2.0 * M_PI * (double(j) / 48);
+            const Point3D point{radius * std::sin(t) * std::cos(theta),
+                                radius * std::sin(t) * std::sin(theta), radius * std::cos(t)};
+            if (j == 0)
+                path.moveTo(flatten(point));
+            else
+                path.lineTo(flatten(point));
+        }
     }
     return path;
 }
 
-/// A sphere as an outline with two great circles, the usual way of drawing one.
-QPainterPath sphereWireframe(double radius)
+/// Vertices of a platonic solid, by face count.
+QVector<Point3D> platonicVertices(int faces, double size)
 {
+    const double a = size / 2.0;
+    switch (faces) {
+    case 4:
+        return {{a, a, a}, {a, -a, -a}, {-a, a, -a}, {-a, -a, a}};
+    case 8:
+        return {{a, 0, 0}, {-a, 0, 0}, {0, a, 0}, {0, -a, 0}, {0, 0, a}, {0, 0, -a}};
+    case 20: {
+        const double g = a * 1.618033988749895;   // the golden ratio
+        return {{0, a, g},  {0, a, -g},  {0, -a, g},  {0, -a, -g},
+                {a, g, 0},  {a, -g, 0},  {-a, g, 0},  {-a, -g, 0},
+                {g, 0, a},  {-g, 0, a},  {g, 0, -a},  {-g, 0, -a}};
+    }
+    default: {
+        // A dodecahedron's vertices: a cube plus three rectangles.
+        const double g = a * 1.618033988749895;
+        const double h = a / 1.618033988749895;
+        QVector<Point3D> vertices;
+        for (const double sx : {-a, a})
+            for (const double sy : {-a, a})
+                for (const double sz : {-a, a})
+                    vertices.append({sx, sy, sz});
+        for (const double s1 : {-h, h})
+            for (const double s2 : {-g, g}) {
+                vertices.append({0, s1, s2});
+                vertices.append({s1, s2, 0});
+                vertices.append({s2, 0, s1});
+            }
+        return vertices;
+    }
+    }
+}
+
+/// Join every pair of vertices that sit a shortest-edge apart, which draws the
+/// solid's real edges without needing a face table for each one.
+QPainterPath polyhedronWireframe(int faces, double size)
+{
+    const QVector<Point3D> vertices = platonicVertices(faces, size);
+    if (vertices.size() < 2)
+        return {};
+
+    auto distance = [](const Point3D &a, const Point3D &b) {
+        return std::sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y)
+                         + (a.z - b.z) * (a.z - b.z));
+    };
+
+    double shortest = std::numeric_limits<double>::max();
+    for (int i = 0; i < vertices.size(); ++i) {
+        for (int j = i + 1; j < vertices.size(); ++j)
+            shortest = qMin(shortest, distance(vertices.at(i), vertices.at(j)));
+    }
+
     QPainterPath path;
-    path.addEllipse(QPointF(0, 0), radius, radius);
-    path.addEllipse(QPointF(0, 0), radius, radius * 0.35);
-    path.addEllipse(QPointF(0, 0), radius * 0.35, radius);
+    for (int i = 0; i < vertices.size(); ++i) {
+        for (int j = i + 1; j < vertices.size(); ++j) {
+            if (distance(vertices.at(i), vertices.at(j)) <= shortest * 1.05) {
+                path.moveTo(flatten(vertices.at(i)));
+                path.lineTo(flatten(vertices.at(j)));
+            }
+        }
+    }
     return path;
 }
 
@@ -316,6 +433,50 @@ QPainterPath gridOfCells(const QString &rows, double cellWidth, double cellHeigh
 
 } // namespace
 
+QPointF SceneRenderer::project(const Camera3D &camera, double x, double y, double z)
+{
+    if (!camera.enabled)
+        return QPointF(x, y);
+
+    const double phi = qDegreesToRadians(camera.phi);
+    const double theta = qDegreesToRadians(camera.theta);
+
+    const double sinPhi = std::sin(phi);
+    const double cosPhi = std::cos(phi);
+    const double sinTheta = std::sin(theta);
+    const double cosTheta = std::cos(theta);
+
+    // Screen right and up, in world terms. At phi=0, theta=-90 these come out
+    // as (1,0,0) and (0,1,0), so a flat scene is left exactly as it was.
+    const double screenX = -x * sinTheta + y * cosTheta;
+    const double screenY = -x * cosPhi * cosTheta - y * cosPhi * sinTheta + z * sinPhi;
+
+    // Manim's camera is perspective, not orthographic: the axis leaning towards
+    // the viewer is drawn longer than the one leaning away. Measured against a
+    // render — its focal distance is 20 scene units — because a projection that
+    // is merely plausible would put the canvas and the video out of step.
+    const double depth = x * sinPhi * cosTheta + y * sinPhi * sinTheta + z * cosPhi;
+    const double factor = SceneRenderer::kFocalDistance
+                          / qMax(0.001, SceneRenderer::kFocalDistance - depth);
+
+    return QPointF(screenX * factor, screenY * factor);
+}
+
+QTransform SceneRenderer::planeTransform(const Camera3D &camera, double z)
+{
+    if (!camera.enabled)
+        return {};
+
+    const double phi = qDegreesToRadians(camera.phi);
+    const double theta = qDegreesToRadians(camera.theta);
+    const double cosPhi = std::cos(phi);
+
+    // Columns are where the world's x and y axes land on screen.
+    return QTransform(-std::sin(theta), -cosPhi * std::cos(theta),
+                      std::cos(theta), -cosPhi * std::sin(theta),
+                      0.0, z * std::sin(phi));
+}
+
 QRectF SceneRenderer::frameRectFor(const Document &document, const QRectF &viewport)
 {
     const double aspect = document.render.height > 0
@@ -345,11 +506,40 @@ QTransform SceneRenderer::sceneToPixels(const Document &document, const QRectF &
     return transform;
 }
 
-QPainterPath SceneRenderer::shapeOf(const evaluator::ObjectState &state)
+bool SceneRenderer::isSolid(const QString &type)
+{
+    const catalog::MobjectSpec *spec = catalog::findMobject(type);
+    if (!spec)
+        return false;
+
+    switch (spec->shape) {
+    case ShapeKind::Cube:
+    case ShapeKind::Sphere:
+    case ShapeKind::Cone:
+    case ShapeKind::Cylinder:
+    case ShapeKind::Torus:
+    case ShapeKind::Prism:
+    case ShapeKind::Surface3D:
+    case ShapeKind::ThreeDAxes:
+    case ShapeKind::Line3D:
+    case ShapeKind::Arrow3D:
+    case ShapeKind::Dot3D:
+    case ShapeKind::Polyhedron:
+        return true;
+    default:
+        return false;
+    }
+}
+
+QPainterPath SceneRenderer::shapeOf(const evaluator::ObjectState &state, const Camera3D &camera)
 {
     const catalog::MobjectSpec *spec = catalog::findMobject(state.type);
     if (!spec)
         return {};
+
+    // The builders below project as they go, so the camera has to be in place
+    // before any of them runs.
+    t_camera = camera;
 
     const QVariantMap &p = state.params;
     QPainterPath path;
@@ -620,59 +810,118 @@ QPainterPath SceneRenderer::shapeOf(const evaluator::ObjectState &state)
     case ShapeKind::Cone: {
         const double radius = numberParam(p, QStringLiteral("base_radius"), 1.0);
         const double height = numberParam(p, QStringLiteral("height"), 2.0);
-        path.addEllipse(QPointF(0, -height / 2.0), radius, radius * 0.35);
-        path.moveTo(-radius, -height / 2.0);
-        path.lineTo(0, height / 2.0);
-        path.lineTo(radius, -height / 2.0);
+        addRing(path, {0, 0, -height / 2.0}, radius, 2);
+        const Point3D apex{0, 0, height / 2.0};
+        for (int i = 0; i < 8; ++i) {
+            const double t = 2.0 * M_PI * (double(i) / 8);
+            path.moveTo(flatten({radius * std::cos(t), radius * std::sin(t), -height / 2.0}));
+            path.lineTo(flatten(apex));
+        }
         break;
     }
     case ShapeKind::Cylinder: {
         const double radius = numberParam(p, QStringLiteral("radius"), 1.0);
         const double height = numberParam(p, QStringLiteral("height"), 2.0);
-        const double lift = radius * 0.35;
-        path.addEllipse(QPointF(0, height / 2.0), radius, lift);
-        path.addEllipse(QPointF(0, -height / 2.0), radius, lift);
-        path.moveTo(-radius, height / 2.0);
-        path.lineTo(-radius, -height / 2.0);
-        path.moveTo(radius, height / 2.0);
-        path.lineTo(radius, -height / 2.0);
+        addRing(path, {0, 0, height / 2.0}, radius, 2);
+        addRing(path, {0, 0, -height / 2.0}, radius, 2);
+        for (int i = 0; i < 8; ++i) {
+            const double t = 2.0 * M_PI * (double(i) / 8);
+            const double x = radius * std::cos(t);
+            const double y = radius * std::sin(t);
+            path.moveTo(flatten({x, y, -height / 2.0}));
+            path.lineTo(flatten({x, y, height / 2.0}));
+        }
         break;
     }
     case ShapeKind::Torus: {
         const double major = numberParam(p, QStringLiteral("major_radius"), 1.0);
         const double minor = numberParam(p, QStringLiteral("minor_radius"), 0.35);
-        path.addEllipse(QPointF(0, 0), major + minor, (major + minor) * 0.45);
-        path.addEllipse(QPointF(0, 0), major - minor, (major - minor) * 0.45);
+        constexpr int kRings = 10;
+        for (int i = 0; i < kRings; ++i) {
+            const double t = 2.0 * M_PI * (double(i) / kRings);
+            // Each ring of the tube, standing where the major circle puts it.
+            for (int j = 0; j <= 24; ++j) {
+                const double u = 2.0 * M_PI * (double(j) / 24);
+                const double r = major + minor * std::cos(u);
+                const Point3D point{r * std::cos(t), r * std::sin(t), minor * std::sin(u)};
+                if (j == 0)
+                    path.moveTo(flatten(point));
+                else
+                    path.lineTo(flatten(point));
+            }
+        }
+        addRing(path, {0, 0, 0}, major + minor, 2);
+        addRing(path, {0, 0, 0}, major - minor, 2);
         break;
     }
     case ShapeKind::Surface3D: {
-        // A saddle grid: enough to say "a surface goes here".
         const double extent = numberParam(p, QStringLiteral("extent"), 2.0);
-        constexpr int kLines = 7;
+        constexpr int kLines = 9;
+        auto height = [](double u, double v) { return std::sin(u) * std::cos(v) * 0.6; };
         for (int i = 0; i < kLines; ++i) {
             const double u = -extent + 2 * extent * (double(i) / (kLines - 1));
             for (int j = 0; j < kLines; ++j) {
                 const double v = -extent + 2 * extent * (double(j) / (kLines - 1));
-                const QPointF point = isometric(u, std::sin(u) * std::cos(v) * 0.6, v);
+                const QPointF screen = flatten({u, v, height(u, v)});
                 if (j == 0)
-                    path.moveTo(point);
+                    path.moveTo(screen);
                 else
-                    path.lineTo(point);
+                    path.lineTo(screen);
             }
         }
         for (int j = 0; j < kLines; ++j) {
             const double v = -extent + 2 * extent * (double(j) / (kLines - 1));
             for (int i = 0; i < kLines; ++i) {
                 const double u = -extent + 2 * extent * (double(i) / (kLines - 1));
-                const QPointF point = isometric(u, std::sin(u) * std::cos(v) * 0.6, v);
+                const QPointF screen = flatten({u, v, height(u, v)});
                 if (i == 0)
-                    path.moveTo(point);
+                    path.moveTo(screen);
                 else
-                    path.lineTo(point);
+                    path.lineTo(screen);
             }
         }
         break;
     }
+
+    case ShapeKind::ThreeDAxes: {
+        const double extent = numberParam(p, QStringLiteral("extent"), 3.0);
+        const Point3D origin{0, 0, 0};
+        for (const Point3D &tip : {Point3D{extent, 0, 0}, Point3D{0, extent, 0},
+                                   Point3D{0, 0, extent}}) {
+            path.moveTo(flatten({-tip.x, -tip.y, -tip.z}));
+            path.lineTo(flatten(tip));
+            // A short cap, so the far end of each axis is visible.
+            const Point3D cap{tip.x * 0.9, tip.y * 0.9, tip.z * 0.9};
+            path.moveTo(flatten(cap));
+            path.lineTo(flatten(tip));
+        }
+        Q_UNUSED(origin);
+        break;
+    }
+    case ShapeKind::Line3D: {
+        const QPointF start = pointParam(p, QStringLiteral("start"));
+        const QPointF end = pointParam(p, QStringLiteral("end"));
+        path.moveTo(flatten({start.x(), start.y(), numberParam(p, QStringLiteral("start_z"), 0.0)}));
+        path.lineTo(flatten({end.x(), end.y(), numberParam(p, QStringLiteral("end_z"), 1.0)}));
+        break;
+    }
+    case ShapeKind::Arrow3D: {
+        const QPointF start = pointParam(p, QStringLiteral("start"));
+        const QPointF end = pointParam(p, QStringLiteral("end"));
+        const QPointF a = flatten({start.x(), start.y(),
+                                   numberParam(p, QStringLiteral("start_z"), 0.0)});
+        const QPointF b = flatten({end.x(), end.y(), numberParam(p, QStringLiteral("end_z"), 1.0)});
+        // The head is drawn on the projected line, which is where it is seen.
+        path = arrow(a, b, 0.22);
+        break;
+    }
+    case ShapeKind::Dot3D:
+        addRing(path, {0, 0, 0}, numberParam(p, QStringLiteral("radius"), 0.1), 2);
+        break;
+    case ShapeKind::Polyhedron:
+        path = polyhedronWireframe(p.value(QStringLiteral("faces")).toInt(),
+                                   numberParam(p, QStringLiteral("edge_length"), 1.5));
+        break;
 
     case ShapeKind::Group:
         // Drawn by its children; a group has no outline of its own.
@@ -705,7 +954,7 @@ bool SceneRenderer::positionIsAnOffset(const QString &type)
 }
 
 QTransform SceneRenderer::transformOf(const evaluator::ObjectState &state,
-                                      const QPainterPath &shape)
+                                      const QPainterPath &shape, const Camera3D &camera)
 {
     const QPointF position = state.params.value(QStringLiteral("position")).toPointF() + state.offset;
     const double rotation = numberParam(state.params, QStringLiteral("rotation"), 0.0)
@@ -713,9 +962,27 @@ QTransform SceneRenderer::transformOf(const evaluator::ObjectState &state,
     const double scale = numberParam(state.params, QStringLiteral("scale"), 1.0) * state.scale;
 
     QTransform transform;
-    transform.translate(position.x(), position.y());
-    transform.rotate(rotation);
-    transform.scale(scale, scale);
+
+    // A flat shape is placed in the scene's plane and then projected; a solid
+    // was projected as it was built, so it is placed on screen directly.
+    if (camera.enabled && !isSolid(state.type)) {
+        const double z = numberParam(state.params, QStringLiteral("z"), 0.0);
+        const QPointF placed = project(camera, position.x(), position.y(), z);
+        transform.translate(placed.x(), placed.y());
+        transform.rotate(rotation);
+        transform.scale(scale, scale);
+        transform = planeTransform(camera, 0.0) * transform;
+    } else if (camera.enabled) {
+        const double z = numberParam(state.params, QStringLiteral("z"), 0.0);
+        const QPointF placed = project(camera, position.x(), position.y(), z);
+        transform.translate(placed.x(), placed.y());
+        transform.rotate(rotation);
+        transform.scale(scale, scale);
+    } else {
+        transform.translate(position.x(), position.y());
+        transform.rotate(rotation);
+        transform.scale(scale, scale);
+    }
 
     // Bring the bounding box's centre to the origin first, so the position
     // names the object's centre and rotation turns about it, as in Manim.
@@ -727,16 +994,16 @@ QTransform SceneRenderer::transformOf(const evaluator::ObjectState &state,
 }
 
 void SceneRenderer::renderObject(QPainter &painter, const evaluator::ObjectState &state,
-                                 const QTransform &toPixels)
+                                 const QTransform &toPixels, const Camera3D &camera)
 {
-    QPainterPath path = shapeOf(state);
+    QPainterPath path = shapeOf(state, camera);
     if (path.isEmpty())
         return;
 
     if (state.drawProgress < 1.0)
         path = partialPath(path, state.drawProgress);
 
-    const QTransform full = transformOf(state, shapeOf(state)) * toPixels;
+    const QTransform full = transformOf(state, shapeOf(state, camera), camera) * toPixels;
     const QPainterPath pixels = full.map(path);
 
     const catalog::MobjectSpec *spec = catalog::findMobject(state.type);
@@ -792,30 +1059,31 @@ void SceneRenderer::render(QPainter &painter, const Document &document, double t
 
     const QTransform toPixels = sceneToPixels(document, frameRect);
     for (const evaluator::ObjectState &state : evaluator::evaluate(document, time))
-        renderObject(painter, state, toPixels);
+        renderObject(painter, state, toPixels, document.camera);
 
     painter.restore();
 }
 
-QRectF SceneRenderer::boundsInPixels(const evaluator::ObjectState &state, const QTransform &toPixels)
+QRectF SceneRenderer::boundsInPixels(const evaluator::ObjectState &state, const QTransform &toPixels,
+                                     const Camera3D &camera)
 {
-    const QPainterPath path = shapeOf(state);
+    const QPainterPath path = shapeOf(state, camera);
     if (path.isEmpty())
         return {};
-    return (transformOf(state, path) * toPixels).map(path).boundingRect();
+    return (transformOf(state, path, camera) * toPixels).map(path).boundingRect();
 }
 
 ObjectId SceneRenderer::objectAt(const QVector<evaluator::ObjectState> &states,
-                                 const QPointF &scenePoint)
+                                 const QPointF &scenePoint, const Camera3D &camera)
 {
     // Topmost first, so clicking picks what the eye picks.
     for (int i = states.size() - 1; i >= 0; --i) {
         const evaluator::ObjectState &state = states.at(i);
-        QPainterPath path = shapeOf(state);
+        QPainterPath path = shapeOf(state, camera);
         if (path.isEmpty())
             continue;
 
-        const QPainterPath placed = transformOf(state, path).map(path);
+        const QPainterPath placed = transformOf(state, path, camera).map(path);
         if (placed.contains(scenePoint))
             return state.id;
 

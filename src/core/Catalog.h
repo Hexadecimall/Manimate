@@ -102,6 +102,11 @@ enum class ShapeKind {
     Torus,
     Prism,
     Surface3D,
+    ThreeDAxes,
+    Line3D,
+    Arrow3D,
+    Dot3D,
+    Polyhedron,
 
     /// A container: draws whatever its children draw.
     Group,

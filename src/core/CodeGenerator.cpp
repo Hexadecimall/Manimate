@@ -481,18 +481,76 @@ QString constructBody(const Document &document, int indentLevel)
     return lines.join(QStringLiteral("\n"));
 }
 
+/// True when the scene needs Manim's three-dimensional camera: either the
+/// camera has been moved, or something in it is a solid.
+bool needsThreeDScene(const Document &document)
+{
+    if (document.camera.enabled)
+        return true;
+
+    for (const SceneObject &object : document.objects) {
+        const catalog::MobjectSpec *spec = catalog::findMobject(object.type);
+        if (!spec)
+            continue;
+        switch (spec->shape) {
+        case catalog::ShapeKind::Cube:
+        case catalog::ShapeKind::Sphere:
+        case catalog::ShapeKind::Cone:
+        case catalog::ShapeKind::Cylinder:
+        case catalog::ShapeKind::Torus:
+        case catalog::ShapeKind::Prism:
+        case catalog::ShapeKind::Surface3D:
+        case catalog::ShapeKind::ThreeDAxes:
+        case catalog::ShapeKind::Line3D:
+        case catalog::ShapeKind::Arrow3D:
+        case catalog::ShapeKind::Dot3D:
+        case catalog::ShapeKind::Polyhedron:
+            return true;
+        default:
+            break;
+        }
+    }
+    return false;
+}
+
 QString generate(const Document &document)
 {
     const QString sceneClass =
         document.sceneClassName.isEmpty() ? QStringLiteral("MainScene") : document.sceneClassName;
 
+    const bool threeD = needsThreeDScene(document);
+
     QStringList lines;
     lines.append(QStringLiteral("from manim import *"));
     lines.append(QString());
     lines.append(QString());
-    lines.append(QStringLiteral("class %1(Scene):").arg(sceneClass));
+    lines.append(QStringLiteral("class %1(%2):")
+                     .arg(sceneClass,
+                          threeD ? QStringLiteral("ThreeDScene") : QStringLiteral("Scene")));
     lines.append(indent(1) + QStringLiteral("def construct(self):"));
+
+    if (threeD) {
+        QStringList camera;
+        camera.append(QStringLiteral("phi=%1 * DEGREES").arg(number(document.camera.phi)));
+        camera.append(QStringLiteral("theta=%1 * DEGREES").arg(number(document.camera.theta)));
+        lines.append(indent(2)
+                     + QStringLiteral("self.set_camera_orientation(%1)")
+                           .arg(camera.join(QStringLiteral(", "))));
+
+        if (document.camera.ambientRotation) {
+            lines.append(indent(2)
+                         + QStringLiteral("self.begin_ambient_camera_rotation(rate=%1)")
+                               .arg(number(document.camera.rotationRate)));
+        }
+        lines.append(QString());
+    }
+
     lines.append(constructBody(document, 2));
+
+    if (threeD && document.camera.ambientRotation) {
+        lines.append(QString());
+        lines.append(indent(2) + QStringLiteral("self.stop_ambient_camera_rotation()"));
+    }
     lines.append(QString());
 
     return lines.join(QStringLiteral("\n"));

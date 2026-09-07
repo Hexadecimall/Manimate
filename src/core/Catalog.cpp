@@ -2,6 +2,8 @@
 
 #include <QPointF>
 
+#include <utility>
+
 namespace mn::catalog {
 namespace {
 
@@ -84,6 +86,7 @@ QVector<ParamSpec> commonParams(const QColor &stroke = kManimWhite, double strok
 {
     return {
         point(QStringLiteral("position"), QStringLiteral("Position"), QPointF(0, 0)),
+        number(QStringLiteral("z"), QStringLiteral("Height"), 0.0, -100, 100, 0.1),
         color(QStringLiteral("color"), QStringLiteral("Colour"), stroke),
         number(QStringLiteral("stroke_width"), QStringLiteral("Stroke"), strokeWidth, 0, 40, 0.5),
         number(QStringLiteral("fill_opacity"), QStringLiteral("Fill"), fillOpacity, 0, 1, 0.05),
@@ -415,6 +418,40 @@ const QVector<MobjectSpec> &mobjects()
                   QStringLiteral("[u, v, np.sin(u) * np.cos(v)]")),
              number(QStringLiteral("extent"), QStringLiteral("Extent"), 2.0, 0.2, 20, 0.1)},
             commonParams(QColor(0x58, 0xC4, 0xDD), 1.5, 0.2));
+
+        add(QStringLiteral("ThreeDAxes"), QStringLiteral("3D axes"), QStringLiteral("3D"),
+            ShapeKind::ThreeDAxes,
+            {number(QStringLiteral("extent"), QStringLiteral("Extent"), 3.0, 0.5, 20, 0.5)});
+
+        add(QStringLiteral("Line3D"), QStringLiteral("Line (3D)"), QStringLiteral("3D"),
+            ShapeKind::Line3D,
+            {point(QStringLiteral("start"), QStringLiteral("Start"), QPointF(-1, 0)),
+             number(QStringLiteral("start_z"), QStringLiteral("Start z"), 0.0, -20, 20, 0.1),
+             point(QStringLiteral("end"), QStringLiteral("End"), QPointF(1, 0)),
+             number(QStringLiteral("end_z"), QStringLiteral("End z"), 1.0, -20, 20, 0.1)});
+
+        add(QStringLiteral("Arrow3D"), QStringLiteral("Arrow (3D)"), QStringLiteral("3D"),
+            ShapeKind::Arrow3D,
+            {point(QStringLiteral("start"), QStringLiteral("Start"), QPointF(0, 0)),
+             number(QStringLiteral("start_z"), QStringLiteral("Start z"), 0.0, -20, 20, 0.1),
+             point(QStringLiteral("end"), QStringLiteral("End"), QPointF(1, 1)),
+             number(QStringLiteral("end_z"), QStringLiteral("End z"), 1.0, -20, 20, 0.1)});
+
+        add(QStringLiteral("Dot3D"), QStringLiteral("Dot (3D)"), QStringLiteral("3D"),
+            ShapeKind::Dot3D,
+            {number(QStringLiteral("radius"), QStringLiteral("Radius"), 0.1, 0.01, 5, 0.01)},
+            commonParams(kManimWhite, 0.0, 1.0));
+
+        for (const auto &solid : {std::pair{QStringLiteral("Tetrahedron"), 4},
+                                  std::pair{QStringLiteral("Octahedron"), 8},
+                                  std::pair{QStringLiteral("Icosahedron"), 20},
+                                  std::pair{QStringLiteral("Dodecahedron"), 12}}) {
+            add(solid.first, solid.first, QStringLiteral("3D"), ShapeKind::Polyhedron,
+                {integer(QStringLiteral("faces"), QStringLiteral("Faces"), solid.second,
+                         solid.second, solid.second),
+                 number(QStringLiteral("edge_length"), QStringLiteral("Size"), 1.5, 0.1, 20, 0.1)},
+                commonParams(QColor(0x58, 0xC4, 0xDD), 2.0, 0.2));
+        }
 
         // ------------------------------------------------- groups and code ---
         add(QStringLiteral("VGroup"), QStringLiteral("Group"), QStringLiteral("Structure"),

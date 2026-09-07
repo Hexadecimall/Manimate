@@ -51,6 +51,33 @@ RenderSettings RenderSettings::fromJson(const QJsonObject &object)
     return settings;
 }
 
+bool Camera3D::isFlat() const
+{
+    return !enabled || (qFuzzyIsNull(phi) && !ambientRotation);
+}
+
+QJsonObject Camera3D::toJson() const
+{
+    QJsonObject object;
+    object.insert(QStringLiteral("enabled"), enabled);
+    object.insert(QStringLiteral("phi"), phi);
+    object.insert(QStringLiteral("theta"), theta);
+    object.insert(QStringLiteral("ambientRotation"), ambientRotation);
+    object.insert(QStringLiteral("rotationRate"), rotationRate);
+    return object;
+}
+
+Camera3D Camera3D::fromJson(const QJsonObject &object)
+{
+    Camera3D camera;
+    camera.enabled = object.value(QStringLiteral("enabled")).toBool(false);
+    camera.phi = object.value(QStringLiteral("phi")).toDouble(0.0);
+    camera.theta = object.value(QStringLiteral("theta")).toDouble(-90.0);
+    camera.ambientRotation = object.value(QStringLiteral("ambientRotation")).toBool(false);
+    camera.rotationRate = object.value(QStringLiteral("rotationRate")).toDouble(0.2);
+    return camera;
+}
+
 QJsonObject ProjectMetadata::toJson() const
 {
     QJsonObject object;
@@ -194,6 +221,7 @@ QJsonObject Document::toJson() const
     root.insert(QLatin1String(kFormatKey), version::kProjectFormat);
     root.insert(QStringLiteral("metadata"), metadata.toJson());
     root.insert(QStringLiteral("render"), render.toJson());
+    root.insert(QStringLiteral("camera"), camera.toJson());
     root.insert(QStringLiteral("sceneClass"), sceneClassName);
     root.insert(QStringLiteral("objects"), objectArray);
     root.insert(QStringLiteral("timeline"), timeline.toJson());
@@ -224,6 +252,7 @@ Document Document::fromJson(const QJsonObject &object, QString *errorOut)
 
     document.metadata = ProjectMetadata::fromJson(object.value(QStringLiteral("metadata")).toObject());
     document.render = RenderSettings::fromJson(object.value(QStringLiteral("render")).toObject());
+    document.camera = Camera3D::fromJson(object.value(QStringLiteral("camera")).toObject());
     document.sceneClassName = object.value(QStringLiteral("sceneClass")).toString(QStringLiteral("MainScene"));
 
     const QJsonArray objectArray = object.value(QStringLiteral("objects")).toArray();

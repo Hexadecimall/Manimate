@@ -40,6 +40,36 @@ struct RenderSettings
     static RenderSettings fromJson(const QJsonObject &object);
 };
 
+/// Where the camera is looking.
+///
+/// Manim's ThreeDScene orients its camera with two angles: phi away from the
+/// z axis, and theta round it. The canvas projects through the same two, so a
+/// scene tilts on screen exactly as it will when rendered — rather than a fixed
+/// isometric view that only resembles the result.
+struct Camera3D
+{
+    /// True once the scene is three-dimensional. A flat scene keeps a flat
+    /// camera, and stays a plain Scene when written out.
+    bool enabled = false;
+
+    /// Polar angle from the z axis, in degrees. 0 looks straight down it,
+    /// which is the ordinary flat view.
+    double phi = 0.0;
+
+    /// Azimuth round the z axis, in degrees. Manim's own default is -90.
+    double theta = -90.0;
+
+    /// Turns the camera steadily during the scene.
+    bool ambientRotation = false;
+    double rotationRate = 0.2;
+
+    /// True when this is the camera a flat scene would have anyway.
+    bool isFlat() const;
+
+    QJsonObject toJson() const;
+    static Camera3D fromJson(const QJsonObject &object);
+};
+
 /// Descriptive metadata about the project. None of it affects rendering; it
 /// exists so the launcher can show a meaningful project list and so a project
 /// carries its own history.
@@ -72,6 +102,7 @@ public:
 
     ProjectMetadata metadata;
     RenderSettings render;
+    Camera3D camera;
 
     /// Python class name used for the exported Scene subclass.
     QString sceneClassName = QStringLiteral("MainScene");
