@@ -21,20 +21,19 @@ TitleBar::TitleBar(QWidget *parent)
     setFixedHeight(kHeight);
     setAttribute(Qt::WA_Hover);
 
-    const WindowButton::Appearance appearance = WindowButton::nativeAppearance();
-    const bool controlsOnLeft = appearance == WindowButton::Appearance::Traffic;
+    const bool controlsOnLeft = WindowButton::controlsBelongOnTheLeft();
 
     m_controls = new QWidget(this);
     m_controls->setAttribute(Qt::WA_Hover);
     m_controls->installEventFilter(this);
 
-    m_close = new WindowButton(WindowButton::Kind::Close, appearance, m_controls);
-    m_minimize = new WindowButton(WindowButton::Kind::Minimize, appearance, m_controls);
-    m_maximize = new WindowButton(WindowButton::Kind::Maximize, appearance, m_controls);
+    m_close = new WindowButton(WindowButton::Kind::Close, m_controls);
+    m_minimize = new WindowButton(WindowButton::Kind::Minimize, m_controls);
+    m_maximize = new WindowButton(WindowButton::Kind::Maximize, m_controls);
 
     auto *controlsLayout = new QHBoxLayout(m_controls);
     controlsLayout->setContentsMargins(0, 0, 0, 0);
-    controlsLayout->setSpacing(0);
+    controlsLayout->setSpacing(2);
     if (controlsOnLeft) {
         controlsLayout->addWidget(m_close);
         controlsLayout->addWidget(m_minimize);

@@ -4,30 +4,30 @@
 
 namespace mn::ui {
 
-/// A window control drawn by hand so it matches the application's own theme
-/// rather than the system frame, which a frameless window does not have.
+/// A window control drawn by the application in its own visual language.
 ///
-/// Two appearances: the macOS traffic light (a coloured disc that only reveals
-/// its glyph on hover) and the glyph button used everywhere else.
+/// Not an imitation of the system's controls: a quiet glyph on no background
+/// until the pointer arrives, then a rounded panel behind it — red for close,
+/// neutral for the other two. That keeps the title bar calm at rest, where
+/// three coloured discs would be the loudest thing on the screen, and makes
+/// what each button does legible at a glance rather than by memorised colour.
 class WindowButton : public QAbstractButton
 {
     Q_OBJECT
 
 public:
     enum class Kind { Close, Minimize, Maximize };
-    enum class Appearance { Traffic, Glyph };
 
-    /// The appearance that matches the host platform's conventions.
-    static Appearance nativeAppearance();
+    WindowButton(Kind kind, QWidget *parent = nullptr);
 
-    WindowButton(Kind kind, Appearance appearance, QWidget *parent = nullptr);
-
-    /// Traffic lights light up together when any of them is hovered, so the
-    /// title bar tells the group when the pointer is over it.
+    /// The whole cluster reacts together, so the controls read as one group.
     void setGroupHovered(bool hovered);
 
     /// Swaps the maximise glyph for the restore glyph.
     void setRestoreState(bool restore);
+
+    /// True when the platform puts the controls at the left of the title bar.
+    static bool controlsBelongOnTheLeft();
 
     QSize sizeHint() const override;
 
@@ -37,11 +37,7 @@ protected:
     void leaveEvent(QEvent *event) override;
 
 private:
-    void paintTraffic(QPainter &painter);
-    void paintGlyph(QPainter &painter);
-
     Kind m_kind;
-    Appearance m_appearance;
     bool m_groupHovered = false;
     bool m_restore = false;
 };

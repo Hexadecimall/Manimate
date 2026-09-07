@@ -86,7 +86,10 @@ void ProjectCardDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
     const bool hovered = option.state & QStyle::State_MouseOver;
     const bool missing = index.data(RecentProjectsModel::MissingRole).toBool();
 
-    const QRectF card = QRectF(option.rect.adjusted(0, 0, 0, -kCardSpacing));
+    // Half a pixel in on every side, so the one-pixel outline lands inside the
+    // item rather than straddling its edge and being clipped away.
+    const QRectF card =
+        QRectF(option.rect).adjusted(0.5, 0.5, -0.5, -kCardSpacing - 0.5);
 
     painter->save();
     painter->setRenderHint(QPainter::Antialiasing);
@@ -102,7 +105,7 @@ void ProjectCardDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
     painter->fillPath(shape, background);
 
     painter->setPen(QPen(selected ? p.accent : p.border, 1.0));
-    painter->drawPath(shape.translated(0.5, 0.5));
+    painter->drawPath(shape);
 
     const QString name = index.data(RecentProjectsModel::NameRole).toString();
     const QColor accent = missing ? p.textFaint : badgeColor(name);

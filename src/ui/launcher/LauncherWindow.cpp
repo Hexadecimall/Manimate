@@ -219,6 +219,9 @@ QWidget *LauncherWindow::buildProjectList()
     m_list->setFrameShape(QFrame::NoFrame);
     m_list->setContextMenuPolicy(Qt::CustomContextMenu);
     m_list->setCursor(Qt::PointingHandCursor);
+    // Keep the cards clear of the scrollbar when one appears.
+    m_list->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    m_list->viewport()->setContentsMargins(0, 0, 2, 0);
 
     m_stack = new QStackedWidget;
     m_stack->addWidget(m_list);

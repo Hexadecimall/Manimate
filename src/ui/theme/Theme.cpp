@@ -57,7 +57,10 @@ QWidget {
     color: %(text)s;
 }
 
-QMainWindow, QDialog {
+/* Deliberately not QMainWindow: the main window is translucent so it can paint
+   its own rounded shape and shadow, and an opaque background here would fill
+   the corners back in. */
+QDialog {
     background: %(window)s;
 }
 

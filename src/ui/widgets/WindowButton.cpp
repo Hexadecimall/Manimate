@@ -8,26 +8,25 @@
 namespace mn::ui {
 namespace {
 
-constexpr int kTrafficDiameter = 12;
-constexpr int kTrafficSpacing = 20;
-constexpr int kGlyphWidth = 44;
-constexpr int kGlyphHeight = 32;
+constexpr int kButtonWidth = 30;
+constexpr int kButtonHeight = 26;
+constexpr qreal kPanelRadius = 6.0;
+constexpr qreal kGlyphArm = 4.2;
 
 } // namespace
 
-WindowButton::Appearance WindowButton::nativeAppearance()
+bool WindowButton::controlsBelongOnTheLeft()
 {
 #ifdef Q_OS_MACOS
-    return Appearance::Traffic;
+    return true;
 #else
-    return Appearance::Glyph;
+    return false;
 #endif
 }
 
-WindowButton::WindowButton(Kind kind, Appearance appearance, QWidget *parent)
+WindowButton::WindowButton(Kind kind, QWidget *parent)
     : QAbstractButton(parent)
     , m_kind(kind)
-    , m_appearance(appearance)
 {
     setCursor(Qt::ArrowCursor);
     setFocusPolicy(Qt::NoFocus);
@@ -64,9 +63,7 @@ void WindowButton::setRestoreState(bool restore)
 
 QSize WindowButton::sizeHint() const
 {
-    if (m_appearance == Appearance::Traffic)
-        return {kTrafficSpacing, kTrafficSpacing};
-    return {kGlyphWidth, kGlyphHeight};
+    return {kButtonWidth, kButtonHeight};
 }
 
 void WindowButton::enterEvent(QEnterEvent *event)
@@ -83,123 +80,62 @@ void WindowButton::leaveEvent(QEvent *event)
 
 void WindowButton::paintEvent(QPaintEvent *)
 {
+    const theme::Palette &p = theme::palette();
+
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
-    if (m_appearance == Appearance::Traffic)
-        paintTraffic(painter);
-    else
-        paintGlyph(painter);
-}
 
-void WindowButton::paintTraffic(QPainter &painter)
-{
-    const theme::Palette &p = theme::palette();
+    const bool hovered = underMouse();
 
-    QColor fill;
-    switch (m_kind) {
-    case Kind::Close:
-        fill = QColor(0xFF, 0x5F, 0x57);
-        break;
-    case Kind::Minimize:
-        fill = QColor(0xFE, 0xBC, 0x2E);
-        break;
-    case Kind::Maximize:
-        fill = QColor(0x28, 0xC8, 0x40);
-        break;
-    }
-
-    const bool lit = m_groupHovered || underMouse();
-    if (!lit)
-        fill = theme::mix(p.surfaceActive, fill, 0.28);
-    if (isDown())
-        fill = fill.darker(125);
-
-    const QRectF disc(QPointF((width() - kTrafficDiameter) / 2.0, (height() - kTrafficDiameter) / 2.0),
-                      QSizeF(kTrafficDiameter, kTrafficDiameter));
-    painter.setPen(Qt::NoPen);
-    painter.setBrush(fill);
-    painter.drawEllipse(disc);
-
-    if (!lit)
-        return;
-
-    // The glyph only appears once the cluster is hovered, as on macOS.
-    const QColor ink(0, 0, 0, 170);
-    const QPointF center = disc.center();
-    constexpr qreal arm = 2.7;
-
-    painter.setBrush(Qt::NoBrush);
-    painter.setPen(QPen(ink, 1.3, Qt::SolidLine, Qt::RoundCap));
-
-    switch (m_kind) {
-    case Kind::Close:
-        painter.drawLine(QPointF(center.x() - arm, center.y() - arm), QPointF(center.x() + arm, center.y() + arm));
-        painter.drawLine(QPointF(center.x() - arm, center.y() + arm), QPointF(center.x() + arm, center.y() - arm));
-        break;
-    case Kind::Minimize:
-        painter.drawLine(QPointF(center.x() - arm - 0.8, center.y()), QPointF(center.x() + arm + 0.8, center.y()));
-        break;
-    case Kind::Maximize: {
-        // Two filled triangles pointing away from each other, the way the
-        // system zoom glyph is drawn.
-        painter.setPen(Qt::NoPen);
-        painter.setBrush(ink);
-
-        const qreal g = 0.7;   // the gap down the middle
-        QPolygonF upperLeft({QPointF(center.x() - arm, center.y() - arm),
-                             QPointF(center.x() + arm - g, center.y() - arm),
-                             QPointF(center.x() - arm, center.y() + arm - g)});
-        QPolygonF lowerRight({QPointF(center.x() + arm, center.y() + arm),
-                              QPointF(center.x() - arm + g, center.y() + arm),
-                              QPointF(center.x() + arm, center.y() - arm + g)});
-        painter.drawPolygon(upperLeft);
-        painter.drawPolygon(lowerRight);
-        break;
-    }
-    }
-}
-
-void WindowButton::paintGlyph(QPainter &painter)
-{
-    const theme::Palette &p = theme::palette();
-
-    QColor background = Qt::transparent;
-    QColor foreground = p.textMuted;
-
-    if (underMouse()) {
-        foreground = m_kind == Kind::Close ? QColor(Qt::white) : p.text;
-        background = m_kind == Kind::Close ? p.danger : p.surfaceHover;
+    // The panel appears under the pointer; close is the only one that colours,
+    // because it is the only one worth hesitating over.
+    if (hovered) {
+        QColor panel = m_kind == Kind::Close ? p.danger : p.surfaceHover;
         if (isDown())
-            background = background.darker(115);
+            panel = panel.darker(120);
+
+        QPainterPath shape;
+        shape.addRoundedRect(QRectF(rect()).adjusted(1, 2, -1, -2), kPanelRadius, kPanelRadius);
+        painter.fillPath(shape, panel);
     }
 
-    if (background.alpha() > 0)
-        painter.fillRect(rect(), background);
-
-    painter.setPen(QPen(foreground, 1.2));
-    painter.setBrush(Qt::NoBrush);
+    QColor ink = p.textFaint;
+    if (m_groupHovered)
+        ink = p.textMuted;
+    if (hovered)
+        ink = m_kind == Kind::Close ? QColor(Qt::white) : p.text;
 
     const QPointF center = QRectF(rect()).center();
-    constexpr qreal half = 5.0;
+    painter.setBrush(Qt::NoBrush);
+    painter.setPen(QPen(ink, 1.4, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
 
     switch (m_kind) {
     case Kind::Close:
-        painter.drawLine(QPointF(center.x() - half, center.y() - half), QPointF(center.x() + half, center.y() + half));
-        painter.drawLine(QPointF(center.x() - half, center.y() + half), QPointF(center.x() + half, center.y() - half));
+        painter.drawLine(QPointF(center.x() - kGlyphArm, center.y() - kGlyphArm),
+                         QPointF(center.x() + kGlyphArm, center.y() + kGlyphArm));
+        painter.drawLine(QPointF(center.x() - kGlyphArm, center.y() + kGlyphArm),
+                         QPointF(center.x() + kGlyphArm, center.y() - kGlyphArm));
         break;
+
     case Kind::Minimize:
-        painter.drawLine(QPointF(center.x() - half, center.y()), QPointF(center.x() + half, center.y()));
+        painter.drawLine(QPointF(center.x() - kGlyphArm - 0.6, center.y()),
+                         QPointF(center.x() + kGlyphArm + 0.6, center.y()));
         break;
+
     case Kind::Maximize:
         if (m_restore) {
-            painter.drawRect(QRectF(center.x() - half, center.y() - half + 2.5, half * 2 - 2.5, half * 2 - 2.5));
-            painter.drawPolyline(QPolygonF({QPointF(center.x() - half + 2.5, center.y() - half + 2.5),
-                                            QPointF(center.x() - half + 2.5, center.y() - half),
-                                            QPointF(center.x() + half, center.y() - half),
-                                            QPointF(center.x() + half, center.y() + half - 2.5),
-                                            QPointF(center.x() + half - 2.5, center.y() + half - 2.5)}));
+            // Two overlapping outlines: the window stepping back out of full size.
+            const qreal a = kGlyphArm - 0.8;
+            painter.drawRect(QRectF(center.x() - a - 0.8, center.y() - a + 1.6, a * 2, a * 2));
+            painter.drawPolyline(QPolygonF({QPointF(center.x() - a + 1.6, center.y() - a + 1.6),
+                                            QPointF(center.x() - a + 1.6, center.y() - a),
+                                            QPointF(center.x() + a + 0.8, center.y() - a),
+                                            QPointF(center.x() + a + 0.8, center.y() + a - 1.6),
+                                            QPointF(center.x() + a - 1.6, center.y() + a - 1.6)}));
         } else {
-            painter.drawRect(QRectF(center.x() - half, center.y() - half, half * 2, half * 2));
+            painter.drawRoundedRect(
+                QRectF(center.x() - kGlyphArm, center.y() - kGlyphArm, kGlyphArm * 2, kGlyphArm * 2),
+                1.5, 1.5);
         }
         break;
     }
