@@ -75,14 +75,15 @@ void Wordmark::paintEvent(QPaintEvent *)
     qreal x = 0.0;
     const qreal y = 0.0;
 
-    // Circle, square, triangle: Manim's own primitives, in Manim's colours.
+    // Circle, square, triangle: Manim's own primitives, in Manim's own colours,
+    // which are fixed rather than taken from the interface's accent.
     painter.setBrush(Qt::NoBrush);
 
-    painter.setPen(QPen(p.accent, stroke));
+    painter.setPen(QPen(p.manimBlue, stroke));
     painter.drawEllipse(QRectF(x + inset, y + inset, size - stroke, size - stroke));
     x += size + kGlyphGap;
 
-    painter.setPen(QPen(p.success, stroke));
+    painter.setPen(QPen(p.manimGreen, stroke));
     const qreal squareInset = size * 0.08;
     painter.drawRoundedRect(QRectF(x + inset + squareInset, y + inset + squareInset,
                                    size - stroke - squareInset * 2, size - stroke - squareInset * 2),
@@ -95,7 +96,7 @@ void Wordmark::paintEvent(QPaintEvent *)
     triangle.lineTo(x + size - margin - inset, y + size - margin - inset);
     triangle.lineTo(x + margin + inset, y + size - margin - inset);
     triangle.closeSubpath();
-    painter.setPen(QPen(p.danger, stroke, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+    painter.setPen(QPen(p.manimRed, stroke, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
     painter.drawPath(triangle);
 
     x += size + kTextGap;

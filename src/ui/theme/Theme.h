@@ -40,10 +40,10 @@ struct Palette
 
     /// The interface's accent. Warm rather than cold, so it reads as an
     /// editing application; Manim's own palette still colours the scene.
-    QColor accent{0xE0, 0x5A, 0x42};
-    QColor accentHover{0xF0, 0x74, 0x5C};
-    QColor accentPressed{0xBE, 0x48, 0x33};
-    QColor onAccent{0x1B, 0x0B, 0x07};
+    QColor accent{0xC0, 0x2E, 0x22};
+    QColor accentHover{0xD8, 0x3B, 0x2C};
+    QColor accentPressed{0x99, 0x23, 0x1A};
+    QColor onAccent{0xFA, 0xEC, 0xEA};
 
     QColor danger{0xE5, 0x48, 0x4D};
     QColor success{0x83, 0xC1, 0x67};
@@ -51,8 +51,11 @@ struct Palette
     QColor violet{0x9A, 0x72, 0xAC};
     QColor teal{0x5C, 0xD0, 0xB3};
 
-    /// Manim's own blue, for the places that should still point at Manim.
+    /// Manim's own colours. Fixed, not derived from the interface's accent:
+    /// the logo means Manim, so it must not change when the theme does.
     QColor manimBlue{0x58, 0xC4, 0xDD};
+    QColor manimGreen{0x83, 0xC1, 0x67};
+    QColor manimRed{0xFC, 0x62, 0x55};
 };
 
 const Palette &palette();

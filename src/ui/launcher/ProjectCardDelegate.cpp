@@ -20,7 +20,10 @@ constexpr int kBadgeSize = 44;
 QColor badgeColor(const QString &seed)
 {
     const theme::Palette &p = theme::palette();
-    const QVector<QColor> colors = {p.accent, p.success, p.violet, p.warning, p.teal, p.danger};
+    // Manim's palette, not the interface's accent: the badges are decoration,
+    // and should not all turn the same colour when the theme changes.
+    const QVector<QColor> colors = {p.manimBlue, p.manimGreen, p.violet,
+                                    p.warning,   p.teal,       p.manimRed};
     if (seed.isEmpty())
         return colors.first();
 
@@ -94,9 +97,11 @@ void ProjectCardDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
     painter->save();
     painter->setRenderHint(QPainter::Antialiasing);
 
+    // Selection is a raised surface with an accent outline, not a wash of
+    // colour: a card is mostly text, and text on tinted ground reads worse.
     QColor background = p.surface;
     if (selected)
-        background = theme::mix(p.surfaceRaised, p.accent, 0.16);
+        background = p.surfaceActive;
     else if (hovered)
         background = p.surfaceHover;
 
