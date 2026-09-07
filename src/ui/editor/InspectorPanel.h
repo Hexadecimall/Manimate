@@ -32,9 +32,13 @@ private:
     QWidget *editorFor(const catalog::ParamSpec &spec, const QVariant &value,
                        const std::function<void(const QVariant &)> &onChanged);
 
+    /// A titled card holding a form. Returns the form to fill in.
+    QFormLayout *addGroup(QVBoxLayout *layout, const QString &title, const QString &subtitle = {});
+
     void addObjectSection(QVBoxLayout *layout, ObjectId id);
     void addClipSection(QVBoxLayout *layout, ClipId id);
     void addSceneSection(QVBoxLayout *layout);
+    void addEmptyState(QVBoxLayout *layout);
 
     EditorState *m_state;
     QScrollArea *m_scroll = nullptr;

@@ -130,8 +130,8 @@ QPushButton[role="quiet"]:pressed { background: %(surfaceActive)s; }
 QLineEdit, QPlainTextEdit, QTextEdit, QSpinBox, QDoubleSpinBox, QComboBox {
     background: %(surface)s;
     border: 1px solid %(border)s;
-    border-radius: %(radius)dpx;
-    padding: 7px 10px;
+    border-radius: %(radiusSmall)dpx;
+    padding: 4px 8px;
     selection-background-color: %(accentSel)s;
     selection-color: %(text)s;
     font-size: 13px;
@@ -143,7 +143,15 @@ QSpinBox:focus, QDoubleSpinBox:focus, QComboBox:focus {
 QLineEdit:disabled, QComboBox:disabled { color: %(textFaint)s; }
 QLineEdit[state="invalid"] { border-color: %(danger)s; }
 
-QComboBox::drop-down { border: none; width: 22px; }
+QComboBox::drop-down { border: none; width: 18px; }
+
+/* The stepper arrows waste width in a narrow inspector; the field is still
+   scrollable and typeable without them. */
+QSpinBox::up-button, QSpinBox::down-button,
+QDoubleSpinBox::up-button, QDoubleSpinBox::down-button {
+    width: 0px;
+    border: none;
+}
 QComboBox QAbstractItemView {
     background: %(surfaceRaised)s;
     border: 1px solid %(border)s;
@@ -158,6 +166,74 @@ QListView, QTreeView, QTableView {
     border: none;
     outline: none;
 }
+
+QTreeView::item, QListView::item {
+    border-radius: %(radiusSmall)dpx;
+    padding: 3px 4px;
+    margin: 1px 4px 1px 0px;
+    color: %(text)s;
+}
+QTreeView::item:hover, QListView::item:hover {
+    background: %(surfaceHover)s;
+}
+QTreeView::item:selected, QListView::item:selected {
+    background: %(accentSoft)s;
+    color: %(text)s;
+}
+QTreeView::item:disabled, QListView::item:disabled {
+    color: %(textFaint)s;
+}
+QTreeView::branch { background: transparent; }
+
+QListView::indicator, QTreeView::indicator, QCheckBox::indicator {
+    width: 13px;
+    height: 13px;
+    border: 1px solid %(borderStrong)s;
+    border-radius: 4px;
+    background: %(surface)s;
+}
+QListView::indicator:hover, QTreeView::indicator:hover, QCheckBox::indicator:hover {
+    border-color: %(accent)s;
+}
+QListView::indicator:checked, QTreeView::indicator:checked, QCheckBox::indicator:checked {
+    background: %(accent)s;
+    border-color: %(accent)s;
+}
+
+/* A panel's title strip: the same height everywhere, so the columns line up. */
+QLabel[role="panelTitle"] {
+    color: %(textMuted)s;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    padding: 0px;
+}
+
+QWidget[role="panelHeader"] {
+    background: %(surfaceRaised)s;
+    border-bottom: 1px solid %(border)s;
+}
+
+QWidget[role="group"] {
+    background: %(surfaceRaised)s;
+    border: 1px solid %(border)s;
+    border-radius: %(radius)dpx;
+}
+
+QLabel[role="groupTitle"] {
+    color: %(accent)s;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.1px;
+}
+
+QLabel[role="field"] {
+    color: %(textMuted)s;
+    font-size: 12px;
+}
+
+QSplitter::handle { background: %(border)s; }
+QSplitter::handle:hover { background: %(accent)s; }
 
 QScrollBar:vertical {
     background: transparent;
@@ -222,6 +298,7 @@ QFrame[role="separator"] { background: %(border)s; border: none; }
         .replace(QStringLiteral("%(text)s"), hex(p.text))
         .replace(QStringLiteral("%(accentHover)s"), hex(p.accentHover))
         .replace(QStringLiteral("%(accentPressed)s"), hex(p.accentPressed))
+        .replace(QStringLiteral("%(accentSoft)s"), rgba(p.accent, 64))
         .replace(QStringLiteral("%(accentSel)s"), rgba(p.accent, 90))
         .replace(QStringLiteral("%(accent)s"), hex(p.accent))
         .replace(QStringLiteral("%(onAccent)s"), hex(p.onAccent))

@@ -21,21 +21,46 @@
 namespace mn::ui {
 namespace {
 
-QLabel *heading(const QString &text)
+constexpr int kMinimumFieldWidth = 54;
+
+/// Let a field shrink with the panel. Without this the widest editor sets the
+/// panel's minimum width and the rest of the column is pushed off the edge.
+void makeShrinkable(QWidget *widget, int minimumWidth = kMinimumFieldWidth)
 {
-    auto *label = new QLabel(text);
-    label->setProperty("role", "section");
-    return label;
+    widget->setMinimumWidth(minimumWidth);
+    widget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+}
+
+QDoubleSpinBox *makeDoubleBox()
+{
+    auto *box = new QDoubleSpinBox;
+    box->setKeyboardTracking(false);
+    box->setButtonSymbols(QAbstractSpinBox::NoButtons);
+    box->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+    makeShrinkable(box);
+    return box;
 }
 
 QFormLayout *makeForm()
 {
     auto *form = new QFormLayout;
     form->setContentsMargins(0, 0, 0, 0);
-    form->setSpacing(7);
+    form->setHorizontalSpacing(10);
+    form->setVerticalSpacing(6);
     form->setLabelAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+    form->setFormAlignment(Qt::AlignLeft | Qt::AlignTop);
     form->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
+    form->setRowWrapPolicy(QFormLayout::DontWrapRows);
     return form;
+}
+
+QLabel *fieldLabel(const QString &text)
+{
+    auto *label = new QLabel(text);
+    label->setProperty("role", "field");
+    label->setMinimumWidth(56);
+    label->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+    return label;
 }
 
 /// A button showing a colour, which opens the colour picker.
@@ -47,6 +72,7 @@ public:
     {
         setCursor(Qt::PointingHandCursor);
         setMinimumHeight(26);
+        makeShrinkable(this, 60);
         setColor(colour);
     }
 
@@ -79,11 +105,26 @@ InspectorPanel::InspectorPanel(EditorState *state, QWidget *parent)
     , m_state(state)
 {
     const theme::Palette &p = theme::palette();
-    setStyleSheet(QStringLiteral("QWidget { background: %1; }").arg(p.surface.name()));
+    setStyleSheet(QStringLiteral("QScrollArea, QScrollArea > QWidget > QWidget { background: %1; }")
+                      .arg(p.surface.name()));
+    setAutoFillBackground(true);
+    QPalette background = palette();
+    background.setColor(QPalette::Window, p.surface);
+    setPalette(background);
 
     auto *outer = new QVBoxLayout(this);
     outer->setContentsMargins(0, 0, 0, 0);
     outer->setSpacing(0);
+
+    auto *header = new QWidget;
+    header->setProperty("role", "panelHeader");
+    header->setFixedHeight(32);
+    auto *headerLayout = new QHBoxLayout(header);
+    headerLayout->setContentsMargins(14, 0, 14, 0);
+    auto *headerTitle = new QLabel(tr("INSPECTOR"));
+    headerTitle->setProperty("role", "panelTitle");
+    headerLayout->addWidget(headerTitle);
+    outer->addWidget(header);
 
     m_scroll = new QScrollArea;
     m_scroll->setWidgetResizable(true);
@@ -104,12 +145,11 @@ QWidget *InspectorPanel::editorFor(const catalog::ParamSpec &spec, const QVarian
 
     switch (spec.type) {
     case ParamType::Number: {
-        auto *box = new QDoubleSpinBox;
+        QDoubleSpinBox *box = makeDoubleBox();
         box->setRange(spec.minimum, spec.maximum);
         box->setSingleStep(spec.step);
-        box->setDecimals(3);
+        box->setDecimals(spec.step >= 1.0 ? 0 : 2);
         box->setValue(value.toDouble());
-        box->setKeyboardTracking(false);
         connect(box, &QDoubleSpinBox::valueChanged, this,
                 [onChanged](double v) { onChanged(v); });
         return box;
@@ -119,6 +159,9 @@ QWidget *InspectorPanel::editorFor(const catalog::ParamSpec &spec, const QVarian
         box->setRange(int(spec.minimum), int(spec.maximum));
         box->setValue(value.toInt());
         box->setKeyboardTracking(false);
+        box->setButtonSymbols(QAbstractSpinBox::NoButtons);
+        box->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+        makeShrinkable(box);
         connect(box, &QSpinBox::valueChanged, this, [onChanged](int v) { onChanged(v); });
         return box;
     }
@@ -148,13 +191,13 @@ QWidget *InspectorPanel::editorFor(const catalog::ParamSpec &spec, const QVarian
         layout->setContentsMargins(0, 0, 0, 0);
         layout->setSpacing(6);
 
-        auto *x = new QDoubleSpinBox;
-        auto *y = new QDoubleSpinBox;
+        QDoubleSpinBox *x = makeDoubleBox();
+        QDoubleSpinBox *y = makeDoubleBox();
         for (QDoubleSpinBox *box : {x, y}) {
             box->setRange(-1000, 1000);
             box->setSingleStep(0.1);
-            box->setDecimals(3);
-            box->setKeyboardTracking(false);
+            box->setDecimals(2);
+            box->setMinimumWidth(44);
         }
         x->setPrefix(QStringLiteral("x "));
         y->setPrefix(QStringLiteral("y "));
@@ -171,12 +214,14 @@ QWidget *InspectorPanel::editorFor(const catalog::ParamSpec &spec, const QVarian
     }
     case ParamType::Text: {
         auto *edit = new QLineEdit(value.toString());
+        makeShrinkable(edit);
         connect(edit, &QLineEdit::textEdited, this,
                 [onChanged](const QString &v) { onChanged(v); });
         return edit;
     }
     case ParamType::Choice: {
         auto *box = new QComboBox;
+        makeShrinkable(box);
         box->addItems(spec.choices);
         box->setCurrentText(value.toString());
         connect(box, &QComboBox::currentTextChanged, this,
@@ -187,6 +232,34 @@ QWidget *InspectorPanel::editorFor(const catalog::ParamSpec &spec, const QVarian
     return new QWidget;
 }
 
+QFormLayout *InspectorPanel::addGroup(QVBoxLayout *layout, const QString &title,
+                                      const QString &subtitle)
+{
+    auto *card = new QWidget;
+    card->setProperty("role", "group");
+
+    auto *cardLayout = new QVBoxLayout(card);
+    cardLayout->setContentsMargins(12, 10, 12, 12);
+    cardLayout->setSpacing(8);
+
+    auto *heading = new QLabel(title.toUpper());
+    heading->setProperty("role", "groupTitle");
+    cardLayout->addWidget(heading);
+
+    if (!subtitle.isEmpty()) {
+        auto *note = new QLabel(subtitle);
+        note->setProperty("role", "subtitle");
+        note->setWordWrap(true);
+        cardLayout->addWidget(note);
+    }
+
+    QFormLayout *form = makeForm();
+    cardLayout->addLayout(form);
+
+    layout->addWidget(card);
+    return form;
+}
+
 void InspectorPanel::addObjectSection(QVBoxLayout *layout, ObjectId id)
 {
     const SceneObject *object = m_state->document().findObject(id);
@@ -194,27 +267,25 @@ void InspectorPanel::addObjectSection(QVBoxLayout *layout, ObjectId id)
         return;
 
     const catalog::MobjectSpec *spec = catalog::findMobject(object->type);
-    layout->addWidget(heading(spec ? spec->displayName.toUpper() : tr("OBJECT")));
-
-    auto *form = makeForm();
+    QFormLayout *form = addGroup(layout, spec ? spec->displayName : tr("Object"));
 
     auto *nameEdit = new QLineEdit(object->name);
+    makeShrinkable(nameEdit);
     connect(nameEdit, &QLineEdit::editingFinished, this, [this, id, nameEdit] {
         m_state->setObjectName(id, nameEdit->text());
     });
-    form->addRow(tr("Name"), nameEdit);
+    form->addRow(fieldLabel(tr("Name")), nameEdit);
 
-    if (spec) {
-        for (const catalog::ParamSpec &param : spec->params) {
-            const QVariant value =
-                catalog::paramOr(object->params, spec->params, param.id);
-            form->addRow(param.label, editorFor(param, value, [this, id, param](const QVariant &v) {
-                             m_state->setObjectParam(id, param.id, v);
-                         }));
-        }
+    if (!spec)
+        return;
+
+    for (const catalog::ParamSpec &param : spec->params) {
+        const QVariant value = catalog::paramOr(object->params, spec->params, param.id);
+        form->addRow(fieldLabel(param.label),
+                     editorFor(param, value, [this, id, param](const QVariant &v) {
+                         m_state->setObjectParam(id, param.id, v);
+                     }));
     }
-
-    layout->addLayout(form);
 }
 
 void InspectorPanel::addClipSection(QVBoxLayout *layout, ClipId id)
@@ -224,25 +295,23 @@ void InspectorPanel::addClipSection(QVBoxLayout *layout, ClipId id)
         return;
 
     const catalog::AnimationSpec *spec = catalog::findAnimation(clip->type);
-    layout->addWidget(heading(spec ? spec->displayName.toUpper() : tr("ANIMATION")));
+    const SceneObject *object = m_state->document().findObject(clip->objectId);
+    QFormLayout *form = addGroup(layout, spec ? spec->displayName : tr("Animation"),
+                                 object ? tr("on %1").arg(object->name) : QString());
 
-    auto *form = makeForm();
-
-    auto *start = new QDoubleSpinBox;
+    QDoubleSpinBox *start = makeDoubleBox();
     start->setRange(0, 3600);
     start->setSingleStep(0.1);
     start->setDecimals(2);
     start->setSuffix(QStringLiteral(" s"));
     start->setValue(clip->start);
-    start->setKeyboardTracking(false);
 
-    auto *duration = new QDoubleSpinBox;
+    QDoubleSpinBox *duration = makeDoubleBox();
     duration->setRange(0.05, 3600);
     duration->setSingleStep(0.1);
     duration->setDecimals(2);
     duration->setSuffix(QStringLiteral(" s"));
     duration->setValue(clip->duration);
-    duration->setKeyboardTracking(false);
 
     auto applyTiming = [this, id, start, duration] {
         const Clip *current = m_state->document().findClip(id);
@@ -254,62 +323,69 @@ void InspectorPanel::addClipSection(QVBoxLayout *layout, ClipId id)
     connect(start, &QDoubleSpinBox::valueChanged, this, applyTiming);
     connect(duration, &QDoubleSpinBox::valueChanged, this, applyTiming);
 
-    form->addRow(tr("Start"), start);
-    form->addRow(tr("Duration"), duration);
+    form->addRow(fieldLabel(tr("Start")), start);
+    form->addRow(fieldLabel(tr("Length")), duration);
 
     auto *rateBox = new QComboBox;
+    makeShrinkable(rateBox);
     rateBox->addItems(rate::names());
     rateBox->setCurrentText(clip->rateFunc);
     connect(rateBox, &QComboBox::currentTextChanged, this,
             [this, id](const QString &name) { m_state->setClipRateFunction(id, name); });
-    form->addRow(tr("Easing"), rateBox);
+    form->addRow(fieldLabel(tr("Easing")), rateBox);
 
-    if (spec) {
-        for (const catalog::ParamSpec &param : spec->params) {
-            const QVariant value = catalog::paramOr(clip->params, spec->params, param.id);
-            form->addRow(param.label, editorFor(param, value, [this, id, param](const QVariant &v) {
-                             m_state->setClipParam(id, param.id, v);
-                         }));
-        }
+    if (!spec)
+        return;
+
+    for (const catalog::ParamSpec &param : spec->params) {
+        const QVariant value = catalog::paramOr(clip->params, spec->params, param.id);
+        form->addRow(fieldLabel(param.label),
+                     editorFor(param, value, [this, id, param](const QVariant &v) {
+                         m_state->setClipParam(id, param.id, v);
+                     }));
     }
-
-    layout->addLayout(form);
 }
 
 void InspectorPanel::addSceneSection(QVBoxLayout *layout)
 {
-    layout->addWidget(heading(tr("SCENE")));
-
-    auto *form = makeForm();
     const Document &document = m_state->document();
+    QFormLayout *form = addGroup(layout, tr("Scene"));
 
-    auto *duration = new QDoubleSpinBox;
+    QDoubleSpinBox *duration = makeDoubleBox();
     duration->setRange(1, 3600);
     duration->setSingleStep(1);
     duration->setDecimals(2);
     duration->setSuffix(QStringLiteral(" s"));
     duration->setValue(document.timeline.duration);
-    duration->setKeyboardTracking(false);
     connect(duration, &QDoubleSpinBox::valueChanged, this,
             [this](double v) { m_state->setTimelineDuration(v); });
-    form->addRow(tr("Length"), duration);
+    form->addRow(fieldLabel(tr("Length")), duration);
 
-    auto *resolution = new QLabel(QStringLiteral("%1 × %2 · %3 fps")
-                                     .arg(document.render.width)
-                                     .arg(document.render.height)
-                                     .arg(document.render.fps));
+    auto *resolution = new QLabel(QStringLiteral("%1 × %2").arg(document.render.width)
+                                      .arg(document.render.height));
     resolution->setProperty("role", "subtitle");
-    form->addRow(tr("Video"), resolution);
+    form->addRow(fieldLabel(tr("Size")), resolution);
+
+    auto *fps = new QLabel(tr("%1 fps").arg(document.render.fps));
+    fps->setProperty("role", "subtitle");
+    form->addRow(fieldLabel(tr("Rate")), fps);
 
     auto *objects = new QLabel(QString::number(document.objects.size()));
     objects->setProperty("role", "subtitle");
-    form->addRow(tr("Objects"), objects);
+    form->addRow(fieldLabel(tr("Objects")), objects);
 
     auto *clips = new QLabel(QString::number(document.timeline.clips.size()));
     clips->setProperty("role", "subtitle");
-    form->addRow(tr("Animations"), clips);
+    form->addRow(fieldLabel(tr("Animations")), clips);
+}
 
-    layout->addLayout(form);
+void InspectorPanel::addEmptyState(QVBoxLayout *layout)
+{
+    auto *hint = new QLabel(tr("Select something on the canvas or the timeline to edit it."));
+    hint->setProperty("role", "subtitle");
+    hint->setWordWrap(true);
+    hint->setAlignment(Qt::AlignHCenter);
+    layout->addWidget(hint);
 }
 
 void InspectorPanel::rebuild()
@@ -332,8 +408,10 @@ void InspectorPanel::rebuild()
     if (object != kInvalidObjectId)
         addObjectSection(layout, object);
 
-    if (object == kInvalidObjectId && clip == kInvalidClipId)
+    if (object == kInvalidObjectId && clip == kInvalidClipId) {
         addSceneSection(layout);
+        addEmptyState(layout);
+    }
 
     layout->addStretch(1);
 

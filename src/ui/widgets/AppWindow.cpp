@@ -8,6 +8,7 @@
 #include <QMouseEvent>
 #include <QPainter>
 #include <QPainterPath>
+#include <cmath>
 #include <QToolButton>
 #include <QVBoxLayout>
 #include <QWindow>
@@ -144,17 +145,19 @@ void AppWindow::paintEvent(QPaintEvent *event)
 
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
-    painter.setBrush(Qt::NoBrush);
+    painter.setPen(Qt::NoPen);
 
-    // A soft shadow, drawn as concentric rounded outlines fading outwards.
-    // Cheaper than a blur and indistinguishable at this size.
+    // A soft shadow, built from filled rounded rectangles fading outwards.
+    // Filled rather than stroked: one-pixel outlines at low alpha were too
+    // faint to read at all, which left the window looking pasted on.
     const QRectF panel = QRectF(m_shell->geometry());
-    for (int i = kShadowMargin; i > 0; --i) {
+    for (int i = kShadowMargin; i >= 1; --i) {
         const qreal t = qreal(i) / kShadowMargin;
         QColor shade(0, 0, 0);
-        shade.setAlphaF(0.16 * (1.0 - t) * (1.0 - t));
-        painter.setPen(QPen(shade, 1.0));
-        painter.drawRoundedRect(panel.adjusted(-i, -i + 1, i, i + 1),
+        // Sits slightly low, the way a shadow cast from above does.
+        shade.setAlphaF(0.30 * std::pow(1.0 - t, 1.7));
+        painter.setBrush(shade);
+        painter.drawRoundedRect(panel.adjusted(-i, -i + 2, i, i + 2),
                                 kCornerRadius + i, kCornerRadius + i);
     }
 }

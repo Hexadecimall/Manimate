@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QIcon>
 #include <QWidget>
 
 class QLineEdit;
@@ -21,6 +22,14 @@ class LibraryPanel : public QWidget
 
 public:
     explicit LibraryPanel(EditorState *state, QWidget *parent = nullptr);
+
+    /// A small preview of a catalog shape, drawn with the scene renderer so the
+    /// icon and the canvas can never disagree about what a shape looks like.
+    /// Shared, so the scene list shows the same picture as the library.
+    static QIcon shapeIcon(const QString &specId);
+
+    /// A glyph standing for what an animation does.
+    static QIcon animationIcon(const QString &animationId);
 
 private:
     void build();

@@ -15,10 +15,10 @@
 namespace mn::ui {
 namespace {
 
-constexpr int kRulerHeight = 26;
-constexpr int kTrackHeight = 34;
-constexpr int kTrackGap = 4;
-constexpr int kHeaderWidth = 96;
+constexpr int kRulerHeight = 28;
+constexpr int kTrackHeight = 42;
+constexpr int kTrackGap = 5;
+constexpr int kHeaderWidth = 116;
 constexpr int kLeftPadding = 8;
 constexpr double kTrimHandle = 6.0;
 constexpr int kMinimumTracks = 3;
@@ -131,19 +131,9 @@ void TimelineView::paintEvent(QPaintEvent *)
     for (int track = 0; track < trackCount; ++track) {
         const QRectF lane(kHeaderWidth, kRulerHeight + track * (kTrackHeight + kTrackGap),
                           width() - kHeaderWidth, kTrackHeight);
-        painter.fillRect(lane, track % 2 == 0 ? p.surface : theme::mix(p.surface, p.window, 0.4));
+        painter.fillRect(lane, track % 2 == 0 ? theme::mix(p.window, p.surface, 0.55)
+                                              : theme::mix(p.window, p.surface, 0.30));
 
-        const QRectF header(0, lane.top(), kHeaderWidth, lane.height());
-        painter.fillRect(header, p.window);
-
-        QFont font = theme::font(1);
-        font.setPixelSize(11);
-        painter.setFont(font);
-        painter.setPen(track < document.timeline.tracks.size() ? p.textMuted : p.textFaint);
-        painter.drawText(header.adjusted(12, 0, -8, 0), Qt::AlignVCenter | Qt::AlignLeft,
-                         track < document.timeline.tracks.size()
-                             ? document.timeline.tracks.at(track).name
-                             : tr("Drop here"));
     }
 
     // ------------------------------------------------------------ ruler ----
@@ -195,30 +185,49 @@ void TimelineView::paintEvent(QPaintEvent *)
         const bool selected = clip.id == m_state->selectedClip();
         const bool hovered = clip.id == m_hovered;
 
-        QColor accent = clipColour(spec);
-        QColor body = theme::mix(p.surface, accent, hovered || selected ? 0.34 : 0.22);
+        const QColor accent = clipColour(spec);
+        const QColor body = theme::mix(p.surfaceRaised, accent, hovered || selected ? 0.36 : 0.20);
 
         QPainterPath shape;
-        shape.addRoundedRect(box, 4, 4);
+        shape.addRoundedRect(box, 5, 5);
         painter.fillPath(shape, body);
 
         // A bar of the animation's own colour down the leading edge.
         painter.save();
         painter.setClipPath(shape);
         painter.fillRect(QRectF(box.left(), box.top(), 3, box.height()), accent);
+
+        // Trim handles, shown only while the pointer is on the clip.
+        if (hovered) {
+            const QColor handle = theme::mix(body, p.text, 0.30);
+            painter.fillRect(QRectF(box.left() + 3, box.top(), 3, box.height()), handle);
+            painter.fillRect(QRectF(box.right() - 4, box.top(), 3, box.height()), handle);
+        }
         painter.restore();
 
-        painter.setPen(QPen(selected ? p.text : theme::mix(accent, p.border, 0.5), selected ? 1.6 : 1.0));
+        painter.setPen(QPen(selected ? p.text : theme::mix(accent, p.border, 0.55), selected ? 1.6 : 1.0));
         painter.setBrush(Qt::NoBrush);
         painter.drawPath(shape);
 
+        const QRectF label = box.adjusted(10, 3, -7, -3);
+        const QString title = spec ? spec->displayName : clip.type;
+
         painter.setFont(clipFont);
         painter.setPen(p.text);
-        const QRectF label = box.adjusted(9, 0, -6, 0);
-        const QString title = spec ? spec->displayName : clip.type;
-        const QString caption = object ? QStringLiteral("%1 · %2").arg(title, object->name) : title;
-        painter.drawText(label, Qt::AlignVCenter | Qt::AlignLeft,
-                         QFontMetricsF(clipFont).elidedText(caption, Qt::ElideRight, label.width()));
+        painter.drawText(QRectF(label.left(), label.top(), label.width(), label.height() / 2.0),
+                         Qt::AlignVCenter | Qt::AlignLeft,
+                         QFontMetricsF(clipFont).elidedText(title, Qt::ElideRight, label.width()));
+
+        if (object && label.height() > 22) {
+            QFont subFont = theme::font(1);
+            subFont.setPixelSize(10);
+            painter.setFont(subFont);
+            painter.setPen(p.textFaint);
+            painter.drawText(
+                QRectF(label.left(), label.center().y(), label.width(), label.height() / 2.0),
+                Qt::AlignVCenter | Qt::AlignLeft,
+                QFontMetricsF(subFont).elidedText(object->name, Qt::ElideRight, label.width()));
+        }
     }
 
     // --------------------------------------------------------- playhead ----
@@ -236,18 +245,33 @@ void TimelineView::paintEvent(QPaintEvent *)
     }
 
     // Mask anything drawn over the track headers.
-    painter.fillRect(QRectF(0, kRulerHeight, kHeaderWidth, height() - kRulerHeight), p.window);
+    painter.fillRect(QRectF(0, kRulerHeight, kHeaderWidth, height() - kRulerHeight), p.surface);
     for (int track = 0; track < trackCount; ++track) {
         const QRectF header(0, kRulerHeight + track * (kTrackHeight + kTrackGap), kHeaderWidth,
                             kTrackHeight);
-        QFont font = theme::font(1);
+        const bool real = track < document.timeline.tracks.size();
+
+        int clipCount = 0;
+        for (const Clip &clip : document.timeline.clips)
+            clipCount += clip.track == track ? 1 : 0;
+
+        QFont font = theme::font(1, QFont::DemiBold);
         font.setPixelSize(11);
         painter.setFont(font);
-        painter.setPen(track < document.timeline.tracks.size() ? p.textMuted : p.textFaint);
-        painter.drawText(header.adjusted(12, 0, -8, 0), Qt::AlignVCenter | Qt::AlignLeft,
-                         track < document.timeline.tracks.size()
-                             ? document.timeline.tracks.at(track).name
-                             : tr("New track"));
+        painter.setPen(real ? p.text : p.textFaint);
+        painter.drawText(header.adjusted(14, 4, -8, -header.height() / 2.0),
+                         Qt::AlignVCenter | Qt::AlignLeft,
+                         real ? document.timeline.tracks.at(track).name : tr("New track"));
+
+        if (real) {
+            QFont sub = theme::font(1);
+            sub.setPixelSize(10);
+            painter.setFont(sub);
+            painter.setPen(p.textFaint);
+            painter.drawText(header.adjusted(14, header.height() / 2.0, -8, -4),
+                             Qt::AlignVCenter | Qt::AlignLeft,
+                             clipCount == 1 ? tr("1 clip") : tr("%1 clips").arg(clipCount));
+        }
     }
     painter.setPen(QPen(p.border, 1.0));
     painter.drawLine(QPointF(kHeaderWidth - 0.5, 0), QPointF(kHeaderWidth - 0.5, height()));

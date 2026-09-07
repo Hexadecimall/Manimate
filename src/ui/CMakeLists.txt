@@ -18,6 +18,7 @@ add_library(manimation_ui STATIC
     editor/TimelineView.cpp
     editor/LibraryPanel.cpp
     editor/InspectorPanel.cpp
+    editor/SceneOutliner.cpp
     project/ProjectWindow.cpp
 )
 

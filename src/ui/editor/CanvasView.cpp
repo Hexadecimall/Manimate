@@ -56,16 +56,27 @@ void CanvasView::paintEvent(QPaintEvent *)
 
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
-    painter.fillRect(rect(), p.window);
+
+    // The surround is darker than the frame, so the video's edge is obvious
+    // even when the scene itself is black.
+    painter.fillRect(rect(), theme::mix(p.window, QColor(Qt::black), 0.45));
 
     const QRectF frame = frameRect();
 
-    // A hairline round the frame, so its edge is visible against a dark scene.
-    painter.setPen(QPen(p.border, 1.0));
-    painter.setBrush(Qt::NoBrush);
-    painter.drawRect(frame.adjusted(-0.5, -0.5, 0.5, 0.5));
+    // A soft shadow under the frame, so it reads as a thing being looked at.
+    painter.setPen(Qt::NoPen);
+    for (int i = 6; i >= 1; --i) {
+        QColor shade(0, 0, 0);
+        shade.setAlphaF(0.16 * (1.0 - double(i) / 7.0));
+        painter.setBrush(shade);
+        painter.drawRect(frame.adjusted(-i, -i + 1, i, i + 2));
+    }
 
     SceneRenderer::render(painter, document, m_state->playhead(), frame);
+
+    painter.setPen(QPen(p.borderStrong, 1.0));
+    painter.setBrush(Qt::NoBrush);
+    painter.drawRect(frame.adjusted(-0.5, -0.5, 0.5, 0.5));
 
     if (m_guides) {
         painter.save();
@@ -78,6 +89,16 @@ void CanvasView::paintEvent(QPaintEvent *)
         painter.drawLine(QPointF(frame.left(), frame.center().y()),
                          QPointF(frame.right(), frame.center().y()));
         painter.restore();
+    }
+
+    // Nothing in the scene yet: say what to do about it.
+    if (document.objects.isEmpty()) {
+        QFont hint = theme::font(1);
+        hint.setPixelSize(13);
+        painter.setFont(hint);
+        painter.setPen(p.textFaint);
+        painter.drawText(frame, Qt::AlignCenter,
+                         tr("Double-click a shape in the library to add it"));
     }
 
     // The selection, drawn over the scene.

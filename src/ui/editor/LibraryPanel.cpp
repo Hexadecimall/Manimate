@@ -2,8 +2,15 @@
 
 #include "Catalog.h"
 #include "EditorState.h"
+#include "SceneEvaluator.h"
+#include "SceneRenderer.h"
 #include "Theme.h"
 
+#include <QPainter>
+#include <QPainterPath>
+#include <QtMath>
+
+#include <QHBoxLayout>
 #include <QHeaderView>
 #include <QLabel>
 #include <QLineEdit>
@@ -15,11 +22,13 @@ namespace {
 
 constexpr int kIdRole = Qt::UserRole + 1;
 constexpr int kIsAnimationRole = Qt::UserRole + 2;
+constexpr int kIconSize = 18;
 
 QTreeWidget *makeTree()
 {
     auto *tree = new QTreeWidget;
     tree->setHeaderHidden(true);
+    tree->setIconSize(QSize(kIconSize, kIconSize));
     tree->setIndentation(12);
     tree->setRootIsDecorated(true);
     tree->setFrameShape(QFrame::NoFrame);
@@ -38,6 +47,144 @@ QLabel *heading(const QString &text)
 
 } // namespace
 
+QIcon LibraryPanel::shapeIcon(const QString &specId)
+{
+    const catalog::MobjectSpec *spec = catalog::findMobject(specId);
+    if (!spec)
+        return {};
+
+    // Evaluate a default instance and draw it exactly as the canvas would,
+    // scaled to fit the icon.
+    evaluator::ObjectState state;
+    state.type = spec->id;
+    state.params = catalog::defaultParams(*spec);
+
+    // Text shapes draw their own string, which is unreadable at icon size, so
+    // they get a letter standing for the kind of text instead.
+    if (spec->shape == catalog::ShapeKind::Text || spec->shape == catalog::ShapeKind::MathText) {
+        state.params.insert(spec->shape == catalog::ShapeKind::Text ? QStringLiteral("text")
+                                                                    : QStringLiteral("tex"),
+                            spec->shape == catalog::ShapeKind::Text ? QStringLiteral("T")
+                                                                    : QStringLiteral("x"));
+    }
+
+    QPainterPath path = SceneRenderer::shapeOf(state);
+    if (path.isEmpty())
+        return {};
+
+    const QRectF bounds = path.boundingRect();
+    if (bounds.isEmpty())
+        return {};
+
+    const qreal ratio = 3.0;   // drawn oversized so it stays crisp on any display
+    QPixmap pixmap(int(kIconSize * ratio), int(kIconSize * ratio));
+    pixmap.fill(Qt::transparent);
+    pixmap.setDevicePixelRatio(ratio);
+
+    const qreal inset = 2.0;
+    const qreal usable = kIconSize - inset * 2.0;
+    const qreal scale = qMin(usable / bounds.width(), usable / bounds.height());
+
+    QTransform transform;
+    transform.translate(kIconSize / 2.0, kIconSize / 2.0);
+    transform.scale(scale, -scale);   // y up, as in the scene
+    transform.translate(-bounds.center().x(), -bounds.center().y());
+
+    QPainter painter(&pixmap);
+    painter.setRenderHint(QPainter::Antialiasing);
+    const bool isText = spec->shape == catalog::ShapeKind::Text
+                        || spec->shape == catalog::ShapeKind::MathText;
+    if (isText) {
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(theme::palette().textMuted);
+    } else {
+        painter.setPen(QPen(theme::palette().textMuted, 1.3));
+        painter.setBrush(Qt::NoBrush);
+    }
+    painter.drawPath(transform.map(path));
+    painter.end();
+
+    return QIcon(pixmap);
+}
+
+QIcon LibraryPanel::animationIcon(const QString &animationId)
+{
+    const catalog::AnimationSpec *spec = catalog::findAnimation(animationId);
+    if (!spec)
+        return {};
+
+    const theme::Palette &p = theme::palette();
+    QColor ink = p.violet;
+    if (spec->isEntrance)
+        ink = p.accent;
+    else if (spec->isExit)
+        ink = p.danger;
+    else if (spec->effect == catalog::Effect::Wait)
+        ink = p.textFaint;
+
+    const qreal ratio = 3.0;
+    QPixmap pixmap(int(kIconSize * ratio), int(kIconSize * ratio));
+    pixmap.fill(Qt::transparent);
+    pixmap.setDevicePixelRatio(ratio);
+
+    QPainter painter(&pixmap);
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.setPen(QPen(ink, 1.4, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+    painter.setBrush(Qt::NoBrush);
+
+    const QPointF centre(kIconSize / 2.0, kIconSize / 2.0);
+    constexpr qreal r = 5.0;
+
+    switch (spec->effect) {
+    case catalog::Effect::Draw:
+        // Three quarters of a circle: an outline being drawn.
+        painter.drawArc(QRectF(centre.x() - r, centre.y() - r, r * 2, r * 2), 90 * 16, -270 * 16);
+        break;
+    case catalog::Effect::FadeIn:
+    case catalog::Effect::FadeOut: {
+        QLinearGradient gradient(centre.x() - r, 0, centre.x() + r, 0);
+        const bool in = spec->effect == catalog::Effect::FadeIn;
+        gradient.setColorAt(in ? 0.0 : 1.0, QColor(ink.red(), ink.green(), ink.blue(), 30));
+        gradient.setColorAt(in ? 1.0 : 0.0, ink);
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(gradient);
+        painter.drawEllipse(centre, r, r);
+        break;
+    }
+    case catalog::Effect::Grow:
+        painter.drawEllipse(centre, r, r);
+        painter.drawEllipse(centre, r * 0.42, r * 0.42);
+        break;
+    case catalog::Effect::Shift:
+        painter.drawLine(QPointF(centre.x() - r, centre.y()), QPointF(centre.x() + r, centre.y()));
+        painter.drawLine(QPointF(centre.x() + r, centre.y()), QPointF(centre.x() + r - 3, centre.y() - 3));
+        painter.drawLine(QPointF(centre.x() + r, centre.y()), QPointF(centre.x() + r - 3, centre.y() + 3));
+        break;
+    case catalog::Effect::Rotate:
+        painter.drawArc(QRectF(centre.x() - r, centre.y() - r, r * 2, r * 2), 40 * 16, 280 * 16);
+        painter.drawLine(QPointF(centre.x() + r * 0.75, centre.y() - r * 0.6),
+                         QPointF(centre.x() + r * 0.2, centre.y() - r * 0.9));
+        break;
+    case catalog::Effect::Scale:
+        painter.drawRect(QRectF(centre.x() - r, centre.y() - r, r * 2, r * 2));
+        painter.drawLine(QPointF(centre.x() - r * 0.4, centre.y() + r * 0.4),
+                         QPointF(centre.x() + r * 0.4, centre.y() - r * 0.4));
+        break;
+    case catalog::Effect::Recolor:
+        painter.setBrush(ink);
+        painter.drawEllipse(centre, r, r);
+        break;
+    case catalog::Effect::Wait:
+        painter.drawEllipse(centre, r, r);
+        painter.drawLine(centre, QPointF(centre.x(), centre.y() - r * 0.6));
+        painter.drawLine(centre, QPointF(centre.x() + r * 0.5, centre.y()));
+        break;
+    }
+    painter.end();
+
+    return QIcon(pixmap);
+}
+
 LibraryPanel::LibraryPanel(EditorState *state, QWidget *parent)
     : QWidget(parent)
     , m_state(state)
@@ -46,8 +193,24 @@ LibraryPanel::LibraryPanel(EditorState *state, QWidget *parent)
     setStyleSheet(QStringLiteral("QWidget { background: %1; }").arg(p.surface.name()));
 
     auto *layout = new QVBoxLayout(this);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(0);
+
+    auto *header = new QWidget;
+    header->setProperty("role", "panelHeader");
+    header->setFixedHeight(32);
+    auto *headerLayout = new QHBoxLayout(header);
+    headerLayout->setContentsMargins(14, 0, 14, 0);
+    auto *headerTitle = new QLabel(tr("LIBRARY"));
+    headerTitle->setProperty("role", "panelTitle");
+    headerLayout->addWidget(headerTitle);
+    layout->addWidget(header);
+
+    auto *body = new QWidget;
+    layout = new QVBoxLayout(body);
     layout->setContentsMargins(12, 12, 12, 12);
     layout->setSpacing(8);
+    qobject_cast<QVBoxLayout *>(this->layout())->addWidget(body, 1);
 
     m_search = new QLineEdit;
     m_search->setPlaceholderText(tr("Search"));
@@ -88,6 +251,7 @@ void LibraryPanel::build()
             auto *item = new QTreeWidgetItem(parent, {spec.displayName});
             item->setData(0, kIdRole, spec.id);
             item->setData(0, kIsAnimationRole, false);
+            item->setIcon(0, shapeIcon(spec.id));
             item->setToolTip(0, tr("Add a %1 to the scene").arg(spec.pythonName));
         }
     }
@@ -103,6 +267,7 @@ void LibraryPanel::build()
             auto *item = new QTreeWidgetItem(parent, {spec.displayName});
             item->setData(0, kIdRole, spec.id);
             item->setData(0, kIsAnimationRole, true);
+            item->setIcon(0, animationIcon(spec.id));
             item->setToolTip(0, tr("Animate the selected object with %1").arg(spec.pythonName));
         }
     }

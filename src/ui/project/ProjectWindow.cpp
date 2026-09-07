@@ -5,6 +5,7 @@
 #include "EditorState.h"
 #include "InspectorPanel.h"
 #include "LibraryPanel.h"
+#include "SceneOutliner.h"
 #include "RecentProjects.h"
 #include "SceneTemplate.h"
 #include "Theme.h"
@@ -113,15 +114,29 @@ QWidget *ProjectWindow::buildEditPage()
     centreLayout->addWidget(m_canvas, 1);
     centreLayout->addWidget(buildTransportBar());
 
+    // The library and the scene share the left column: what you can add, and
+    // what you have added.
     auto *library = new LibraryPanel(m_state);
     library->setMinimumWidth(180);
+
+    auto *outliner = new SceneOutliner(m_state);
+    outliner->setMinimumHeight(90);
+
+    auto *leftColumn = new QSplitter(Qt::Vertical);
+    leftColumn->setHandleWidth(1);
+    leftColumn->setChildrenCollapsible(false);
+    leftColumn->addWidget(library);
+    leftColumn->addWidget(outliner);
+    leftColumn->setStretchFactor(0, 3);
+    leftColumn->setStretchFactor(1, 1);
+    leftColumn->setSizes({520, 220});
     m_inspector = new InspectorPanel(m_state);
     m_inspector->setMinimumWidth(220);
 
     auto *upper = new QSplitter(Qt::Horizontal);
     upper->setHandleWidth(1);
     upper->setChildrenCollapsible(false);
-    upper->addWidget(library);
+    upper->addWidget(leftColumn);
     upper->addWidget(centre);
     upper->addWidget(m_inspector);
     upper->setStretchFactor(0, 0);
