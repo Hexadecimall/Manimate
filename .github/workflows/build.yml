@@ -103,19 +103,17 @@ jobs:
 
           # Put ffmpeg where the interpreter's own bin is, so adding one
           # directory to PATH is enough for a render to find everything.
-          "$interpreter" - <<'PYTHON'
+          "$interpreter" -c "
           import imageio_ffmpeg, os, shutil, stat, sys
-
           source = imageio_ffmpeg.get_ffmpeg_exe()
           root = os.path.dirname(os.path.dirname(os.path.abspath(sys.executable)))
-          target_dir = os.path.join(root, "bin") if os.name != "nt" else root
+          target_dir = root if os.name == 'nt' else os.path.join(root, 'bin')
           os.makedirs(target_dir, exist_ok=True)
-
-          target = os.path.join(target_dir, "ffmpeg.exe" if os.name == "nt" else "ffmpeg")
+          target = os.path.join(target_dir, 'ffmpeg.exe' if os.name == 'nt' else 'ffmpeg')
           shutil.copy2(source, target)
           os.chmod(target, os.stat(target).st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
-          print("bundled ffmpeg ->", target)
-          PYTHON
+          print('bundled ffmpeg ->', target)
+          "
 
           # Prove all of it before it is packaged: a build that ships a Manim
           # which cannot import, or an ffmpeg that cannot run, is worse than one
