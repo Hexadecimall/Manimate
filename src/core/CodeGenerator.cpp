@@ -135,8 +135,21 @@ QStringList placementFor(const SceneObject &object, const catalog::MobjectSpec &
 
     const QPointF position =
         catalog::paramOr(object.params, spec.params, QStringLiteral("position")).toPointF();
-    if (!position.isNull())
+
+    // A line and an arrow already say where they are through their endpoints,
+    // so their position shifts them. Everything else is centred on it.
+    const bool isOffset = spec.shape == catalog::ShapeKind::Line
+                          || spec.shape == catalog::ShapeKind::Arrow;
+
+    if (isOffset) {
+        if (!position.isNull())
+            lines.append(QStringLiteral("%1.shift(%2)").arg(variable, pointLiteral(position)));
+    } else {
+        // Emitted even at the origin. move_to centres the bounding box, and for
+        // a shape whose natural centre is not its box's centre — a triangle,
+        // say — leaving it out would place it somewhere the canvas does not.
         lines.append(QStringLiteral("%1.move_to(%2)").arg(variable, pointLiteral(position)));
+    }
 
     const double rotation =
         catalog::paramOr(object.params, spec.params, QStringLiteral("rotation")).toDouble();

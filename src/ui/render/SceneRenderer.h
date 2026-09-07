@@ -42,7 +42,18 @@ public:
     static QPainterPath shapeOf(const evaluator::ObjectState &state);
 
     /// Where the object sits in scene units, including animated motion.
-    static QTransform transformOf(const evaluator::ObjectState &state);
+    ///
+    /// `shape` is the object's own outline, needed because Manim's move_to
+    /// centres a mobject's bounding box rather than its local origin. For most
+    /// shapes those coincide; for a triangle the circumcentre sits a quarter of
+    /// a radius above the box's centre, so ignoring the difference draws it
+    /// high while a square and a circle beside it sit centred.
+    static QTransform transformOf(const evaluator::ObjectState &state,
+                                  const QPainterPath &shape);
+
+    /// True when a shape is defined by explicit endpoints, so its position is
+    /// an offset rather than a centre.
+    static bool positionIsAnOffset(const QString &type);
 
     /// Bounding box in pixels, for hit testing and selection handles.
     static QRectF boundsInPixels(const evaluator::ObjectState &state, const QTransform &toPixels);

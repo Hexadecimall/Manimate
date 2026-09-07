@@ -298,7 +298,17 @@ QPainterPath SceneRenderer::shapeOf(const evaluator::ObjectState &state)
     return path;
 }
 
-QTransform SceneRenderer::transformOf(const evaluator::ObjectState &state)
+bool SceneRenderer::positionIsAnOffset(const QString &type)
+{
+    const catalog::MobjectSpec *spec = catalog::findMobject(type);
+    if (!spec)
+        return false;
+    // A line and an arrow already say where they are, through their endpoints.
+    return spec->shape == ShapeKind::Line || spec->shape == ShapeKind::Arrow;
+}
+
+QTransform SceneRenderer::transformOf(const evaluator::ObjectState &state,
+                                      const QPainterPath &shape)
 {
     const QPointF position = state.params.value(QStringLiteral("position")).toPointF() + state.offset;
     const double rotation = numberParam(state.params, QStringLiteral("rotation"), 0.0)
@@ -309,6 +319,13 @@ QTransform SceneRenderer::transformOf(const evaluator::ObjectState &state)
     transform.translate(position.x(), position.y());
     transform.rotate(rotation);
     transform.scale(scale, scale);
+
+    // Bring the bounding box's centre to the origin first, so the position
+    // names the object's centre and rotation turns about it, as in Manim.
+    if (!positionIsAnOffset(state.type) && !shape.isEmpty()) {
+        const QPointF centre = shape.boundingRect().center();
+        transform.translate(-centre.x(), -centre.y());
+    }
     return transform;
 }
 
@@ -322,7 +339,7 @@ void SceneRenderer::renderObject(QPainter &painter, const evaluator::ObjectState
     if (state.drawProgress < 1.0)
         path = partialPath(path, state.drawProgress);
 
-    const QTransform full = transformOf(state) * toPixels;
+    const QTransform full = transformOf(state, shapeOf(state)) * toPixels;
     const QPainterPath pixels = full.map(path);
 
     const catalog::MobjectSpec *spec = catalog::findMobject(state.type);
@@ -388,7 +405,7 @@ QRectF SceneRenderer::boundsInPixels(const evaluator::ObjectState &state, const 
     const QPainterPath path = shapeOf(state);
     if (path.isEmpty())
         return {};
-    return (transformOf(state) * toPixels).map(path).boundingRect();
+    return (transformOf(state, path) * toPixels).map(path).boundingRect();
 }
 
 ObjectId SceneRenderer::objectAt(const QVector<evaluator::ObjectState> &states,
@@ -401,7 +418,7 @@ ObjectId SceneRenderer::objectAt(const QVector<evaluator::ObjectState> &states,
         if (path.isEmpty())
             continue;
 
-        const QPainterPath placed = transformOf(state).map(path);
+        const QPainterPath placed = transformOf(state, path).map(path);
         if (placed.contains(scenePoint))
             return state.id;
 

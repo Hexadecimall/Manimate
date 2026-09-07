@@ -8,6 +8,7 @@
 #include "CodeGenerator.h"
 #include "EditorState.h"
 #include "SceneEvaluator.h"
+#include "SceneRenderer.h"
 #include "ProjectWindow.h"
 #include "Theme.h"
 #include "TitleBar.h"
@@ -58,6 +59,7 @@ private slots:
 
     void generatesRunnablePython();
     void solverExpressesOverlapExactly();
+    void positionCentresTheBoundingBox();
     void addingAnObjectSelectsIt();
     void animationsChangeWhatTheCanvasWouldDraw();
     void undoRestoresWhatWasThere();
@@ -362,6 +364,55 @@ void LauncherTest::solverExpressesOverlapExactly()
     const QString later = codegen::constructBody(state.document(), 0);
     QCOMPARE(later.count(QStringLiteral("self.play(")), 2);
     QVERIFY(later.contains(QStringLiteral("self.wait(3)")));
+}
+
+void LauncherTest::positionCentresTheBoundingBox()
+{
+    EditorState state;
+    state.setDocument(Document::createNew(QStringLiteral("Centring")), {});
+
+    // A triangle's circumcentre sits above its bounding box's centre, so it is
+    // the shape that shows whether position means one or the other.
+    const ObjectId triangle = state.addObject(QStringLiteral("manim.Triangle"));
+    const ObjectId square = state.addObject(QStringLiteral("manim.Square"));
+    for (const ObjectId id : {triangle, square})
+        state.setObjectParam(id, QStringLiteral("position"), QPointF(0.0, 0.0));
+
+    const auto states = evaluator::evaluate(state.document(), 0.0);
+    QCOMPARE(states.size(), 2);
+
+    for (const evaluator::ObjectState &object : states) {
+        const QPainterPath shape = SceneRenderer::shapeOf(object);
+        const QRectF placed = SceneRenderer::transformOf(object, shape).map(shape).boundingRect();
+        QVERIFY2(qAbs(placed.center().y()) < 1e-6,
+                 qPrintable(QStringLiteral("%1 centred at y=%2, not 0")
+                                .arg(object.type)
+                                .arg(placed.center().y())));
+    }
+
+    // Measured against real Manim: Triangle().move_to(ORIGIN) spans -0.75 to
+    // 0.75, being 1.5 units tall with its box centred. The canvas must agree.
+    for (const evaluator::ObjectState &object : states) {
+        if (object.type != QLatin1String("manim.Triangle"))
+            continue;
+        const QPainterPath shape = SceneRenderer::shapeOf(object);
+        const QRectF placed = SceneRenderer::transformOf(object, shape).map(shape).boundingRect();
+        QVERIFY2(qAbs(placed.height() - 1.5) < 1e-6,
+                 qPrintable(QStringLiteral("triangle is %1 units tall, expected 1.5")
+                                .arg(placed.height())));
+    }
+
+    // And the generated Python says the same thing, so the render agrees with
+    // the canvas rather than placing the triangle somewhere else.
+    const QString code = codegen::constructBody(state.document(), 0);
+    QVERIFY(code.contains(QStringLiteral("triangle.move_to([0, 0, 0])")));
+
+    // A line is positioned by its endpoints, so its position shifts instead.
+    const ObjectId line = state.addObject(QStringLiteral("manim.Line"));
+    state.setObjectParam(line, QStringLiteral("position"), QPointF(2.0, 1.0));
+    const QString withLine = codegen::constructBody(state.document(), 0);
+    QVERIFY(withLine.contains(QStringLiteral("line.shift([2, 1, 0])")));
+    QVERIFY(!withLine.contains(QStringLiteral("line.move_to")));
 }
 
 void LauncherTest::addingAnObjectSelectsIt()
