@@ -2,6 +2,7 @@
 
 #include "Catalog.h"
 #include "Document.h"
+#include "LibraryPanel.h"
 #include "EditorState.h"
 #include "Theme.h"
 
@@ -66,7 +67,9 @@ TimelineView::TimelineView(EditorState *state, QWidget *parent)
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::MinimumExpanding);
 
     connect(m_state, &EditorState::documentChanged, this, [this] {
-        // A new track changes how tall the view wants to be.
+        // Objects and clips decide how the lanes are laid out and how tall the
+        // view wants to be, so both are worked out again.
+        m_lanesStale = true;
         updateGeometry();
         update();
     });
@@ -86,8 +89,7 @@ QSize TimelineView::minimumSizeHint() const
 {
     // Tall enough for every track plus the empty one that accepts a drop, so
     // the scroll area around it knows when there is more than fits.
-    const int tracks = qMax(kMinimumTracks, int(m_state->document().timeline.tracks.size()) + 1);
-    return {600, kRulerHeight + tracks * (kTrackHeight + kTrackGap) + kAudioHeight + 16};
+    return {600, int(audioLaneTop() + kAudioHeight + 12)};
 }
 
 void TimelineView::setScale(double pixelsPerSecond)
@@ -133,17 +135,117 @@ void TimelineView::revealPlayhead()
         setOffset(m_offset + (x - (width() - kEdge)));
 }
 
-int TimelineView::trackAt(double y) const
+QVector<TimelineView::Lane> TimelineView::lanes() const
 {
-    const double local = y - kRulerHeight;
-    if (local < 0)
-        return -1;
-    return int(local) / (kTrackHeight + kTrackGap);
+    if (!m_lanesStale)
+        return m_lanes;
+
+    const Document &document = m_state->document();
+
+    // The same order as the scene list, so the two read the same way.
+    QVector<const SceneObject *> ordered;
+    for (const SceneObject &object : document.objects)
+        ordered.append(&object);
+    std::sort(ordered.begin(), ordered.end(), [](const SceneObject *a, const SceneObject *b) {
+        return a->zOrder > b->zOrder;
+    });
+
+    m_lanes.clear();
+    double top = kRulerHeight;
+
+    for (const SceneObject *object : std::as_const(ordered)) {
+        Lane lane;
+        lane.object = object->id;
+        lane.top = top;
+
+        // How deep the lane has to be: the most clips of this object that are
+        // ever running at the same moment.
+        QVector<const Clip *> mine;
+        for (const Clip &clip : document.timeline.clips) {
+            if (clip.objectId == object->id)
+                mine.append(&clip);
+        }
+        std::sort(mine.begin(), mine.end(),
+                  [](const Clip *a, const Clip *b) { return a->start < b->start; });
+
+        QVector<double> rowEnds;
+        for (const Clip *clip : std::as_const(mine)) {
+            int row = 0;
+            while (row < rowEnds.size() && clip->start < rowEnds.at(row) - 1e-6)
+                ++row;
+            if (row == rowEnds.size())
+                rowEnds.append(clip->end());
+            else
+                rowEnds[row] = clip->end();
+        }
+
+        lane.depth = qMax(1, int(rowEnds.size()));
+        lane.height = lane.depth * kTrackHeight + (lane.depth - 1) * 2;
+        m_lanes.append(lane);
+
+        top += lane.height + kTrackGap;
+    }
+
+    m_lanesStale = false;
+    return m_lanes;
+}
+
+const TimelineView::Lane *TimelineView::laneFor(ObjectId object) const
+{
+    const QVector<Lane> all = lanes();
+    for (const Lane &lane : m_lanes) {
+        if (lane.object == object)
+            return &lane;
+    }
+    Q_UNUSED(all);
+    return nullptr;
+}
+
+const TimelineView::Lane *TimelineView::laneAt(double y) const
+{
+    lanes();
+    for (const Lane &lane : m_lanes) {
+        if (y >= lane.top && y < lane.top + lane.height)
+            return &lane;
+    }
+    return nullptr;
+}
+
+int TimelineView::rowOf(const Clip &clip) const
+{
+    // Assigned the same way the lane's depth was worked out, so a clip always
+    // lands on the row the lane made room for.
+    QVector<const Clip *> mine;
+    for (const Clip &candidate : m_state->document().timeline.clips) {
+        if (candidate.objectId == clip.objectId)
+            mine.append(&candidate);
+    }
+    std::sort(mine.begin(), mine.end(),
+              [](const Clip *a, const Clip *b) { return a->start < b->start; });
+
+    QVector<double> rowEnds;
+    for (const Clip *candidate : std::as_const(mine)) {
+        int row = 0;
+        while (row < rowEnds.size() && candidate->start < rowEnds.at(row) - 1e-6)
+            ++row;
+        if (row == rowEnds.size())
+            rowEnds.append(candidate->end());
+        else
+            rowEnds[row] = candidate->end();
+
+        if (candidate->id == clip.id)
+            return row;
+    }
+    return 0;
 }
 
 QRectF TimelineView::clipRect(const Clip &clip) const
 {
-    const double top = kRulerHeight + clip.track * (kTrackHeight + kTrackGap) + 2;
+    const Lane *lane = laneFor(clip.objectId);
+    if (!lane)
+        return {};
+
+    const double top = lane->top + rowOf(clip) * (kTrackHeight + 2) + 2;
     return QRectF(xAt(clip.start), top, qMax(6.0, clip.duration * m_scale), kTrackHeight - 4);
 }
 
@@ -168,16 +270,25 @@ void TimelineView::paintEvent(QPaintEvent *)
     painter.fillRect(rect(), p.window);
 
     const double duration = m_state->timelineDuration();
-    const int trackCount = qMax(kMinimumTracks, int(document.timeline.tracks.size()) + 1);
-    const double audioTop = kRulerHeight + trackCount * (kTrackHeight + kTrackGap) + 6;
+    const QVector<Lane> allLanes = lanes();
+    const double audioTop = audioLaneTop();
 
     // ------------------------------------------------------------- lanes ----
-    for (int track = 0; track < trackCount; ++track) {
-        const QRectF lane(kHeaderWidth, kRulerHeight + track * (kTrackHeight + kTrackGap),
-                          width() - kHeaderWidth, kTrackHeight);
-        painter.fillRect(lane, track % 2 == 0 ? theme::mix(p.window, p.surface, 0.55)
-                                              : theme::mix(p.window, p.surface, 0.30));
+    for (int i = 0; i < allLanes.size(); ++i) {
+        const Lane &lane = allLanes.at(i);
+        const QRectF strip(kHeaderWidth, lane.top, width() - kHeaderWidth, lane.height);
+        painter.fillRect(strip, i % 2 == 0 ? theme::mix(p.window, p.surface, 0.55)
+                                           : theme::mix(p.window, p.surface, 0.30));
+    }
 
+    if (allLanes.isEmpty()) {
+        QFont hint = theme::font(1);
+        hint.setPixelSize(12);
+        painter.setFont(hint);
+        painter.setPen(p.textFaint);
+        painter.drawText(QRectF(kHeaderWidth + 24, kRulerHeight + 20, 420, 20),
+                         Qt::AlignLeft | Qt::AlignVCenter,
+                         tr("Add a shape and it gets a lane here."));
     }
 
     // ------------------------------------------------------------ ruler ----
@@ -288,13 +399,14 @@ void TimelineView::paintEvent(QPaintEvent *)
         for (const AudioClip &clip : document.timeline.audio) {
             // A sound has no length here: Manim is told when to start it and
             // plays it to its end, whatever that is.
-            const double x = xAt(clip.start);
-            const QRectF box(x, audioTop + 3, qMax(80.0, 1.5 * m_scale), kAudioHeight - 6);
+            const QRectF box = audioClipRect(clip);
+            const bool selected = clip.id == m_state->selectedAudio();
 
             QPainterPath shape;
             shape.addRoundedRect(box, 5, 5);
-            painter.fillPath(shape, theme::mix(p.surfaceRaised, p.teal, 0.28));
-            painter.setPen(QPen(theme::mix(p.teal, p.border, 0.5), 1.0));
+            painter.fillPath(shape, theme::mix(p.surfaceRaised, p.teal, selected ? 0.40 : 0.28));
+            painter.setPen(QPen(selected ? p.text : theme::mix(p.teal, p.border, 0.5),
+                                selected ? 1.6 : 1.0));
             painter.setBrush(Qt::NoBrush);
             painter.drawPath(shape);
 
@@ -303,8 +415,13 @@ void TimelineView::paintEvent(QPaintEvent *)
             painter.setFont(clipFont);
             painter.setPen(p.text);
             const QRectF label = box.adjusted(10, 0, -7, 0);
+            const QString caption = qFuzzyIsNull(clip.gain)
+                                        ? clip.asset
+                                        : QStringLiteral("%1  %2 dB")
+                                              .arg(clip.asset)
+                                              .arg(clip.gain, 0, 'g', 2);
             painter.drawText(label, Qt::AlignVCenter | Qt::AlignLeft,
-                             QFontMetricsF(clipFont).elidedText(clip.asset, Qt::ElideMiddle,
+                             QFontMetricsF(clipFont).elidedText(caption, Qt::ElideMiddle,
                                                                label.width()));
         }
     }
@@ -334,35 +451,74 @@ void TimelineView::paintEvent(QPaintEvent *)
         painter.drawText(QRectF(0, audioTop, kHeaderWidth, kAudioHeight).adjusted(14, 0, -8, 0),
                          Qt::AlignVCenter | Qt::AlignLeft, tr("Audio"));
     }
-    for (int track = 0; track < trackCount; ++track) {
-        const QRectF header(0, kRulerHeight + track * (kTrackHeight + kTrackGap), kHeaderWidth,
-                            kTrackHeight);
-        const bool real = track < document.timeline.tracks.size();
 
-        int clipCount = 0;
-        for (const Clip &clip : document.timeline.clips)
-            clipCount += clip.track == track ? 1 : 0;
+    for (const Lane &lane : allLanes) {
+        const SceneObject *object = document.findObject(lane.object);
+        if (!object)
+            continue;
+
+        const QRectF header(0, lane.top, kHeaderWidth, lane.height);
+        const bool selected = lane.object == m_state->selectedObject();
+
+        if (selected)
+            painter.fillRect(header.adjusted(0, 1, -1, -1), p.surfaceHover);
+
+        // The same picture the library and the scene list use, so an object is
+        // recognisable wherever it appears.
+        const QIcon icon = LibraryPanel::shapeIcon(object->type);
+        const QRectF iconRect(12, lane.top + (kTrackHeight - 16) / 2.0, 16, 16);
+        icon.paint(&painter, iconRect.toRect());
 
         QFont font = theme::font(1, QFont::DemiBold);
         font.setPixelSize(11);
         painter.setFont(font);
-        painter.setPen(real ? p.text : p.textFaint);
-        painter.drawText(header.adjusted(14, 4, -8, -header.height() / 2.0),
-                         Qt::AlignVCenter | Qt::AlignLeft,
-                         real ? document.timeline.tracks.at(track).name : tr("+ Add track"));
+        painter.setPen(object->visible ? p.text : p.textFaint);
 
-        if (real) {
+        const QRectF nameRect(36, lane.top, kHeaderWidth - 44, kTrackHeight);
+        painter.drawText(nameRect, Qt::AlignVCenter | Qt::AlignLeft,
+                         QFontMetricsF(font).elidedText(object->name, Qt::ElideMiddle,
+                                                       nameRect.width()));
+
+        // A lane only grows rows when its own animations overlap, so saying how
+        // deep it is explains why it is taller than its neighbours.
+        if (lane.depth > 1) {
             QFont sub = theme::font(1);
             sub.setPixelSize(10);
             painter.setFont(sub);
             painter.setPen(p.textFaint);
-            painter.drawText(header.adjusted(14, header.height() / 2.0, -8, -4),
+            painter.drawText(QRectF(36, lane.top + kTrackHeight, kHeaderWidth - 44, 14),
                              Qt::AlignVCenter | Qt::AlignLeft,
-                             clipCount == 1 ? tr("1 clip") : tr("%1 clips").arg(clipCount));
+                             tr("%1 at once").arg(lane.depth));
         }
     }
     painter.setPen(QPen(p.border, 1.0));
     painter.drawLine(QPointF(kHeaderWidth - 0.5, 0), QPointF(kHeaderWidth - 0.5, height()));
+}
+
+double TimelineView::audioLaneTop() const
+{
+    const QVector<Lane> all = lanes();
+    double bottom = kRulerHeight;
+    for (const Lane &lane : all)
+        bottom = qMax(bottom, lane.top + lane.height + kTrackGap);
+
+    // Keep the view a sensible height even before anything is in the scene.
+    return qMax(bottom, double(kRulerHeight + kMinimumTracks * (kTrackHeight + kTrackGap))) + 6;
+}
+
+QRectF TimelineView::audioClipRect(const AudioClip &clip) const
+{
+    return QRectF(xAt(clip.start), audioLaneTop() + 3, qMax(80.0, 1.5 * m_scale),
+                  kAudioHeight - 6);
+}
+
+ClipId TimelineView::audioAt(const QPointF &point) const
+{
+    for (const AudioClip &clip : m_state->document().timeline.audio) {
+        if (audioClipRect(clip).contains(point))
+            return clip.id;
+    }
+    return kInvalidClipId;
 }
 
 ClipId TimelineView::clipAt(const QPointF &point, Grab *how) const
@@ -397,6 +553,11 @@ void TimelineView::updateCursorFor(const QPointF &point)
         update();
     }
 
+    if (audioAt(point) != kInvalidClipId) {
+        setCursor(Qt::OpenHandCursor);
+        return;
+    }
+
     switch (how) {
     case Grab::TrimStart:
     case Grab::TrimEnd:
@@ -414,37 +575,58 @@ void TimelineView::updateCursorFor(const QPointF &point)
 void TimelineView::contextMenuEvent(QContextMenuEvent *event)
 {
     const QPointF point = event->pos();
-    const int track = trackAt(point.y());
-    const int trackCount = int(m_state->document().timeline.tracks.size());
 
-    QMenu menu(this);
-    QAction *add = menu.addAction(tr("Add Track"));
+    if (const ClipId sound = audioAt(point); sound != kInvalidClipId) {
+        m_state->selectAudio(sound);
 
-    QAction *rename = nullptr;
-    QAction *remove = nullptr;
-    if (track >= 0 && track < trackCount) {
-        menu.addSeparator();
-        rename = menu.addAction(tr("Rename Track"));
-        remove = menu.addAction(tr("Delete Track"));
-        // The last track cannot go: a timeline needs somewhere to put a clip.
-        remove->setEnabled(trackCount > 1);
+        QMenu soundMenu(this);
+        QAction *toPlayhead = soundMenu.addAction(tr("Move to Playhead"));
+        soundMenu.addSeparator();
+        QAction *removeSound = soundMenu.addAction(tr("Remove Sound"));
+
+        QAction *picked = soundMenu.exec(event->globalPos());
+        if (picked == toPlayhead)
+            m_state->setAudioTiming(sound, m_state->playhead());
+        else if (picked == removeSound)
+            m_state->removeAudio(sound);
+        return;
     }
 
-    QAction *chosen = menu.exec(event->globalPos());
-    if (!chosen)
+    // A lane is an object, so the menu is about that object.
+    const Lane *lane = laneAt(point.y());
+    if (!lane)
         return;
 
-    if (chosen == add) {
-        m_state->addTrack();
+    const SceneObject *object = m_state->document().findObject(lane->object);
+    if (!object)
+        return;
+
+    QMenu menu(this);
+    QAction *select = menu.addAction(tr("Select %1").arg(object->name));
+    QAction *rename = menu.addAction(tr("Rename…"));
+    menu.addSeparator();
+    QAction *clearClips = menu.addAction(tr("Remove Its Animations"));
+    QAction *remove = menu.addAction(tr("Delete %1").arg(object->name));
+
+    QAction *chosen = menu.exec(event->globalPos());
+    if (chosen == select) {
+        m_state->selectObject(lane->object);
     } else if (chosen == rename) {
         bool accepted = false;
-        const QString name = QInputDialog::getText(
-            this, tr("Rename Track"), tr("Name"), QLineEdit::Normal,
-            m_state->document().timeline.tracks.at(track).name, &accepted);
+        const QString name = QInputDialog::getText(this, tr("Rename"), tr("Name"),
+                                                   QLineEdit::Normal, object->name, &accepted);
         if (accepted)
-            m_state->renameTrack(track, name);
+            m_state->setObjectName(lane->object, name);
+    } else if (chosen == clearClips) {
+        QVector<ClipId> doomed;
+        for (const Clip &clip : m_state->document().timeline.clips) {
+            if (clip.objectId == lane->object)
+                doomed.append(clip.id);
+        }
+        for (const ClipId id : doomed)
+            m_state->removeClip(id);
     } else if (chosen == remove) {
-        m_state->removeTrack(track);
+        m_state->removeObject(lane->object);
     }
 }
 
@@ -465,10 +647,25 @@ void TimelineView::mousePressEvent(QMouseEvent *event)
         return;
     }
 
-    // The empty lane under the last track is an invitation to add one.
-    const int trackCount = int(m_state->document().timeline.tracks.size());
-    if (point.x() < kHeaderWidth && trackAt(point.y()) == trackCount) {
-        m_state->addTrack();
+    if (const ClipId sound = audioAt(point); sound != kInvalidClipId) {
+        const AudioClip *clip = nullptr;
+        for (const AudioClip &candidate : m_state->document().timeline.audio) {
+            if (candidate.id == sound)
+                clip = &candidate;
+        }
+        if (clip) {
+            m_state->selectAudio(sound);
+            m_grabbedAudio = sound;
+            m_grabbedAudioOffset = timeAt(point.x()) - clip->start;
+            m_grabMoved = false;
+            setCursor(Qt::ClosedHandCursor);
+        }
+        return;
+    }
+
+    if (point.x() < kHeaderWidth) {
+        if (const Lane *lane = laneAt(point.y()))
+            m_state->selectObject(lane->object);
         return;
     }
 
@@ -496,6 +693,19 @@ void TimelineView::mousePressEvent(QMouseEvent *event)
 void TimelineView::mouseMoveEvent(QMouseEvent *event)
 {
     const QPointF point = event->position();
+
+    if (m_grabbedAudio != kInvalidClipId) {
+        if (!m_grabMoved) {
+            m_state->beginEdit();
+            m_grabMoved = true;
+        }
+        const double snapped = event->modifiers().testFlag(Qt::AltModifier)
+                                   ? timeAt(point.x()) - m_grabbedAudioOffset
+                                   : std::round((timeAt(point.x()) - m_grabbedAudioOffset) * 10.0)
+                                         / 10.0;
+        m_state->setAudioTiming(m_grabbedAudio, snapped);
+        return;
+    }
 
     if (m_grab == Grab::None) {
         updateCursorFor(point);
@@ -527,8 +737,11 @@ void TimelineView::mouseMoveEvent(QMouseEvent *event)
 
     switch (m_grab) {
     case Grab::Move: {
-        const int track = qMax(0, trackAt(point.y()));
-        m_state->setClipTiming(m_grabbed, maybeSnap(time - m_grabTimeOffset), clip->duration, track);
+        m_state->setClipTiming(m_grabbed, maybeSnap(time - m_grabTimeOffset), clip->duration,
+                               clip->track);
+        // Dragging into another lane points the animation at that object.
+        if (const Lane *lane = laneAt(point.y()); lane && lane->object != clip->objectId)
+            m_state->setClipObject(m_grabbed, lane->object);
         setCursor(Qt::ClosedHandCursor);
         break;
     }
@@ -553,6 +766,7 @@ void TimelineView::mouseReleaseEvent(QMouseEvent *event)
     Q_UNUSED(event);
     m_grab = Grab::None;
     m_grabbed = kInvalidClipId;
+    m_grabbedAudio = kInvalidClipId;
     m_grabMoved = false;
     unsetCursor();
 }

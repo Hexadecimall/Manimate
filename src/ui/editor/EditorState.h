@@ -32,6 +32,10 @@ public:
 
     ObjectId selectedObject() const { return m_selectedObject; }
     ClipId selectedClip() const { return m_selectedClip; }
+
+    /// The selected sound, which is selected separately: it animates nothing,
+    /// so it shares no state with the animation clips.
+    ClipId selectedAudio() const { return m_selectedAudio; }
     double playhead() const { return m_playhead; }
 
     bool isModified() const { return m_modified; }
@@ -46,6 +50,7 @@ public:
 public Q_SLOTS:
     void selectObject(ObjectId id);
     void selectClip(ClipId id);
+    void selectAudio(ClipId id);
     void clearSelection();
     void setPlayhead(double seconds);
 
@@ -71,6 +76,10 @@ public Q_SLOTS:
 
     void setClipParam(ClipId id, const QString &key, const QVariant &value);
     void setClipTiming(ClipId id, double start, double duration, int track);
+
+    /// Point a clip at a different object, which is what dragging it into
+    /// another lane means.
+    void setClipObject(ClipId id, ObjectId objectId);
     void setClipRateFunction(ClipId id, const QString &name);
 
     /// Copy `sourceFile` into the project's assets and place it at the
@@ -81,7 +90,9 @@ public Q_SLOTS:
     void setAudioGain(ClipId id, double gain);
     void removeAudio(ClipId id);
 
-    void setCamera(const Camera3D &camera);
+    /// `recordUndo` is false while a camera is being dragged, so an orbit is
+    /// one undo step rather than one per mouse move.
+    void setCamera(const Camera3D &camera, bool recordUndo = true);
 
     /// Add an empty track at the end.
     void addTrack();
@@ -116,6 +127,7 @@ private:
 
     ObjectId m_selectedObject = kInvalidObjectId;
     ClipId m_selectedClip = kInvalidClipId;
+    ClipId m_selectedAudio = kInvalidClipId;
     double m_playhead = 0.0;
     bool m_modified = false;
 

@@ -55,11 +55,43 @@ private:
 
     double timeAt(double x) const;
     double xAt(double time) const;
-    int trackAt(double y) const;
     QRectF clipRect(const Clip &clip) const;
+
+    /// One lane per object, in the order the scene list shows them. A clip
+    /// belongs to the lane of the object it animates, so the timeline reads as
+    /// "what happens to this thing" rather than as a set of numbered rows.
+    struct Lane
+    {
+        ObjectId object = kInvalidObjectId;
+        double top = 0.0;
+        double height = 0.0;
+
+        /// How many clips of this object overlap at once, and so how many rows
+        /// deep the lane has to be for all of them to be visible.
+        int depth = 1;
+    };
+
+    QVector<Lane> lanes() const;
+    const Lane *laneFor(ObjectId object) const;
+
+    /// The lane under `y`, or nothing.
+    const Lane *laneAt(double y) const;
+
+    /// Which row within its lane a clip sits on, so overlapping animations of
+    /// one object do not cover each other.
+    int rowOf(const Clip &clip) const;
 
     /// The clip under `point`, and which part of it.
     ClipId clipAt(const QPointF &point, Grab *how) const;
+
+    /// Lanes are recomputed whenever the document changes, not on every paint.
+    mutable QVector<Lane> m_lanes;
+    mutable bool m_lanesStale = true;
+
+    /// Where the audio lane starts, and the sound under `point`.
+    double audioLaneTop() const;
+    QRectF audioClipRect(const AudioClip &clip) const;
+    ClipId audioAt(const QPointF &point) const;
 
     /// Spacing of ruler labels that keeps them readable at the current zoom.
     double rulerStep() const;
@@ -78,6 +110,10 @@ private:
     bool m_grabMoved = false;
 
     ClipId m_hovered = kInvalidClipId;
+
+    /// A sound being dragged, and where it was grabbed within itself.
+    ClipId m_grabbedAudio = kInvalidClipId;
+    double m_grabbedAudioOffset = 0.0;
 };
 
 } // namespace mn::ui

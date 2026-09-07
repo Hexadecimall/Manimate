@@ -113,9 +113,23 @@ void EditorState::selectClip(ClipId id)
         return;
 
     m_selectedClip = id;
+    m_selectedAudio = kInvalidClipId;
     // Selecting a clip also selects what it animates, so the inspector and the
     // canvas agree about what is being worked on.
     m_selectedObject = clip ? clip->objectId : kInvalidObjectId;
+    Q_EMIT selectionChanged();
+}
+
+void EditorState::selectAudio(ClipId id)
+{
+    if (m_selectedAudio == id)
+        return;
+    m_selectedAudio = id;
+
+    // Selecting a sound deselects the animation clip, so the inspector shows
+    // one thing rather than two.
+    if (id != kInvalidClipId)
+        m_selectedClip = kInvalidClipId;
     Q_EMIT selectionChanged();
 }
 
@@ -125,6 +139,7 @@ void EditorState::clearSelection()
         return;
     m_selectedObject = kInvalidObjectId;
     m_selectedClip = kInvalidClipId;
+    m_selectedAudio = kInvalidClipId;
     Q_EMIT selectionChanged();
 }
 
@@ -191,19 +206,14 @@ ClipId EditorState::addClip(ObjectId objectId, const QString &animationId)
 
     beginEdit();
 
+    // The timeline lays out one lane per object, so a clip needs no track of
+    // its own: it appears under whatever it animates.
     Clip clip;
     clip.objectId = objectId;
     clip.type = spec->id;
     clip.start = m_playhead;
     clip.duration = spec->defaultDuration;
     clip.params = catalog::defaultParams(*spec);
-    clip.track = freeTrackFor(clip.start, clip.duration);
-
-    while (m_document.timeline.tracks.size() <= clip.track) {
-        Track track;
-        track.name = QStringLiteral("Track %1").arg(m_document.timeline.tracks.size() + 1);
-        m_document.timeline.tracks.append(track);
-    }
 
     const ClipId id = m_document.addClip(std::move(clip));
 
@@ -303,6 +313,13 @@ void EditorState::removeClip(ClipId id)
 
 void EditorState::deleteSelection()
 {
+    if (m_selectedAudio != kInvalidClipId) {
+        removeAudio(m_selectedAudio);
+        m_selectedAudio = kInvalidClipId;
+        Q_EMIT selectionChanged();
+        return;
+    }
+
     // A selected clip is the narrower thing, so it goes first.
     if (m_selectedClip != kInvalidClipId)
         removeClip(m_selectedClip);
@@ -369,6 +386,17 @@ void EditorState::setClipTiming(ClipId id, double start, double duration, int tr
     }
 
     commit();
+}
+
+void EditorState::setClipObject(ClipId id, ObjectId objectId)
+{
+    Clip *clip = m_document.findClip(id);
+    if (!clip || clip->objectId == objectId || !m_document.findObject(objectId))
+        return;
+
+    clip->objectId = objectId;
+    commit();
+    Q_EMIT selectionChanged();
 }
 
 void EditorState::setClipRateFunction(ClipId id, const QString &name)
@@ -445,9 +473,10 @@ void EditorState::removeAudio(ClipId id)
     commit();
 }
 
-void EditorState::setCamera(const Camera3D &camera)
+void EditorState::setCamera(const Camera3D &camera, bool recordUndo)
 {
-    beginEdit();
+    if (recordUndo)
+        beginEdit();
     m_document.camera = camera;
     commit();
 }

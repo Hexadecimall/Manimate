@@ -11,6 +11,7 @@
 #include "EditorState.h"
 #include "SceneEvaluator.h"
 #include "SceneRenderer.h"
+#include "TimelineView.h"
 #include "ProjectWindow.h"
 #include "Theme.h"
 #include "TitleBar.h"
@@ -70,6 +71,7 @@ private slots:
     void groupsCarryTheirChildren();
     void tracksCanBeAddedAndRemoved();
     void listsDrawTheirOwnSelection();
+    void theWindowRemembersHowItWasLeft();
     void audioBecomesAddSound();
     void codeRoundTripsBackIntoTheScene();
     void parserReportsWhatItCannotRead();
@@ -623,6 +625,40 @@ void LauncherTest::listsDrawTheirOwnSelection()
         QCOMPARE(list->palette().color(QPalette::Highlight).alpha(), 0);
 }
 
+void LauncherTest::theWindowRemembersHowItWasLeft()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+
+    ProjectLayout layout;
+    QVERIFY(project::create(dir.path(), QStringLiteral("Remembered"), &layout, nullptr));
+
+    // Leave a window in a particular state and close it.
+    {
+        ProjectWindow window;
+        QVERIFY(window.openProject(layout.projectFile));
+        window.resize(1234, 806);
+        window.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&window));
+
+        window.showPage(ProjectWindow::Page::Export);
+        window.findChild<TimelineView *>()->setScale(210.0);
+        window.close();
+    }
+
+    // A new one comes back the same way.
+    {
+        ProjectWindow window;
+        QVERIFY(window.openProject(layout.projectFile));
+        window.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&window));
+
+        QCOMPARE(window.currentPage(), ProjectWindow::Page::Export);
+        QCOMPARE(window.findChild<TimelineView *>()->scale(), 210.0);
+        QCOMPARE(window.size(), QSize(1234, 806));
+    }
+}
+
 void LauncherTest::audioBecomesAddSound()
 {
     QTemporaryDir dir;
@@ -851,8 +887,14 @@ void LauncherTest::typingInATextFieldKeepsFocus()
     const ObjectId text = state->addObject(QStringLiteral("manim.Text"));
     state->selectObject(text);
 
+    // The window restores whichever page was last open, so say which one this
+    // needs rather than depending on what another test left behind.
+    window.showPage(ProjectWindow::Page::Edit);
+
     window.resize(1300, 820);
     window.show();
+    window.raise();
+    window.activateWindow();
     QVERIFY(QTest::qWaitForWindowExposed(&window));
     QTest::qWait(50);
 
@@ -865,7 +907,9 @@ void LauncherTest::typingInATextFieldKeepsFocus()
     QVERIFY(field);
 
     field->setFocus();
-    QTRY_COMPARE(QApplication::focusWidget(), field);
+    // A widget only takes application focus once its window is active, which
+    // is not instant.
+    QTRY_COMPARE_WITH_TIMEOUT(QApplication::focusWidget(), field, 3000);
 
     // Every keystroke changes the document, which used to rebuild the panel
     // and destroy this very widget.
@@ -942,6 +986,9 @@ void LauncherTest::projectSnapshot()
 
     ProjectWindow window;
     QVERIFY(window.openProject(layout.projectFile));
+
+    // The window restores whichever page was last open; this wants the editor.
+    window.showPage(ProjectWindow::Page::Edit);
 
     // Build a small scene so the editor has something to show.
     EditorState *state = window.state();

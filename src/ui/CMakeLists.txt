@@ -20,6 +20,7 @@ add_library(manimate_ui STATIC
     editor/LibraryPanel.cpp
     editor/InspectorPanel.cpp
     editor/SceneOutliner.cpp
+    audio/AudioPlayer.cpp
     export/RenderJob.cpp
     project/ProjectWindow.cpp
 )
@@ -35,6 +36,7 @@ target_include_directories(manimate_ui PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/render
     ${CMAKE_CURRENT_SOURCE_DIR}/editor
     ${CMAKE_CURRENT_SOURCE_DIR}/export
+    ${CMAKE_CURRENT_SOURCE_DIR}/audio
 )
 
 # The only Objective-C++ in the project: macOS draws a window shadow of its
@@ -44,4 +46,4 @@ if(APPLE)
     target_link_libraries(manimate_ui PRIVATE "-framework AppKit")
 endif()
 
-target_link_libraries(manimate_ui PUBLIC Manimate::Core Qt6::Widgets)
+target_link_libraries(manimate_ui PUBLIC Manimate::Core Qt6::Widgets Qt6::Multimedia)

@@ -21,6 +21,8 @@ namespace mn::ui {
 namespace {
 
 constexpr auto kLocationKey = "newProject/location";
+constexpr auto kResolutionKey = "newProject/resolution";
+constexpr auto kFrameRateKey = "newProject/frameRate";
 
 struct ResolutionPreset
 {
@@ -154,7 +156,18 @@ NewProjectDialog::NewProjectDialog(QWidget *parent, const QString &importSource)
     for (const int fps : {24, 30, 60}) {
         m_fpsCombo->addItem(tr("%1 fps").arg(fps), fps);
     }
-    m_fpsCombo->setCurrentIndex(2);
+    // Whatever was chosen last time is almost always what is wanted again.
+    QSettings remembered;
+    const QSize lastResolution = remembered.value(QLatin1String(kResolutionKey)).toSize();
+    if (lastResolution.isValid()) {
+        const int index = m_resolutionCombo->findData(lastResolution);
+        if (index >= 0)
+            m_resolutionCombo->setCurrentIndex(index);
+    }
+
+    const int lastFrameRate = remembered.value(QLatin1String(kFrameRateKey), 60).toInt();
+    const int frameRateIndex = m_fpsCombo->findData(lastFrameRate);
+    m_fpsCombo->setCurrentIndex(frameRateIndex >= 0 ? frameRateIndex : 2);
 
     auto *formatRow = new QHBoxLayout;
     formatRow->setSpacing(8);
@@ -276,6 +289,11 @@ void NewProjectDialog::createProject()
     }
 
     setDefaultLocation(location);
+
+    QSettings remembered;
+    remembered.setValue(QLatin1String(kResolutionKey), m_resolutionCombo->currentData().toSize());
+    remembered.setValue(QLatin1String(kFrameRateKey), m_fpsCombo->currentData().toInt());
+
     m_layout = layout;
     accept();
 }

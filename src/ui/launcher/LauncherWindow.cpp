@@ -79,6 +79,7 @@ LauncherWindow::LauncherWindow(QWidget *parent)
     setContent(central);
 
     buildMenus();
+    rememberGeometryAs(QStringLiteral("launcher"));
     refreshRecents();
 }
 

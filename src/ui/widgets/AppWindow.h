@@ -43,6 +43,11 @@ public:
     /// True when menus go to a system-wide menu bar rather than the title bar.
     static bool usesNativeMenuBar();
 
+    /// Remember this window's size and position under `key`, and put it back
+    /// the next time it opens. Saved shortly after the window settles rather
+    /// than only on close, so a crash does not lose it.
+    void rememberGeometryAs(const QString &key);
+
     /// Margin round the window holding the shadow, and the band that starts a
     /// resize. Collapses to nothing while maximised.
     static constexpr int kShadowMargin = 10;
@@ -56,7 +61,13 @@ public:
     static constexpr int kInnerCornerRadius = kCornerRadius;
 
 protected:
+    /// Write the geometry out now. Called for you; exposed so a subclass can
+    /// save anything else of its own at the same moment.
+    virtual void saveWindowState();
+
     void paintEvent(QPaintEvent *event) override;
+    void moveEvent(QMoveEvent *event) override;
+    void hideEvent(QHideEvent *event) override;
     void resizeEvent(QResizeEvent *event) override;
     void showEvent(QShowEvent *event) override;
     void changeEvent(QEvent *event) override;
@@ -71,6 +82,9 @@ private:
 
     QPixmap m_shadow;
     bool m_nativeShadowDisabled = false;
+
+    QString m_stateKey;
+    class QTimer *m_saveTimer = nullptr;
     Qt::Edges edgesAt(const QPoint &position) const;
     static Qt::CursorShape cursorForEdges(Qt::Edges edges);
 

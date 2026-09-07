@@ -6,6 +6,8 @@
 
 #include <QMenu>
 #include <QMenuBar>
+#include <QSettings>
+#include <QTimer>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QPainterPath>
@@ -73,6 +75,47 @@ AppWindow::AppWindow(QWidget *parent)
     setCentralWidget(central);
 
     installEventFilter(this);
+
+    // Saving on every move would write settings continuously while a window is
+    // dragged, so it waits for the window to settle.
+    m_saveTimer = new QTimer(this);
+    m_saveTimer->setSingleShot(true);
+    m_saveTimer->setInterval(500);
+    connect(m_saveTimer, &QTimer::timeout, this, [this] { saveWindowState(); });
+}
+
+void AppWindow::rememberGeometryAs(const QString &key)
+{
+    m_stateKey = key;
+
+    QSettings settings;
+    const QByteArray geometry =
+        settings.value(QStringLiteral("windows/%1/geometry").arg(key)).toByteArray();
+    if (!geometry.isEmpty())
+        restoreGeometry(geometry);
+}
+
+void AppWindow::saveWindowState()
+{
+    if (m_stateKey.isEmpty())
+        return;
+
+    QSettings settings;
+    settings.setValue(QStringLiteral("windows/%1/geometry").arg(m_stateKey), saveGeometry());
+}
+
+void AppWindow::moveEvent(QMoveEvent *event)
+{
+    QMainWindow::moveEvent(event);
+    if (m_saveTimer && !m_stateKey.isEmpty())
+        m_saveTimer->start();
+}
+
+void AppWindow::hideEvent(QHideEvent *event)
+{
+    QMainWindow::hideEvent(event);
+    if (!m_stateKey.isEmpty())
+        saveWindowState();
 }
 
 void AppWindow::setContent(QWidget *content)
@@ -159,6 +202,8 @@ void AppWindow::resizeEvent(QResizeEvent *event)
 {
     QMainWindow::resizeEvent(event);
     rebuildShadow();
+    if (m_saveTimer && !m_stateKey.isEmpty())
+        m_saveTimer->start();
 }
 
 /// Blur one channel-agnostic pass over the image, horizontally then

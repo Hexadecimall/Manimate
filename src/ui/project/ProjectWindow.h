@@ -58,6 +58,10 @@ Q_SIGNALS:
 protected:
     void closeEvent(QCloseEvent *event) override;
 
+    /// Also stores the layout: which page, how the panels are divided, how far
+    /// the timeline is zoomed, and whether the guides are on.
+    void saveWindowState() override;
+
 private:
     /// Undo and redo live in the title bar; the window has no toolbar of its
     /// own, because a second strip naming the project only repeated it.
@@ -110,6 +114,7 @@ private:
     QString m_generatedCode;
     QWidget *m_codeStaleBar = nullptr;
 
+    class AudioPlayer *m_audio = nullptr;
     class RenderJob *m_renderJob = nullptr;
     QPushButton *m_renderButton = nullptr;
     QPlainTextEdit *m_renderLog = nullptr;
@@ -122,6 +127,9 @@ private:
 
     QLabel *m_viewerInfoLabel = nullptr;
     QSlider *m_zoomSlider = nullptr;
+    QSplitter *m_columns = nullptr;
+    QSplitter *m_rows = nullptr;
+    QPushButton *m_guidesButton = nullptr;
     QPushButton *m_playButton = nullptr;
     QLabel *m_timeLabel = nullptr;
     QAction *m_undoAction = nullptr;

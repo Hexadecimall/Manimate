@@ -93,6 +93,44 @@ void CanvasView::paintEvent(QPaintEvent *)
         painter.restore();
     }
 
+    // In three dimensions, show which way the camera is facing.
+    if (document.camera.enabled) {
+        const Camera3D &camera = document.camera;
+        const QPointF centre(frame.left() + 46, frame.bottom() - 46);
+        constexpr double kArm = 26.0;
+
+        const struct {
+            double x, y, z;
+            QColor colour;
+            QString label;
+        } axes[] = {
+            {1, 0, 0, p.manimRed, QStringLiteral("x")},
+            {0, 1, 0, p.manimGreen, QStringLiteral("y")},
+            {0, 0, 1, p.manimBlue, QStringLiteral("z")},
+        };
+
+        QFont gizmoFont = theme::font(1, QFont::DemiBold);
+        gizmoFont.setPixelSize(10);
+        painter.setFont(gizmoFont);
+
+        for (const auto &axis : axes) {
+            const QPointF projected = SceneRenderer::project(camera, axis.x, axis.y, axis.z);
+            // The projection is in scene units; y still points up on screen.
+            const QPointF tip = centre + QPointF(projected.x(), -projected.y()) * kArm;
+
+            painter.setPen(QPen(axis.colour, 1.6));
+            painter.drawLine(centre, tip);
+            painter.drawText(QRectF(tip.x() - 6, tip.y() - 8, 12, 16), Qt::AlignCenter, axis.label);
+        }
+
+        painter.setPen(p.textFaint);
+        painter.drawText(QRectF(frame.left() + 12, frame.bottom() - 22, 200, 16),
+                         Qt::AlignLeft | Qt::AlignVCenter,
+                         tr("3D  ·  tilt %1°  turn %2°  ·  drag to orbit")
+                             .arg(qRound(camera.phi))
+                             .arg(qRound(camera.theta)));
+    }
+
     // Nothing in the scene yet: say what to do about it.
     if (document.objects.isEmpty()) {
         QFont hint = theme::font(1);
@@ -292,6 +330,15 @@ void CanvasView::mousePressEvent(QMouseEvent *event)
 
     if (hit == kInvalidObjectId) {
         m_state->clearSelection();
+
+        // In three dimensions the empty canvas is a viewport: dragging it turns
+        // the camera round the scene rather than doing nothing.
+        if (m_state->document().camera.enabled) {
+            m_orbiting = true;
+            m_orbitFrom = event->position();
+            m_state->beginEdit();
+            setCursor(Qt::ClosedHandCursor);
+        }
         return;
     }
 
@@ -307,6 +354,21 @@ void CanvasView::mousePressEvent(QMouseEvent *event)
 
 void CanvasView::mouseMoveEvent(QMouseEvent *event)
 {
+    if (m_orbiting) {
+        const QPointF delta = event->position() - m_orbitFrom;
+        m_orbitFrom = event->position();
+
+        Camera3D camera = m_state->document().camera;
+        camera.theta -= delta.x() * 0.4;
+        // Past straight up or straight down the view turns inside out, so the
+        // tilt stops there.
+        camera.phi = qBound(0.0, camera.phi - delta.y() * 0.4, 180.0);
+
+        // Not recorded: the whole drag is one step, opened when it began.
+        m_state->setCamera(camera, false);
+        return;
+    }
+
     if (m_resizing != Handle::None) {
         if (!m_dragMoved) {
             m_state->beginEdit();
@@ -341,6 +403,10 @@ void CanvasView::mouseMoveEvent(QMouseEvent *event)
 void CanvasView::mouseReleaseEvent(QMouseEvent *event)
 {
     Q_UNUSED(event);
+    if (m_orbiting) {
+        m_orbiting = false;
+        unsetCursor();
+    }
     m_dragging = kInvalidObjectId;
     m_resizing = Handle::None;
     m_resizeStartParams.clear();

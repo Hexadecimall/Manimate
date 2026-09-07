@@ -64,6 +64,10 @@ private:
     QPointF m_grabOffset;
     bool m_dragMoved = false;
 
+    /// True while the camera is being dragged round the scene.
+    bool m_orbiting = false;
+    QPointF m_orbitFrom;
+
     /// Resize in progress, and the object's size when it started.
     Handle m_resizing = Handle::None;
     QPointF m_resizeStartExtent;

@@ -1,5 +1,6 @@
 #include "ProjectWindow.h"
 
+#include "AudioPlayer.h"
 #include "CanvasView.h"
 #include "CodeEditor.h"
 #include "CodeGenerator.h"
@@ -30,6 +31,7 @@
 #include <QPlainTextEdit>
 #include <QScrollArea>
 #include <QScrollBar>
+#include <QSettings>
 #include <QSlider>
 #include <QSplitter>
 #include <QStackedWidget>
@@ -87,6 +89,7 @@ ProjectWindow::ProjectWindow(QWidget *parent)
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
 
+    m_audio = new AudioPlayer(this);
     m_renderJob = new RenderJob(this);
 
     m_pages = new QStackedWidget;
@@ -101,7 +104,10 @@ ProjectWindow::ProjectWindow(QWidget *parent)
     buildTitleBarActions();
 
     connect(m_state, &EditorState::modifiedChanged, this, [this] { updateTitle(); });
-    connect(m_state, &EditorState::playheadChanged, this, [this] { updateTransport(); });
+    connect(m_state, &EditorState::playheadChanged, this, [this](double seconds) {
+        updateTransport();
+        m_audio->seek(m_state->document().timeline, seconds);
+    });
     connect(m_state, &EditorState::documentChanged, this, [this] {
         updateTransport();
         updateViewerInfo();
@@ -109,9 +115,48 @@ ProjectWindow::ProjectWindow(QWidget *parent)
     });
     connect(m_state, &EditorState::historyChanged, this, &ProjectWindow::updateHistoryActions);
 
-    showPage(Page::Edit);
+    // The window remembers where it was and how it was arranged. Restored
+    // after everything exists, so there is something to restore onto.
+    rememberGeometryAs(QStringLiteral("project"));
+
+    QSettings settings;
+    const QByteArray columns = settings.value(QStringLiteral("editor/columns")).toByteArray();
+    if (!columns.isEmpty())
+        m_columns->restoreState(columns);
+    const QByteArray rows = settings.value(QStringLiteral("editor/rows")).toByteArray();
+    if (!rows.isEmpty())
+        m_rows->restoreState(rows);
+
+    const double zoom = settings.value(QStringLiteral("editor/timelineZoom"), 90.0).toDouble();
+    m_timeline->setScale(zoom);
+    if (m_zoomSlider)
+        m_zoomSlider->setValue(int(m_timeline->scale()));
+
+    const bool guides = settings.value(QStringLiteral("editor/guides"), true).toBool();
+    m_guidesButton->setChecked(guides);
+    m_canvas->setGuidesVisible(guides);
+
+    const int page = settings.value(QStringLiteral("editor/page"), 0).toInt();
+    showPage(page == 1 ? Page::Code : page == 2 ? Page::Export : Page::Edit);
+
     updateTitle();
     updateTransport();
+}
+
+void ProjectWindow::saveWindowState()
+{
+    AppWindow::saveWindowState();
+
+    QSettings settings;
+    if (m_columns)
+        settings.setValue(QStringLiteral("editor/columns"), m_columns->saveState());
+    if (m_rows)
+        settings.setValue(QStringLiteral("editor/rows"), m_rows->saveState());
+    if (m_timeline)
+        settings.setValue(QStringLiteral("editor/timelineZoom"), m_timeline->scale());
+    if (m_guidesButton)
+        settings.setValue(QStringLiteral("editor/guides"), m_guidesButton->isChecked());
+    settings.setValue(QStringLiteral("editor/page"), m_pages ? m_pages->currentIndex() : 0);
 }
 
 void ProjectWindow::buildTitleBarActions()
@@ -233,7 +278,8 @@ QWidget *ProjectWindow::buildEditPage()
     m_inspector = new InspectorPanel(m_state);
     m_inspector->setMinimumWidth(220);
 
-    auto *upper = new QSplitter(Qt::Horizontal);
+    m_columns = new QSplitter(Qt::Horizontal);
+    QSplitter *upper = m_columns;
     upper->setHandleWidth(1);
     upper->setChildrenCollapsible(false);
     upper->addWidget(leftColumn);
@@ -260,7 +306,8 @@ QWidget *ProjectWindow::buildEditPage()
     timelineLayout->addWidget(buildTimelineBar());
     timelineLayout->addWidget(timelineScroll, 1);
 
-    auto *split = new QSplitter(Qt::Vertical);
+    m_rows = new QSplitter(Qt::Vertical);
+    QSplitter *split = m_rows;
     split->setHandleWidth(1);
     split->setChildrenCollapsible(false);
     split->addWidget(upper);
@@ -327,14 +374,14 @@ QWidget *ProjectWindow::buildTransportBar()
 
     layout->addStretch(1);
 
-    auto *guides = new QPushButton(tr("Guides"));
-    guides->setProperty("role", "quiet");
-    guides->setCheckable(true);
-    guides->setChecked(true);
-    guides->setCursor(Qt::PointingHandCursor);
-    connect(guides, &QPushButton::toggled, this,
+    m_guidesButton = new QPushButton(tr("Guides"));
+    m_guidesButton->setProperty("role", "quiet");
+    m_guidesButton->setCheckable(true);
+    m_guidesButton->setChecked(true);
+    m_guidesButton->setCursor(Qt::PointingHandCursor);
+    connect(m_guidesButton, &QPushButton::toggled, this,
             [this](bool on) { m_canvas->setGuidesVisible(on); });
-    layout->addWidget(guides);
+    layout->addWidget(m_guidesButton);
 
     return bar;
 }
@@ -905,6 +952,7 @@ bool ProjectWindow::openProject(const QString &projectFile)
         label->setText(QDir::toNativeSeparators(QDir(m_layout.root).relativeFilePath(m_scriptPath)));
     }
 
+    m_audio->setLayout(m_layout);
     m_state->setDocument(std::move(document), m_layout);
     m_generatedCode.clear();
     syncCodeFromScene(m_codeEditor->toPlainText().trimmed().isEmpty());
@@ -1006,6 +1054,9 @@ void ProjectWindow::togglePlayback()
     m_playButton->setText(QStringLiteral("❚❚"));
     m_playButton->setToolTip(tr("Pause"));
     m_playbackTimer->start(1000 / qMax(1, m_state->document().render.fps));
+
+    // The scene's sounds run alongside the picture, from wherever it starts.
+    m_audio->setPlaying(true, m_state->document().timeline, m_state->playhead());
 }
 
 void ProjectWindow::stopPlayback()
@@ -1016,6 +1067,7 @@ void ProjectWindow::stopPlayback()
     m_playbackTimer->stop();
     m_playButton->setText(QStringLiteral("▶"));
     m_playButton->setToolTip(tr("Play"));
+    m_audio->stop();
 }
 
 void ProjectWindow::stepFrame(int frames)
@@ -1084,6 +1136,7 @@ void ProjectWindow::closeEvent(QCloseEvent *event)
         event->ignore();
         return;
     }
+    saveWindowState();
     event->accept();
     Q_EMIT closed();
 }
