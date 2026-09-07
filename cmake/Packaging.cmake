@@ -1,9 +1,13 @@
 # Installation and packaging.
 #
-# Each platform gets the package its users expect: a .dmg on macOS, an NSIS
-# installer plus a portable .zip on Windows, and a relocatable tarball on Linux
-# that the release workflow also turns into an AppImage. Qt is deployed into
-# every one of them, so nothing has to be installed alongside the application.
+# Every platform gets two packages: the installer its users expect, and a
+# ready-to-run archive for anyone who would rather not install anything.
+#
+#   macOS    .dmg              .app in a .zip
+#   Windows  NSIS installer    portable folder in a .zip
+#   Linux    .deb             .AppImage (single file, and a .tar.gz)
+#
+# Qt is deployed into all of them, so nothing has to be installed alongside.
 
 include(GNUInstallDirs)
 
@@ -98,7 +102,18 @@ elseif(WIN32)
     set(CPACK_NSIS_DELETE_ICONS_EXTRA
         "Delete '$SMPROGRAMS\\\\$START_MENU\\\\Manimation.lnk'")
 else()
-    set(CPACK_GENERATOR "TGZ")
+    set(CPACK_GENERATOR "DEB;TGZ")
+
+    set(CPACK_DEBIAN_PACKAGE_NAME manimation)
+    set(CPACK_DEBIAN_PACKAGE_SECTION graphics)
+    set(CPACK_DEBIAN_PACKAGE_PRIORITY optional)
+    set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "${CPACK_PACKAGE_HOMEPAGE_URL}")
+    set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Manimation")
+    set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
+    # Qt travels inside the package, so only the system libraries it cannot
+    # carry are declared.
+    set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+    set(CPACK_PACKAGING_INSTALL_PREFIX /usr)
 endif()
 
 include(CPack)

@@ -29,10 +29,17 @@ the newest one off `main`, and `--list` (`-List`) to print what they would
 install without touching anything. On Windows, `-Portable` unpacks the zip
 instead of running the installer, and needs no administrator rights.
 
-Or take the package for your platform straight from
-[Releases](https://github.com/Hexadecimall/Manimation/releases): a `.dmg` on
-macOS, an `.AppImage` or tarball on Linux, an installer or portable `.zip` on
-Windows.
+Or take a package straight from
+[Releases](https://github.com/Hexadecimall/Manimation/releases). Every platform
+has both an installer and a ready-to-run build that installs nothing:
+
+| Platform | Installer            | Ready to run                    |
+| -------- | -------------------- | ------------------------------- |
+| macOS    | `.dmg`               | `.app` in a `.zip`              |
+| Windows  | `.exe` installer     | portable folder in a `.zip`     |
+| Linux    | `.deb`               | `.AppImage`, or a `.tar.gz`     |
+
+The macOS build is universal, so one download covers Apple silicon and Intel.
 
 ## Building
 

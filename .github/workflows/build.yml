@@ -90,6 +90,17 @@ jobs:
         working-directory: build
         run: cpack --config CPackConfig.cmake -C Release
 
+      # A .app in a .zip, for anyone who would rather not run an installer.
+      # ditto is used rather than a generic zip because it is the only thing
+      # that reliably preserves the symlinks inside Qt's frameworks.
+      - name: Build the portable macOS archive
+        if: matrix.platform == 'macos'
+        run: |
+          cmake --install build --prefix "$PWD/stage"
+          ditto -c -k --keepParent --sequesterRsrc \
+            "$PWD/stage/Manimation.app" \
+            "build/Manimation-${{ steps.version.outputs.version }}-macos-universal.zip"
+
       # linuxdeploy produces the AppImage users expect; CPack's tarball is kept
       # alongside it for anyone who would rather unpack it themselves.
       - name: Build AppImage
@@ -125,7 +136,7 @@ jobs:
           # Everything CPack and linuxdeploy produced, and nothing else.
           find build -maxdepth 2 \
             \( -name '*.dmg' -o -name '*.exe' -o -name '*.zip' \
-               -o -name '*.tar.gz' -o -name '*.AppImage' \) \
+               -o -name '*.deb' -o -name '*.tar.gz' -o -name '*.AppImage' \) \
             -not -path '*/_CPack_Packages/*' -exec cp {} dist/ \;
           ls -lh dist
 
