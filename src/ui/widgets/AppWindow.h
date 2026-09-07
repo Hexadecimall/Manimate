@@ -2,6 +2,7 @@
 
 #include <QList>
 #include <QMainWindow>
+#include <QPixmap>
 
 class QMenu;
 class QVBoxLayout;
@@ -56,11 +57,18 @@ public:
 
 protected:
     void paintEvent(QPaintEvent *event) override;
+    void resizeEvent(QResizeEvent *event) override;
     void changeEvent(QEvent *event) override;
     bool eventFilter(QObject *watched, QEvent *event) override;
 
 private:
     void applyMaximisedState();
+
+    /// Redraw the cached shadow. Done on resize only: a live graphics effect
+    /// would re-blur the whole window on every repaint anywhere inside it.
+    void rebuildShadow();
+
+    QPixmap m_shadow;
     Qt::Edges edgesAt(const QPoint &position) const;
     static Qt::CursorShape cursorForEdges(Qt::Edges edges);
 

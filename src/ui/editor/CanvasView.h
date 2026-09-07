@@ -3,6 +3,7 @@
 #include "SceneEvaluator.h"
 
 #include <QPointF>
+#include <QVariantMap>
 #include <QWidget>
 
 namespace mn::ui {
@@ -36,8 +37,23 @@ protected:
     void keyPressEvent(QKeyEvent *event) override;
 
 private:
+    /// Which corner of the selection is being dragged, if any.
+    enum class Handle { None, TopLeft, TopRight, BottomLeft, BottomRight };
+
     QRectF frameRect() const;
     QPointF toScene(const QPointF &widgetPoint) const;
+
+    /// The selection's outline in widget coordinates, or a null rect.
+    QRectF selectionOutline() const;
+
+    /// The handle under `widgetPoint`, if the pointer is close enough to one.
+    Handle handleAt(const QPointF &widgetPoint) const;
+
+    /// Resize the selected object so its half-extent matches `scenePoint`,
+    /// measured from the object's own centre.
+    void resizeTo(const QPointF &scenePoint);
+
+    static Qt::CursorShape cursorFor(Handle handle);
 
     EditorState *m_state;
     bool m_guides = true;
@@ -47,6 +63,11 @@ private:
     ObjectId m_dragging = kInvalidObjectId;
     QPointF m_grabOffset;
     bool m_dragMoved = false;
+
+    /// Resize in progress, and the object's size when it started.
+    Handle m_resizing = Handle::None;
+    QPointF m_resizeStartExtent;
+    QVariantMap m_resizeStartParams;
 };
 
 } // namespace mn::ui

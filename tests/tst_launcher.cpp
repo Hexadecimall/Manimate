@@ -14,6 +14,7 @@
 
 #include <QApplication>
 #include <QDebug>
+#include <QElapsedTimer>
 #include <QMenuBar>
 #include <QToolButton>
 #include <QDateTime>
@@ -49,6 +50,7 @@ private slots:
 
     void snapshot();
     void projectSnapshot();
+    void repaintIsFastEnoughForPlayback();
 
     void generatesRunnablePython();
     void solverExpressesOverlapExactly();
@@ -420,6 +422,50 @@ void LauncherTest::undoRestoresWhatWasThere()
 
     state.redo();
     QCOMPARE(state.document().objects.size(), 1);
+}
+
+/// Playback repaints the whole window on every frame, so a frame has to cost
+/// less than the frame budget or playback silently runs slow.
+void LauncherTest::repaintIsFastEnoughForPlayback()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+
+    ProjectLayout layout;
+    QVERIFY(project::create(dir.path(), QStringLiteral("Speed"), &layout, nullptr));
+
+    ProjectWindow window;
+    QVERIFY(window.openProject(layout.projectFile));
+
+    EditorState *state = window.state();
+    for (int i = 0; i < 12; ++i) {
+        const ObjectId id = state->addObject(QStringLiteral("manim.Circle"));
+        state->setObjectParam(id, QStringLiteral("position"),
+                              QPointF(-5.0 + i * 0.9, (i % 3) - 1.0));
+        const ClipId clip = state->addClip(id, QStringLiteral("manim.Create"));
+        state->setClipTiming(clip, i * 0.2, 1.0, i % 4);
+    }
+
+    window.resize(1400, 880);
+    window.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&window));
+
+    constexpr int kFrames = 60;
+    QElapsedTimer timer;
+    timer.start();
+    for (int i = 0; i < kFrames; ++i) {
+        state->setPlayhead(i * (1.0 / 60.0));
+        window.grab();
+    }
+    const double msPerFrame = double(timer.elapsed()) / kFrames;
+
+    qInfo("full-window repaint: %.2f ms per frame", msPerFrame);
+
+    // 60fps leaves 16.7ms. A generous ceiling, so this fails on a real
+    // regression rather than on a busy machine.
+    QVERIFY2(msPerFrame < 16.0,
+             qPrintable(QStringLiteral("%1 ms per frame is too slow for 60fps")
+                            .arg(msPerFrame, 0, 'f', 2)));
 }
 
 /// Writes a PNG of a project window, so the wired-up editor can be looked at.

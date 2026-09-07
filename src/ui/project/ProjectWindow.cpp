@@ -74,6 +74,9 @@ ProjectWindow::ProjectWindow(QWidget *parent)
     setMinimumSize(920, 600);
 
     m_playbackTimer = new QTimer(this);
+    // The default coarse timer can slip by several milliseconds a tick, which
+    // at 60fps is a visible stutter.
+    m_playbackTimer->setTimerType(Qt::PreciseTimer);
     connect(m_playbackTimer, &QTimer::timeout, this, &ProjectWindow::advancePlayback);
 
     auto *content = new QWidget;

@@ -7,8 +7,8 @@
 #include <QMenuBar>
 #include <QMouseEvent>
 #include <QPainter>
-#include <QGraphicsDropShadowEffect>
 #include <QPainterPath>
+#include <algorithm>
 #include <QToolButton>
 #include <QVBoxLayout>
 #include <QWindow>
@@ -58,16 +58,6 @@ AppWindow::AppWindow(QWidget *parent)
                                           "}")
                                .arg(p.window.name())
                                .arg(kCornerRadius));
-
-    // A real blurred shadow. Hand-drawing one as concentric rounded outlines
-    // meant each ring needed a wider corner radius than the last, and the
-    // outermost arc curved visibly differently from the window itself, which
-    // read as a second border round the corners.
-    auto *shadow = new QGraphicsDropShadowEffect(this);
-    shadow->setBlurRadius(kShadowMargin * 2.0);
-    shadow->setColor(QColor(0, 0, 0, 165));
-    shadow->setOffset(0, 3);
-    m_shell->setGraphicsEffect(shadow);
 
     m_shellLayout = new QVBoxLayout(m_shell);
     // Children run to the edge: whatever sits in a corner rounds it itself,
@@ -135,9 +125,7 @@ void AppWindow::applyMaximisedState()
     const theme::Palette &p = theme::palette();
     const bool filling = isMaximized() || isFullScreen();
 
-    // A window filling the screen casts no shadow.
-    if (auto *shadow = qobject_cast<QGraphicsDropShadowEffect *>(m_shell->graphicsEffect()))
-        shadow->setEnabled(!filling);
+    rebuildShadow();
 
     // A window filling the screen has no corners to round and nowhere to cast
     // a shadow, so it should meet the screen edges exactly.
@@ -154,11 +142,87 @@ void AppWindow::applyMaximisedState()
     update();
 }
 
+void AppWindow::resizeEvent(QResizeEvent *event)
+{
+    QMainWindow::resizeEvent(event);
+    rebuildShadow();
+}
+
+/// Blur one channel-agnostic pass over the image, horizontally then
+/// vertically. Three passes of a box blur approximate a Gaussian closely
+/// enough that nothing about the result looks boxy.
+static void boxBlur(QImage &image, int radius)
+{
+    if (radius < 1)
+        return;
+
+    const int width = image.width();
+    const int height = image.height();
+    const int span = radius * 2 + 1;
+
+    QImage scratch = image;
+
+    for (int pass = 0; pass < 3; ++pass) {
+        // Horizontal.
+        for (int y = 0; y < height; ++y) {
+            const QRgb *in = reinterpret_cast<const QRgb *>(image.constScanLine(y));
+            QRgb *out = reinterpret_cast<QRgb *>(scratch.scanLine(y));
+            for (int x = 0; x < width; ++x) {
+                int a = 0;
+                for (int k = -radius; k <= radius; ++k)
+                    a += qAlpha(in[std::clamp(x + k, 0, width - 1)]);
+                out[x] = qRgba(0, 0, 0, a / span);
+            }
+        }
+        // Vertical.
+        for (int x = 0; x < width; ++x) {
+            for (int y = 0; y < height; ++y) {
+                int a = 0;
+                for (int k = -radius; k <= radius; ++k) {
+                    const QRgb *line = reinterpret_cast<const QRgb *>(
+                        scratch.constScanLine(std::clamp(y + k, 0, height - 1)));
+                    a += qAlpha(line[x]);
+                }
+                reinterpret_cast<QRgb *>(image.scanLine(y))[x] = qRgba(0, 0, 0, a / span);
+            }
+        }
+    }
+}
+
+void AppWindow::rebuildShadow()
+{
+    if (isMaximized() || isFullScreen() || m_shell->geometry().isEmpty() || size().isEmpty()) {
+        m_shadow = {};
+        return;
+    }
+
+    QImage image(size(), QImage::Format_ARGB32_Premultiplied);
+    image.fill(Qt::transparent);
+
+    {
+        QPainter painter(&image);
+        painter.setRenderHint(QPainter::Antialiasing);
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(QColor(0, 0, 0, 190));
+        // Cast from slightly above, as a window's shadow is.
+        painter.drawRoundedRect(QRectF(m_shell->geometry()).adjusted(1, 3, -1, 3),
+                                kCornerRadius, kCornerRadius);
+    }
+
+    boxBlur(image, kShadowMargin / 3);
+    m_shadow = QPixmap::fromImage(image);
+}
+
 void AppWindow::paintEvent(QPaintEvent *event)
 {
-    // Nothing to paint: the shell draws the window's surface and its shadow
-    // comes from the drop-shadow effect, so everything outside stays clear.
     QMainWindow::paintEvent(event);
+
+    if (m_shadow.isNull())
+        return;
+
+    // Just a blit: the shadow only changes when the window is resized.
+    QPainter painter(this);
+    painter.drawPixmap(0, 0, m_shadow);
 }
 
 Qt::Edges AppWindow::edgesAt(const QPoint &position) const
