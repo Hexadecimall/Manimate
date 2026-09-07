@@ -7,6 +7,7 @@
 #include "CodeEditor.h"
 #include "Catalog.h"
 #include "CodeGenerator.h"
+#include "CodeParser.h"
 #include "EditorState.h"
 #include "SceneEvaluator.h"
 #include "SceneRenderer.h"
@@ -64,6 +65,8 @@ private slots:
     void pythonBlocksBecomeControlFlow();
     void groupsCarryTheirChildren();
     void audioBecomesAddSound();
+    void codeRoundTripsBackIntoTheScene();
+    void parserReportsWhatItCannotRead();
     void catalogCoversABroadRangeOfManim();
     void addingAnObjectSelectsIt();
     void animationsChangeWhatTheCanvasWouldDraw();
@@ -522,6 +525,89 @@ void LauncherTest::audioBecomesAddSound()
 
     state.removeAudio(audio);
     QVERIFY(!codegen::constructBody(state.document(), 0).contains(QStringLiteral("add_sound")));
+}
+
+void LauncherTest::codeRoundTripsBackIntoTheScene()
+{
+    EditorState state;
+    state.setDocument(Document::createNew(QStringLiteral("Trip")), {});
+    state.documentForWriting().sceneClassName = QStringLiteral("Trip");
+
+    const ObjectId circle = state.addObject(QStringLiteral("manim.Circle"));
+    state.setObjectParam(circle, QStringLiteral("position"), QPointF(-2, 1));
+    state.setObjectParam(circle, QStringLiteral("radius"), 1.5);
+    state.setObjectParam(circle, QStringLiteral("color"), QColor(0x58, 0xC4, 0xDD));
+
+    const ObjectId label = state.addObject(QStringLiteral("manim.Text"));
+    state.setObjectParam(label, QStringLiteral("text"), QStringLiteral("Round trip"));
+    state.setObjectParam(label, QStringLiteral("position"), QPointF(0, -2));
+
+    const ClipId create = state.addClip(circle, QStringLiteral("manim.Create"));
+    state.setClipTiming(create, 0.0, 1.2, 0);
+    const ClipId write = state.addClip(label, QStringLiteral("manim.Write"));
+    state.setClipTiming(write, 0.5, 1.0, 1);
+    const ClipId shift = state.addClip(circle, QStringLiteral("manim.Shift"));
+    state.setClipTiming(shift, 3.0, 0.8, 0);
+    state.setClipParam(shift, QStringLiteral("by"), QPointF(2.5, 0));
+
+    const QString original = codegen::generate(state.document());
+
+    // Read it back into a fresh document.
+    Document rebuilt = Document::createNew(QStringLiteral("Trip"));
+    const codeparser::Result outcome = codeparser::parse(original, &rebuilt);
+    QVERIFY2(outcome.ok(), qPrintable(outcome.error));
+    QVERIFY2(outcome.complete,
+             qPrintable(QStringLiteral("did not understand: %1")
+                            .arg(outcome.unrecognised.join(QStringLiteral(" | ")))));
+
+    QCOMPARE(rebuilt.objects.size(), 2);
+    QCOMPARE(rebuilt.timeline.clips.size(), 3);
+
+    const SceneObject *readCircle = nullptr;
+    for (const SceneObject &object : rebuilt.objects) {
+        if (object.type == QLatin1String("manim.Circle"))
+            readCircle = &object;
+    }
+    QVERIFY(readCircle);
+    QCOMPARE(readCircle->params.value(QStringLiteral("radius")).toDouble(), 1.5);
+    QCOMPARE(readCircle->params.value(QStringLiteral("position")).toPointF(), QPointF(-2, 1));
+
+    // The real test: generating from what was read produces the same file.
+    QCOMPARE(codegen::generate(rebuilt), original);
+}
+
+void LauncherTest::parserReportsWhatItCannotRead()
+{
+    const QString source = QStringLiteral(
+        "from manim import *\n"
+        "\n"
+        "\n"
+        "class Hand(Scene):\n"
+        "    def construct(self):\n"
+        "        circle = Circle(radius=1)\n"
+        "        circle.move_to([0, 0, 0])\n"
+        "        circle.set_sheen(0.4)\n"
+        "        weird = SomethingNobodyHasHeardOf()\n"
+        "\n"
+        "        self.play(Create(circle, run_time=1))\n");
+
+    Document document = Document::createNew(QStringLiteral("Hand"));
+    const codeparser::Result outcome = codeparser::parse(source, &document);
+
+    // What it understood, it kept.
+    QVERIFY(outcome.ok());
+    QCOMPARE(document.objects.size(), 1);
+    QCOMPARE(document.timeline.clips.size(), 1);
+
+    // What it did not, it named, rather than dropping in silence.
+    QVERIFY(!outcome.complete);
+    QCOMPARE(outcome.unrecognised.size(), 2);
+    QVERIFY(outcome.unrecognised.join(QChar()).contains(QStringLiteral("set_sheen")));
+    QVERIFY(outcome.unrecognised.join(QChar()).contains(QStringLiteral("SomethingNobodyHasHeardOf")));
+
+    // A file with no scene at all is an error, not a silent empty document.
+    Document empty = Document::createNew(QStringLiteral("Empty"));
+    QVERIFY(!codeparser::parse(QStringLiteral("x = 1\n"), &empty).ok());
 }
 
 void LauncherTest::catalogCoversABroadRangeOfManim()

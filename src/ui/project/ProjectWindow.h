@@ -72,6 +72,10 @@ private:
     void syncCodeFromScene(bool force = false);
 
     void startRender();
+
+    /// Read the code page back into the scene. Reports what it could not take
+    /// in rather than dropping it.
+    void applyCodeToScene();
     QWidget *buildTransportBar();
     QWidget *buildPageBar();
 

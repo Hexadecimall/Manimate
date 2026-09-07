@@ -3,6 +3,7 @@
 #include "CanvasView.h"
 #include "CodeEditor.h"
 #include "CodeGenerator.h"
+#include "CodeParser.h"
 #include "EditorState.h"
 #include "RenderJob.h"
 #include "InspectorPanel.h"
@@ -356,10 +357,16 @@ QWidget *ProjectWindow::buildCodePage()
 
     auto *staleLayout = new QHBoxLayout(m_codeStaleBar);
     staleLayout->setContentsMargins(14, 0, 10, 0);
-    auto *staleText = new QLabel(tr("The scene has changed since this code was edited by hand."));
+    auto *staleText = new QLabel(tr("This code and the scene have both changed."));
     staleText->setProperty("role", "subtitle");
     staleLayout->addWidget(staleText);
     staleLayout->addStretch(1);
+
+    auto *toScene = new QPushButton(tr("Apply to scene"));
+    toScene->setCursor(Qt::PointingHandCursor);
+    toScene->setFixedHeight(24);
+    connect(toScene, &QPushButton::clicked, this, &ProjectWindow::applyCodeToScene);
+    staleLayout->addWidget(toScene);
 
     auto *regenerate = new QPushButton(tr("Regenerate from scene"));
     regenerate->setCursor(Qt::PointingHandCursor);
@@ -396,8 +403,12 @@ QWidget *ProjectWindow::buildCodePage()
                                            .arg(column)
                                            .arg(m_codeEditor->lineCount()));
             });
-    connect(m_codeEditor->document(), &QTextDocument::modificationChanged, this,
-            [this] { updateTitle(); });
+    connect(m_codeEditor->document(), &QTextDocument::modificationChanged, this, [this] {
+        updateTitle();
+        // Editing the code offers a way to push it back into the scene.
+        if (m_codeStaleBar)
+            m_codeStaleBar->setVisible(m_codeEditor->document()->isModified());
+    });
     connect(this, &ProjectWindow::closed, scriptLabel, [] {});
 
     // Kept up to date whenever a project is opened.
@@ -537,6 +548,44 @@ void ProjectWindow::startRender()
     m_renderStatus->setText(tr("Manim %1").arg(version));
     m_renderJob->start(m_layout, m_scriptPath, m_state->document().sceneClassName,
                        m_state->document().render);
+}
+
+void ProjectWindow::applyCodeToScene()
+{
+    Document rebuilt = m_state->document();
+    const codeparser::Result outcome = codeparser::parse(m_codeEditor->toPlainText(), &rebuilt);
+
+    if (!outcome.ok()) {
+        QMessageBox::warning(this, tr("Cannot read that"), outcome.error);
+        return;
+    }
+
+    if (!outcome.complete) {
+        // Say exactly which lines will not survive, before anything is lost.
+        QMessageBox box(QMessageBox::Warning, tr("Some code cannot be read"),
+                        tr("%n line(s) are outside what the editor can represent.", nullptr,
+                           int(outcome.unrecognised.size())),
+                        QMessageBox::Ok | QMessageBox::Cancel, this);
+        box.setInformativeText(
+            tr("Applying this will keep everything else and drop those lines. They will "
+               "still be in the file until the scene is written out again."));
+        box.setDetailedText(outcome.unrecognised.join(QStringLiteral("\n")));
+        box.setDefaultButton(QMessageBox::Cancel);
+        if (box.exec() != QMessageBox::Ok)
+            return;
+    }
+
+    m_state->beginEdit();
+    m_state->setDocument(std::move(rebuilt), m_layout);
+    m_state->setModified(true);
+
+    // The code now matches the scene, so the two are back in step.
+    m_generatedCode = codegen::generate(m_state->document());
+    m_codeEditor->setPlainText(m_generatedCode);
+    if (m_codeStaleBar)
+        m_codeStaleBar->setVisible(false);
+
+    showPage(Page::Edit);
 }
 
 void ProjectWindow::syncCodeFromScene(bool force)
