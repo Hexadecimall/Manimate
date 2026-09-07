@@ -3,6 +3,7 @@
 #include "SceneEvaluator.h"
 
 #include <QPointF>
+#include <QHash>
 #include <QVariantMap>
 #include <QWidget>
 
@@ -63,6 +64,15 @@ private:
     ObjectId m_dragging = kInvalidObjectId;
     QPointF m_grabOffset;
     bool m_dragMoved = false;
+
+    /// A selection rectangle being dragged out, in widget coordinates.
+    bool m_marquee = false;
+    QPointF m_marqueeFrom;
+    QPointF m_marqueeTo;
+
+    /// Where each selected object was when a group drag started, so they all
+    /// move together by the same amount.
+    QHash<ObjectId, QPointF> m_dragOrigins;
 
     /// True while the camera is being dragged round the scene.
     bool m_orbiting = false;

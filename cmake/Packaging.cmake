@@ -64,6 +64,28 @@ else()
     endforeach()
 endif()
 
+# A Python with Manim already installed, shipped inside the package so a render
+# works on a machine that has neither. Set by the release build; a local build
+# leaves it empty and falls back to whatever Python is on the system.
+set(MANIMATE_BUNDLED_PYTHON "" CACHE PATH "Directory holding a standalone Python with Manim")
+
+if(MANIMATE_BUNDLED_PYTHON AND EXISTS "${MANIMATE_BUNDLED_PYTHON}")
+    if(APPLE)
+        # Inside the bundle's Resources, where everything that is not a binary
+        # belongs, and where codesigning expects to find it.
+        set(python_destination "Manimate.app/Contents/Resources/python")
+    elseif(WIN32)
+        set(python_destination "python")
+    else()
+        set(python_destination "${CMAKE_INSTALL_BINDIR}/python")
+    endif()
+
+    install(DIRECTORY "${MANIMATE_BUNDLED_PYTHON}/"
+            DESTINATION "${python_destination}"
+            USE_SOURCE_PERMISSIONS)
+    message(STATUS "Bundling Python from ${MANIMATE_BUNDLED_PYTHON}")
+endif()
+
 # Bundle the Qt libraries and plugins the application actually uses.
 qt_generate_deploy_app_script(
     TARGET manimate

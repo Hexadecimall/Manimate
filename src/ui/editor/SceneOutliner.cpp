@@ -54,9 +54,8 @@ SceneOutliner::SceneOutliner(EditorState *state, QWidget *parent)
     connect(m_list, &QListWidget::itemSelectionChanged, this, [this] {
         if (m_updating)
             return;
-        const QListWidgetItem *item = m_list->currentItem();
-        m_state->selectObject(item ? ObjectId(item->data(kObjectIdRole).toULongLong())
-                                   : kInvalidObjectId);
+        // Several rows can be selected, and the canvas shows the same set.
+        m_state->setSelection(selectedObjects());
     });
     connect(m_list, &QListWidget::itemChanged, this, &SceneOutliner::itemChanged);
     connect(m_list, &QListWidget::customContextMenuRequested, this,
@@ -113,15 +112,17 @@ void SceneOutliner::rebuild()
 void SceneOutliner::syncSelectionFromState()
 {
     m_updating = true;
-    const ObjectId selected = m_state->selectedObject();
 
     m_list->clearSelection();
     for (int i = 0; i < m_list->count(); ++i) {
         QListWidgetItem *item = m_list->item(i);
-        if (ObjectId(item->data(kObjectIdRole).toULongLong()) == selected) {
+        const ObjectId id = ObjectId(item->data(kObjectIdRole).toULongLong());
+        if (!m_state->isSelected(id))
+            continue;
+
+        item->setSelected(true);
+        if (id == m_state->selectedObject())
             m_list->setCurrentItem(item);
-            break;
-        }
     }
     m_updating = false;
 }

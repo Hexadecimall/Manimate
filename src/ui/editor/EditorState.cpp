@@ -99,11 +99,47 @@ void EditorState::redo()
 
 void EditorState::selectObject(ObjectId id)
 {
-    if (m_selectedObject == id && m_selectedClip == kInvalidClipId)
+    if (m_selectedObject == id && m_selectedClip == kInvalidClipId && m_selection.size() <= 1
+        && (id == kInvalidObjectId || m_selection.contains(id))) {
         return;
+    }
+
     m_selectedObject = id;
+    m_selection.clear();
+    if (id != kInvalidObjectId)
+        m_selection.append(id);
     m_selectedClip = kInvalidClipId;
     Q_EMIT selectionChanged();
+}
+
+void EditorState::setSelection(const QVector<ObjectId> &ids)
+{
+    QVector<ObjectId> kept;
+    for (const ObjectId id : ids) {
+        if (m_document.findObject(id) && !kept.contains(id))
+            kept.append(id);
+    }
+    if (kept == m_selection)
+        return;
+
+    m_selection = kept;
+    // The inspector edits one thing, so it follows the last one chosen.
+    m_selectedObject = kept.isEmpty() ? kInvalidObjectId : kept.last();
+    m_selectedClip = kInvalidClipId;
+    Q_EMIT selectionChanged();
+}
+
+void EditorState::toggleSelected(ObjectId id)
+{
+    if (!m_document.findObject(id))
+        return;
+
+    QVector<ObjectId> next = m_selection;
+    if (next.contains(id))
+        next.removeAll(id);
+    else
+        next.append(id);
+    setSelection(next);
 }
 
 void EditorState::selectClip(ClipId id)
@@ -138,6 +174,7 @@ void EditorState::clearSelection()
     if (m_selectedObject == kInvalidObjectId && m_selectedClip == kInvalidClipId)
         return;
     m_selectedObject = kInvalidObjectId;
+    m_selection.clear();
     m_selectedClip = kInvalidClipId;
     m_selectedAudio = kInvalidClipId;
     Q_EMIT selectionChanged();
@@ -313,6 +350,15 @@ void EditorState::removeClip(ClipId id)
 
 void EditorState::deleteSelection()
 {
+    // Several objects at once, when a marquee put them there.
+    if (m_selectedClip == kInvalidClipId && m_selectedAudio == kInvalidClipId
+        && m_selection.size() > 1) {
+        const QVector<ObjectId> doomed = m_selection;
+        for (const ObjectId id : doomed)
+            removeObject(id);
+        return;
+    }
+
     if (m_selectedAudio != kInvalidClipId) {
         removeAudio(m_selectedAudio);
         m_selectedAudio = kInvalidClipId;

@@ -4,7 +4,10 @@
 
 #include <QDir>
 #include <QFileInfo>
+#include <QCoreApplication>
+#include <QProcessEnvironment>
 #include <QDirIterator>
+#include <QSettings>
 #include <QStandardPaths>
 
 namespace mn::ui {
@@ -41,14 +44,50 @@ RenderJob::~RenderJob()
     cancel();
 }
 
+QString RenderJob::bundledPython()
+{
+    // Beside the executable on Windows and Linux; inside Resources on macOS,
+    // where anything that is not a binary belongs.
+    const QDir base(QCoreApplication::applicationDirPath());
+    const QStringList candidates = {
+#ifdef Q_OS_MACOS
+        base.filePath(QStringLiteral("../Resources/python/bin/python3")),
+#endif
+        base.filePath(QStringLiteral("python/bin/python3")),
+        base.filePath(QStringLiteral("python/python.exe")),
+    };
+
+    for (const QString &candidate : candidates) {
+        const QFileInfo info(candidate);
+        if (info.isFile() && info.isExecutable())
+            return info.canonicalFilePath();
+    }
+    return {};
+}
+
 QString RenderJob::pythonExecutable()
 {
+    // An interpreter named in settings wins, for anyone running their own.
+    const QString chosen = QSettings().value(QStringLiteral("render/python")).toString();
+    if (!chosen.isEmpty() && QFileInfo(chosen).isExecutable())
+        return chosen;
+
+    const QString bundled = bundledPython();
+    if (!bundled.isEmpty())
+        return bundled;
+
     for (const QString &candidate : {QStringLiteral("python3"), QStringLiteral("python")}) {
         const QString found = QStandardPaths::findExecutable(candidate);
         if (!found.isEmpty())
             return found;
     }
     return {};
+}
+
+bool RenderJob::usingBundledPython()
+{
+    const QString bundled = bundledPython();
+    return !bundled.isEmpty() && pythonExecutable() == bundled;
 }
 
 bool RenderJob::manimAvailable(QString *versionOut)
@@ -58,6 +97,7 @@ bool RenderJob::manimAvailable(QString *versionOut)
         return false;
 
     QProcess probe;
+    probe.setProcessEnvironment(renderEnvironment());
     probe.start(python, {QStringLiteral("-c"),
                          QStringLiteral("import manim; print(manim.__version__)")});
     if (!probe.waitForFinished(8000))
@@ -68,6 +108,24 @@ bool RenderJob::manimAvailable(QString *versionOut)
     if (versionOut)
         *versionOut = QString::fromUtf8(probe.readAllStandardOutput()).trimmed();
     return true;
+}
+
+QProcessEnvironment RenderJob::renderEnvironment()
+{
+    QProcessEnvironment environment = QProcessEnvironment::systemEnvironment();
+
+    const QString python = bundledPython();
+    if (python.isEmpty())
+        return environment;
+
+    // ffmpeg sits beside the interpreter. Manim resolves it from PATH, so one
+    // directory in front of the existing PATH is all it takes — in front, so a
+    // shipped build does not quietly depend on whatever the machine has.
+    const QString beside = QFileInfo(python).absolutePath();
+    const QString separator = QDir::listSeparator();
+    environment.insert(QStringLiteral("PATH"),
+                       beside + separator + environment.value(QStringLiteral("PATH")));
+    return environment;
 }
 
 bool RenderJob::latexAvailable()
@@ -131,6 +189,7 @@ void RenderJob::start(const ProjectLayout &layout, const QString &scriptPath,
     };
 
     m_process = new QProcess(this);
+    m_process->setProcessEnvironment(renderEnvironment());
     m_process->setWorkingDirectory(m_layout.root);
     m_process->setProcessChannelMode(QProcess::MergedChannels);
 

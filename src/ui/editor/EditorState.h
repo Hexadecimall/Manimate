@@ -30,7 +30,13 @@ public:
     void setDocument(Document document, const ProjectLayout &layout);
     ProjectLayout layout() const { return m_layout; }
 
+    /// The object the inspector edits: the last one added to the selection.
     ObjectId selectedObject() const { return m_selectedObject; }
+
+    /// Everything selected. One object is the ordinary case; a marquee or a
+    /// shift-click makes it several.
+    const QVector<ObjectId> &selectedObjects() const { return m_selection; }
+    bool isSelected(ObjectId id) const { return m_selection.contains(id); }
     ClipId selectedClip() const { return m_selectedClip; }
 
     /// The selected sound, which is selected separately: it animates nothing,
@@ -49,6 +55,12 @@ public:
 
 public Q_SLOTS:
     void selectObject(ObjectId id);
+
+    /// Replace the selection outright.
+    void setSelection(const QVector<ObjectId> &ids);
+
+    /// Add or remove one object, as shift-clicking does.
+    void toggleSelected(ObjectId id);
     void selectClip(ClipId id);
     void selectAudio(ClipId id);
     void clearSelection();
@@ -126,6 +138,7 @@ private:
     ProjectLayout m_layout;
 
     ObjectId m_selectedObject = kInvalidObjectId;
+    QVector<ObjectId> m_selection;
     ClipId m_selectedClip = kInvalidClipId;
     ClipId m_selectedAudio = kInvalidClipId;
     double m_playhead = 0.0;

@@ -71,6 +71,7 @@ private slots:
     void groupsCarryTheirChildren();
     void tracksCanBeAddedAndRemoved();
     void listsDrawTheirOwnSelection();
+    void severalObjectsCanBeSelectedAndMovedTogether();
     void theWindowRemembersHowItWasLeft();
     void audioBecomesAddSound();
     void codeRoundTripsBackIntoTheScene();
@@ -657,6 +658,44 @@ void LauncherTest::theWindowRemembersHowItWasLeft()
         QCOMPARE(window.findChild<TimelineView *>()->scale(), 210.0);
         QCOMPARE(window.size(), QSize(1234, 806));
     }
+}
+
+void LauncherTest::severalObjectsCanBeSelectedAndMovedTogether()
+{
+    EditorState state;
+    state.setDocument(Document::createNew(QStringLiteral("Many")), {});
+
+    const ObjectId a = state.addObject(QStringLiteral("manim.Circle"));
+    const ObjectId b = state.addObject(QStringLiteral("manim.Square"));
+    const ObjectId c = state.addObject(QStringLiteral("manim.Star"));
+    state.setObjectParam(a, QStringLiteral("position"), QPointF(-2, 0));
+    state.setObjectParam(b, QStringLiteral("position"), QPointF(0, 0));
+    state.setObjectParam(c, QStringLiteral("position"), QPointF(2, 0));
+
+    state.setSelection({a, b});
+    QCOMPARE(state.selectedObjects().size(), 2);
+    QVERIFY(state.isSelected(a));
+    QVERIFY(!state.isSelected(c));
+    // The inspector edits the last one chosen.
+    QCOMPARE(state.selectedObject(), b);
+
+    state.toggleSelected(c);
+    QCOMPARE(state.selectedObjects().size(), 3);
+    state.toggleSelected(a);
+    QVERIFY(!state.isSelected(a));
+
+    // Selecting one thing replaces the whole selection.
+    state.selectObject(a);
+    QCOMPARE(state.selectedObjects(), QVector<ObjectId>{a});
+
+    // Deleting with several selected removes all of them.
+    state.setSelection({b, c});
+    state.deleteSelection();
+    QCOMPARE(state.document().objects.size(), 1);
+    QCOMPARE(state.document().objects.first().id, a);
+
+    // A selection naming something deleted does not keep pointing at it.
+    QVERIFY(!state.isSelected(b));
 }
 
 void LauncherTest::audioBecomesAddSound()

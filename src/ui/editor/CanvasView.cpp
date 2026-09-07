@@ -141,6 +141,29 @@ void CanvasView::paintEvent(QPaintEvent *)
                          tr("Double-click a shape in the library to add it"));
     }
 
+    // Every selected object gets an outline; only the one the inspector edits
+    // gets handles, since resizing several at once means nothing yet.
+    for (const ObjectId other : m_state->selectedObjects()) {
+        if (other == m_state->selectedObject())
+            continue;
+        const evaluator::ObjectState state =
+            evaluator::evaluateObject(document, other, m_state->playhead());
+        const QRectF bounds = SceneRenderer::boundsInPixels(
+            state, SceneRenderer::sceneToPixels(document, frame), document.camera);
+        if (bounds.isNull())
+            continue;
+        painter.setBrush(Qt::NoBrush);
+        painter.setPen(QPen(theme::mix(p.text, p.window, 0.35), 1.0));
+        painter.drawRect(bounds.adjusted(-4, -4, 4, 4));
+    }
+
+    if (m_marquee) {
+        const QRectF box = QRectF(m_marqueeFrom, m_marqueeTo).normalized();
+        painter.setPen(QPen(p.text, 1.0, Qt::DashLine));
+        painter.setBrush(QColor(p.text.red(), p.text.green(), p.text.blue(), 20));
+        painter.drawRect(box);
+    }
+
     // The selection, drawn over the scene.
     const ObjectId selected = m_state->selectedObject();
     if (selected != kInvalidObjectId) {
@@ -332,17 +355,36 @@ void CanvasView::mousePressEvent(QMouseEvent *event)
         m_state->clearSelection();
 
         // In three dimensions the empty canvas is a viewport: dragging it turns
-        // the camera round the scene rather than doing nothing.
-        if (m_state->document().camera.enabled) {
+        // the camera round the scene. Holding shift draws a selection instead,
+        // so both are reachable without a second pointer button.
+        const bool orbit = m_state->document().camera.enabled
+                           && !event->modifiers().testFlag(Qt::ShiftModifier);
+        if (orbit) {
             m_orbiting = true;
             m_orbitFrom = event->position();
             m_state->beginEdit();
             setCursor(Qt::ClosedHandCursor);
+            return;
         }
+
+        m_marquee = true;
+        m_marqueeFrom = event->position();
+        m_marqueeTo = m_marqueeFrom;
         return;
     }
 
-    m_state->selectObject(hit);
+    // Shift adds to the selection rather than replacing it.
+    if (event->modifiers().testFlag(Qt::ShiftModifier))
+        m_state->toggleSelected(hit);
+    else if (!m_state->isSelected(hit))
+        m_state->selectObject(hit);
+
+    // A drag moves everything selected, by the same amount.
+    m_dragOrigins.clear();
+    for (const ObjectId id : m_state->selectedObjects()) {
+        if (const SceneObject *object = m_state->document().findObject(id))
+            m_dragOrigins.insert(id, object->params.value(QStringLiteral("position")).toPointF());
+    }
 
     const evaluator::ObjectState state =
         evaluator::evaluateObject(m_state->document(), hit, m_state->playhead());
@@ -354,6 +396,12 @@ void CanvasView::mousePressEvent(QMouseEvent *event)
 
 void CanvasView::mouseMoveEvent(QMouseEvent *event)
 {
+    if (m_marquee) {
+        m_marqueeTo = event->position();
+        update();
+        return;
+    }
+
     if (m_orbiting) {
         const QPointF delta = event->position() - m_orbitFrom;
         m_orbitFrom = event->position();
@@ -397,12 +445,41 @@ void CanvasView::mouseMoveEvent(QMouseEvent *event)
         target.setX(std::round(target.x() * 4.0) / 4.0);
         target.setY(std::round(target.y() * 4.0) / 4.0);
     }
-    m_state->moveObjectTo(m_dragging, target);
+
+    // Everything selected moves by the same amount, keeping its arrangement.
+    const QPointF was = m_dragOrigins.value(m_dragging, target);
+    const QPointF by = target - was;
+    for (auto it = m_dragOrigins.constBegin(); it != m_dragOrigins.constEnd(); ++it)
+        m_state->moveObjectTo(it.key(), it.value() + by);
 }
 
 void CanvasView::mouseReleaseEvent(QMouseEvent *event)
 {
     Q_UNUSED(event);
+    if (m_marquee) {
+        m_marquee = false;
+
+        // Anything the rectangle touches is selected. Touching rather than
+        // enclosing, because an outline is mostly empty space and enclosing
+        // would make a large shape hard to catch.
+        const QRectF box = QRectF(m_marqueeFrom, m_marqueeTo).normalized();
+        const QTransform toPixels =
+            SceneRenderer::sceneToPixels(m_state->document(), frameRect());
+
+        QVector<ObjectId> caught;
+        for (const evaluator::ObjectState &state :
+             evaluator::evaluate(m_state->document(), m_state->playhead())) {
+            const QRectF bounds =
+                SceneRenderer::boundsInPixels(state, toPixels, m_state->document().camera);
+            if (!bounds.isNull() && box.intersects(bounds))
+                caught.append(state.id);
+        }
+
+        m_state->setSelection(caught);
+        update();
+        return;
+    }
+
     if (m_orbiting) {
         m_orbiting = false;
         unsetCursor();

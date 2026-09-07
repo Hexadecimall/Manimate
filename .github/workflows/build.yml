@@ -63,6 +63,78 @@ jobs:
           version: 6.8.3
           cache: true
 
+      # Manim and a Python to run it are shipped inside the package, so a
+      # render works on a machine that has neither. A standalone build is used
+      # rather than the runner's own Python: that one is not relocatable, and a
+      # copy of it would break the moment it left this machine.
+      - name: Fetch a standalone Python
+        shell: bash
+        env:
+          PYTHON_BUILD: 20250106
+          PYTHON_VERSION: 3.12.8
+        run: |
+          case "${{ matrix.platform }}-${{ matrix.arch }}" in
+            macos-*)   target="aarch64-apple-darwin" ;;
+            linux-*)   target="x86_64-unknown-linux-gnu" ;;
+            windows-*) target="x86_64-pc-windows-msvc-shared" ;;
+          esac
+
+          base="https://github.com/astral-sh/python-build-standalone/releases/download"
+          url="$base/${PYTHON_BUILD}/cpython-${PYTHON_VERSION}+${PYTHON_BUILD}-${target}-install_only.tar.gz"
+
+          echo "fetching $url"
+          curl -fsSL -o python.tar.gz "$url"
+          mkdir -p runtime
+          tar -xzf python.tar.gz -C runtime --strip-components=1
+
+          if [ "${{ matrix.platform }}" = windows ]; then
+            interpreter="runtime/python.exe"
+          else
+            interpreter="runtime/bin/python3"
+          fi
+
+          "$interpreter" -m pip install --upgrade pip
+
+          # manim pulls in what it needs to draw: pycairo for the canvas and
+          # manimpango for text, both as wheels carrying their own libraries.
+          # imageio-ffmpeg carries an ffmpeg binary, which manim needs to turn
+          # frames into a video and which is not otherwise on a clean machine.
+          "$interpreter" -m pip install manim imageio-ffmpeg
+
+          # Put ffmpeg where the interpreter's own bin is, so adding one
+          # directory to PATH is enough for a render to find everything.
+          "$interpreter" - <<'PYTHON'
+          import imageio_ffmpeg, os, shutil, stat, sys
+
+          source = imageio_ffmpeg.get_ffmpeg_exe()
+          root = os.path.dirname(os.path.dirname(os.path.abspath(sys.executable)))
+          target_dir = os.path.join(root, "bin") if os.name != "nt" else root
+          os.makedirs(target_dir, exist_ok=True)
+
+          target = os.path.join(target_dir, "ffmpeg.exe" if os.name == "nt" else "ffmpeg")
+          shutil.copy2(source, target)
+          os.chmod(target, os.stat(target).st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
+          print("bundled ffmpeg ->", target)
+          PYTHON
+
+          # Prove all of it before it is packaged: a build that ships a Manim
+          # which cannot import, or an ffmpeg that cannot run, is worse than one
+          # that ships neither.
+          "$interpreter" -c "import manim, cairo, manimpango; print('manim', manim.__version__, '| cairo', cairo.version)"
+          if [ "${{ matrix.platform }}" = windows ]; then
+            ./runtime/ffmpeg.exe -version | head -1
+          else
+            ./runtime/bin/ffmpeg -version | head -1
+          fi
+
+          # Trim what a render never needs. The download is large enough
+          # without pip's caches and every test suite in site-packages.
+          find runtime -type d -name "__pycache__" -prune -exec rm -rf {} + 2>/dev/null || true
+          find runtime -type d -name "tests" -prune -exec rm -rf {} + 2>/dev/null || true
+          rm -rf runtime/lib/python*/test runtime/lib/python*/idlelib runtime/lib/python*/tkinter
+
+          du -sh runtime
+
       - name: Configure
         shell: bash
         run: |
@@ -75,6 +147,7 @@ jobs:
           cmake -S . -B build \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_OSX_DEPLOYMENT_TARGET=12.0 \
+            -DMANIMATE_BUNDLED_PYTHON="$PWD/runtime" \
             $extra
 
       - name: Build

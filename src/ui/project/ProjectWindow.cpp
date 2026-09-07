@@ -501,9 +501,26 @@ QWidget *ProjectWindow::buildExportPage()
         tr("Renders this project's Python with Manim and puts the video in the "
            "project's output folder. The render runs alongside the editor, so "
            "you can keep working while it goes."));
+
+    auto *provenance = new QLabel;
+    provenance->setProperty("role", "subtitle");
+    provenance->setWordWrap(true);
+    {
+        QString manim;
+        const bool have = RenderJob::manimAvailable(&manim);
+        const bool bundled = RenderJob::usingBundledPython();
+        if (have && bundled)
+            provenance->setText(tr("Using the Manim %1 shipped with Manimate.").arg(manim));
+        else if (have)
+            provenance->setText(tr("Using Manim %1 from this machine's Python.").arg(manim));
+        else
+            provenance->setText(tr("No Manim was found. This build ships without one; "
+                                   "install it with:  python3 -m pip install manim"));
+    }
     explain->setProperty("role", "subtitle");
     explain->setWordWrap(true);
     bodyLayout->addWidget(explain);
+    bodyLayout->addWidget(provenance);
 
     auto *buttons = new QHBoxLayout;
     buttons->setSpacing(10);

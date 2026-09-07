@@ -31,8 +31,24 @@ public:
 
     void cancel();
 
-    /// The interpreter that will be used, and whether Manim is importable.
+    /// The interpreter that will be used.
+    ///
+    /// The application ships its own Python with Manim already installed, so a
+    /// render works on a machine that has neither. That copy is preferred; a
+    /// system interpreter is the fallback, and a path set in settings beats
+    /// both, for anyone who wants their own Manim version.
     static QString pythonExecutable();
+
+    /// Where the bundled interpreter lives inside the installed application,
+    /// or an empty string if this build has none.
+    static QString bundledPython();
+
+    /// True when the interpreter in use is the one shipped with the app.
+    static bool usingBundledPython();
+
+    /// The environment a render runs in. The bundled interpreter's own folder
+    /// goes on PATH so Manim finds the ffmpeg shipped beside it.
+    static QProcessEnvironment renderEnvironment();
     static bool manimAvailable(QString *versionOut = nullptr);
 
     /// Whether a LaTeX binary is on the path. Manim typesets formulae through
