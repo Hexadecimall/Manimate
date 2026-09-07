@@ -38,10 +38,21 @@ private:
     void addObjectSection(QVBoxLayout *layout, ObjectId id);
     void addClipSection(QVBoxLayout *layout, ClipId id);
     void addSceneSection(QVBoxLayout *layout);
-    void addEmptyState(QVBoxLayout *layout);
+    void addEmptyState(QVBoxLayout *layout, const QString &message);
+
+    /// A scrolling page holding one section, built fresh on every rebuild.
+    QScrollArea *makePage();
+    void fillPage(QScrollArea *page, int which);
 
     EditorState *m_state;
-    QScrollArea *m_scroll = nullptr;
+    class SegmentedTabs *m_tabs = nullptr;
+    QScrollArea *m_objectPage = nullptr;
+    QScrollArea *m_clipPage = nullptr;
+    QScrollArea *m_scenePage = nullptr;
+
+    /// True while the tabs are being switched in response to a selection, so
+    /// the switch is not mistaken for the user choosing a tab.
+    bool m_syncing = false;
 };
 
 } // namespace mn::ui

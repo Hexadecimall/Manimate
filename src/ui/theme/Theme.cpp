@@ -261,6 +261,24 @@ QScrollBar::handle:horizontal {
 }
 QScrollBar::handle:horizontal:hover { background: %(scrollHover)s; }
 
+QSlider::groove:horizontal {
+    height: 3px;
+    background: %(borderStrong)s;
+    border-radius: 2px;
+}
+QSlider::sub-page:horizontal {
+    background: %(accent)s;
+    border-radius: 2px;
+}
+QSlider::handle:horizontal {
+    background: %(text)s;
+    width: 11px;
+    height: 11px;
+    margin: -4px 0;
+    border-radius: 6px;
+}
+QSlider::handle:horizontal:hover { background: %(accent)s; }
+
 QMenu {
     background: %(surfaceRaised)s;
     border: 1px solid %(border)s;

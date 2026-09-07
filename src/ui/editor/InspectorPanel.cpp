@@ -3,6 +3,7 @@
 #include "Document.h"
 #include "EditorState.h"
 #include "RateFunctions.h"
+#include "SegmentedTabs.h"
 #include "Theme.h"
 
 #include <QCheckBox>
@@ -100,13 +101,20 @@ private:
 
 } // namespace
 
+QScrollArea *InspectorPanel::makePage()
+{
+    auto *page = new QScrollArea;
+    page->setWidgetResizable(true);
+    page->setFrameShape(QFrame::NoFrame);
+    page->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    return page;
+}
+
 InspectorPanel::InspectorPanel(EditorState *state, QWidget *parent)
     : QWidget(parent)
     , m_state(state)
 {
     const theme::Palette &p = theme::palette();
-    setStyleSheet(QStringLiteral("QScrollArea, QScrollArea > QWidget > QWidget { background: %1; }")
-                      .arg(p.surface.name()));
     setAutoFillBackground(true);
     QPalette background = palette();
     background.setColor(QPalette::Window, p.surface);
@@ -116,21 +124,16 @@ InspectorPanel::InspectorPanel(EditorState *state, QWidget *parent)
     outer->setContentsMargins(0, 0, 0, 0);
     outer->setSpacing(0);
 
-    auto *header = new QWidget;
-    header->setProperty("role", "panelHeader");
-    header->setFixedHeight(32);
-    auto *headerLayout = new QHBoxLayout(header);
-    headerLayout->setContentsMargins(14, 0, 14, 0);
-    auto *headerTitle = new QLabel(tr("INSPECTOR"));
-    headerTitle->setProperty("role", "panelTitle");
-    headerLayout->addWidget(headerTitle);
-    outer->addWidget(header);
+    m_tabs = new SegmentedTabs;
+    outer->addWidget(m_tabs, 1);
 
-    m_scroll = new QScrollArea;
-    m_scroll->setWidgetResizable(true);
-    m_scroll->setFrameShape(QFrame::NoFrame);
-    m_scroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    outer->addWidget(m_scroll);
+    m_objectPage = makePage();
+    m_clipPage = makePage();
+    m_scenePage = makePage();
+
+    m_tabs->addPage(tr("Object"), m_objectPage);
+    m_tabs->addPage(tr("Animation"), m_clipPage);
+    m_tabs->addPage(tr("Scene"), m_scenePage);
 
     connect(m_state, &EditorState::selectionChanged, this, &InspectorPanel::rebuild);
     connect(m_state, &EditorState::documentChanged, this, &InspectorPanel::rebuild);
@@ -379,46 +382,71 @@ void InspectorPanel::addSceneSection(QVBoxLayout *layout)
     form->addRow(fieldLabel(tr("Animations")), clips);
 }
 
-void InspectorPanel::addEmptyState(QVBoxLayout *layout)
+void InspectorPanel::addEmptyState(QVBoxLayout *layout, const QString &message)
 {
-    auto *hint = new QLabel(tr("Select something on the canvas or the timeline to edit it."));
+    auto *hint = new QLabel(message);
     hint->setProperty("role", "subtitle");
     hint->setWordWrap(true);
     hint->setAlignment(Qt::AlignHCenter);
     layout->addWidget(hint);
 }
 
-void InspectorPanel::rebuild()
+void InspectorPanel::fillPage(QScrollArea *page, int which)
 {
-    // Replaced wholesale rather than unpicked. Draining a layout by hand is
-    // where the bugs live — a QLayoutItem owns any layout it holds, so freeing
-    // both is a double free — and a fresh widget cannot leave a stale editor
-    // pointing at an object that has since been deleted.
     auto *body = new QWidget;
     auto *layout = new QVBoxLayout(body);
-    layout->setContentsMargins(14, 14, 14, 14);
-    layout->setSpacing(14);
+    layout->setContentsMargins(12, 12, 12, 12);
+    layout->setSpacing(12);
 
     const ObjectId object = m_state->selectedObject();
     const ClipId clip = m_state->selectedClip();
 
-    if (clip != kInvalidClipId)
-        addClipSection(layout, clip);
-
-    if (object != kInvalidObjectId)
-        addObjectSection(layout, object);
-
-    if (object == kInvalidObjectId && clip == kInvalidClipId) {
+    switch (which) {
+    case 0:
+        if (object != kInvalidObjectId)
+            addObjectSection(layout, object);
+        else
+            addEmptyState(layout, tr("Select an object on the canvas or in the scene list."));
+        break;
+    case 1:
+        if (clip != kInvalidClipId)
+            addClipSection(layout, clip);
+        else
+            addEmptyState(layout, tr("Select a clip on the timeline."));
+        break;
+    default:
         addSceneSection(layout);
-        addEmptyState(layout);
+        break;
     }
 
     layout->addStretch(1);
 
-    QWidget *previous = m_scroll->takeWidget();
-    m_scroll->setWidget(body);
+    // Replaced wholesale rather than unpicked. Draining a layout by hand is
+    // where the bugs live — a QLayoutItem owns any layout it holds, so freeing
+    // both is a double free — and a fresh widget cannot leave a stale editor
+    // pointing at an object that has since been deleted.
+    QWidget *previous = page->takeWidget();
+    page->setWidget(body);
     if (previous)
         previous->deleteLater();
+}
+
+void InspectorPanel::rebuild()
+{
+    fillPage(m_objectPage, 0);
+    fillPage(m_clipPage, 1);
+    fillPage(m_scenePage, 2);
+
+    // Follow the selection to the tab that has something to say about it,
+    // without overriding a tab the user picked deliberately.
+    m_syncing = true;
+    if (m_state->selectedClip() != kInvalidClipId)
+        m_tabs->setCurrentIndex(1);
+    else if (m_state->selectedObject() != kInvalidObjectId)
+        m_tabs->setCurrentIndex(0);
+    else
+        m_tabs->setCurrentIndex(2);
+    m_syncing = false;
 }
 
 } // namespace mn::ui

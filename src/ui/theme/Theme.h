@@ -16,17 +16,27 @@ namespace mn::theme {
 /// produces.
 struct Palette
 {
-    QColor window{0x0E, 0x0F, 0x12};
-    QColor surface{0x14, 0x16, 0x1A};
-    QColor surfaceRaised{0x1B, 0x1E, 0x24};
-    QColor surfaceHover{0x23, 0x27, 0x2F};
-    QColor surfaceActive{0x2B, 0x30, 0x3A};
-    QColor border{0x2A, 0x2F, 0x38};
-    QColor borderStrong{0x3A, 0x41, 0x4D};
+    /// The deepest surface: what shows behind and between panels.
+    QColor window{0x16, 0x17, 0x1A};
 
-    QColor text{0xE6, 0xE9, 0xEF};
-    QColor textMuted{0x9A, 0xA3, 0xB2};
-    QColor textFaint{0x6B, 0x74, 0x83};
+    /// A panel's own background.
+    QColor surface{0x1F, 0x20, 0x24};
+
+    /// Raised within a panel: headers, toolbars, clips.
+    QColor surfaceRaised{0x26, 0x27, 0x2C};
+    QColor surfaceHover{0x2F, 0x30, 0x37};
+    QColor surfaceActive{0x38, 0x39, 0x42};
+
+    /// Panels are separated by lines DARKER than they are, which is what makes
+    /// a dense editing interface read as panels rather than as boxes.
+    QColor border{0x0E, 0x0F, 0x11};
+
+    /// A lighter line, for outlines inside a panel.
+    QColor borderStrong{0x3B, 0x3D, 0x46};
+
+    QColor text{0xDA, 0xDC, 0xE2};
+    QColor textMuted{0x8E, 0x92, 0x9C};
+    QColor textFaint{0x5E, 0x62, 0x6C};
 
     QColor accent{0x58, 0xC4, 0xDD};
     QColor accentHover{0x7E, 0xD4, 0xE6};

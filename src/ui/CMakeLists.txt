@@ -4,6 +4,7 @@ add_library(manimation_ui STATIC
     widgets/WindowButton.cpp
     widgets/TitleBar.cpp
     widgets/AppWindow.cpp
+    widgets/SegmentedTabs.cpp
     launcher/RecentProjectsModel.cpp
     launcher/ProjectCardDelegate.cpp
     launcher/NewProjectDialog.cpp

@@ -7,8 +7,8 @@
 #include <QMenuBar>
 #include <QMouseEvent>
 #include <QPainter>
+#include <QGraphicsDropShadowEffect>
 #include <QPainterPath>
-#include <cmath>
 #include <QToolButton>
 #include <QVBoxLayout>
 #include <QWindow>
@@ -54,6 +54,16 @@ AppWindow::AppWindow(QWidget *parent)
                                           "}")
                                .arg(p.window.name(), p.border.name())
                                .arg(kCornerRadius));
+
+    // A real blurred shadow. Hand-drawing one as concentric rounded outlines
+    // meant each ring needed a wider corner radius than the last, and the
+    // outermost arc curved visibly differently from the window itself, which
+    // read as a second border round the corners.
+    auto *shadow = new QGraphicsDropShadowEffect(this);
+    shadow->setBlurRadius(kShadowMargin * 2.0);
+    shadow->setColor(QColor(0, 0, 0, 165));
+    shadow->setOffset(0, 3);
+    m_shell->setGraphicsEffect(shadow);
 
     m_shellLayout = new QVBoxLayout(m_shell);
     m_shellLayout->setContentsMargins(0, 0, 0, 0);
@@ -119,6 +129,10 @@ void AppWindow::applyMaximisedState()
     const theme::Palette &p = theme::palette();
     const bool filling = isMaximized() || isFullScreen();
 
+    // A window filling the screen casts no shadow.
+    if (auto *shadow = qobject_cast<QGraphicsDropShadowEffect *>(m_shell->graphicsEffect()))
+        shadow->setEnabled(!filling);
+
     // A window filling the screen has no corners to round and nowhere to cast
     // a shadow, so it should meet the screen edges exactly.
     const int margin = filling ? 0 : kShadowMargin;
@@ -138,28 +152,9 @@ void AppWindow::applyMaximisedState()
 
 void AppWindow::paintEvent(QPaintEvent *event)
 {
+    // Nothing to paint: the shell draws the window's surface and its shadow
+    // comes from the drop-shadow effect, so everything outside stays clear.
     QMainWindow::paintEvent(event);
-
-    if (isMaximized() || isFullScreen())
-        return;
-
-    QPainter painter(this);
-    painter.setRenderHint(QPainter::Antialiasing);
-    painter.setPen(Qt::NoPen);
-
-    // A soft shadow, built from filled rounded rectangles fading outwards.
-    // Filled rather than stroked: one-pixel outlines at low alpha were too
-    // faint to read at all, which left the window looking pasted on.
-    const QRectF panel = QRectF(m_shell->geometry());
-    for (int i = kShadowMargin; i >= 1; --i) {
-        const qreal t = qreal(i) / kShadowMargin;
-        QColor shade(0, 0, 0);
-        // Sits slightly low, the way a shadow cast from above does.
-        shade.setAlphaF(0.30 * std::pow(1.0 - t, 1.7));
-        painter.setBrush(shade);
-        painter.drawRoundedRect(panel.adjusted(-i, -i + 2, i, i + 2),
-                                kCornerRadius + i, kCornerRadius + i);
-    }
 }
 
 Qt::Edges AppWindow::edgesAt(const QPoint &position) const

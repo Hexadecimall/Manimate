@@ -6,12 +6,17 @@
 class QLineEdit;
 class QTreeWidget;
 class QTreeWidgetItem;
+class QWidget;
 
 namespace mn::ui {
 
 class EditorState;
 
-/// The catalog, as somewhere to drag things from.
+/// The left column: what can be added, and what has been.
+///
+/// Shapes, animations and the scene's contents share one tabbed panel rather
+/// than each taking a sliver of the same column, which is how an editing
+/// application uses a narrow strip of screen.
 ///
 /// Shapes add themselves to the scene. Animations attach to whatever is
 /// selected, at the playhead — which is why the panel dims them when nothing
@@ -37,10 +42,15 @@ private:
     void activate(QTreeWidgetItem *item);
     void refreshEnabledState();
 
+    /// One tab's page: a search field above a tree.
+    QWidget *makePage(QLineEdit **searchOut, QTreeWidget **treeOut);
+
     EditorState *m_state;
     QLineEdit *m_search = nullptr;
+    QLineEdit *m_animationSearch = nullptr;
     QTreeWidget *m_shapes = nullptr;
     QTreeWidget *m_animations = nullptr;
+    class SegmentedTabs *m_tabs = nullptr;
 };
 
 } // namespace mn::ui

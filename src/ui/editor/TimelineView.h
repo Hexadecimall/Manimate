@@ -26,6 +26,7 @@ public:
     void setScale(double pixelsPerSecond);
 
     QSize sizeHint() const override;
+    QSize minimumSizeHint() const override;
 
 Q_SIGNALS:
     void zoomChanged(double pixelsPerSecond);

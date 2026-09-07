@@ -33,16 +33,6 @@ SceneOutliner::SceneOutliner(EditorState *state, QWidget *parent)
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
 
-    auto *header = new QWidget;
-    header->setProperty("role", "panelHeader");
-    header->setFixedHeight(32);
-    auto *headerLayout = new QHBoxLayout(header);
-    headerLayout->setContentsMargins(14, 0, 14, 0);
-    auto *title = new QLabel(tr("SCENE"));
-    title->setProperty("role", "panelTitle");
-    headerLayout->addWidget(title);
-    layout->addWidget(header);
-
     m_list = new QListWidget;
     m_list->setFrameShape(QFrame::NoFrame);
     m_list->setIconSize(QSize(18, 18));

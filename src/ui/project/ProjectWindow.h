@@ -6,6 +6,7 @@
 
 class QLabel;
 class QPushButton;
+class QSlider;
 class QSplitter;
 class QStackedWidget;
 class QTimer;
@@ -57,6 +58,9 @@ protected:
     void closeEvent(QCloseEvent *event) override;
 
 private:
+    QWidget *buildToolbar();
+    QWidget *buildViewerHeader();
+    QWidget *buildTimelineBar();
     QWidget *buildEditPage();
     QWidget *buildCodePage();
     QWidget *buildTransportBar();
@@ -65,6 +69,7 @@ private:
     void buildMenus();
     void updateTitle();
     void updateTransport();
+    void updateViewerInfo();
     void updateHistoryActions();
 
     void togglePlayback();
@@ -89,6 +94,9 @@ private:
     InspectorPanel *m_inspector = nullptr;
     CodeEditor *m_codeEditor = nullptr;
 
+    QLabel *m_projectLabel = nullptr;
+    QLabel *m_viewerInfoLabel = nullptr;
+    QSlider *m_zoomSlider = nullptr;
     QPushButton *m_playButton = nullptr;
     QLabel *m_timeLabel = nullptr;
     QAction *m_undoAction = nullptr;

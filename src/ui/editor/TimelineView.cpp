@@ -57,17 +57,28 @@ TimelineView::TimelineView(EditorState *state, QWidget *parent)
 {
     setFocusPolicy(Qt::StrongFocus);
     setMouseTracking(true);
-    setMinimumHeight(kRulerHeight + kTrackHeight * kMinimumTracks + 16);
+    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::MinimumExpanding);
 
-    connect(m_state, &EditorState::documentChanged, this, QOverload<>::of(&QWidget::update));
+    connect(m_state, &EditorState::documentChanged, this, [this] {
+        // A new track changes how tall the view wants to be.
+        updateGeometry();
+        update();
+    });
     connect(m_state, &EditorState::selectionChanged, this, QOverload<>::of(&QWidget::update));
     connect(m_state, &EditorState::playheadChanged, this, [this] { update(); });
 }
 
 QSize TimelineView::sizeHint() const
 {
+    return minimumSizeHint();
+}
+
+QSize TimelineView::minimumSizeHint() const
+{
+    // Tall enough for every track plus the empty one that accepts a drop, so
+    // the scroll area around it knows when there is more than fits.
     const int tracks = qMax(kMinimumTracks, int(m_state->document().timeline.tracks.size()) + 1);
-    return {900, kRulerHeight + tracks * (kTrackHeight + kTrackGap) + 12};
+    return {600, kRulerHeight + tracks * (kTrackHeight + kTrackGap) + 10};
 }
 
 void TimelineView::setScale(double pixelsPerSecond)

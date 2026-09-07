@@ -4,6 +4,8 @@
 #include "EditorState.h"
 #include "SceneEvaluator.h"
 #include "SceneRenderer.h"
+#include "SceneOutliner.h"
+#include "SegmentedTabs.h"
 #include "Theme.h"
 
 #include <QPainter>
@@ -185,51 +187,54 @@ QIcon LibraryPanel::animationIcon(const QString &animationId)
     return QIcon(pixmap);
 }
 
+QWidget *LibraryPanel::makePage(QLineEdit **searchOut, QTreeWidget **treeOut)
+{
+    auto *page = new QWidget;
+    auto *layout = new QVBoxLayout(page);
+    layout->setContentsMargins(8, 8, 8, 8);
+    layout->setSpacing(7);
+
+    auto *search = new QLineEdit;
+    search->setPlaceholderText(tr("Search"));
+    search->setClearButtonEnabled(true);
+    layout->addWidget(search);
+
+    QTreeWidget *tree = makeTree();
+    layout->addWidget(tree, 1);
+
+    *searchOut = search;
+    *treeOut = tree;
+    return page;
+}
+
 LibraryPanel::LibraryPanel(EditorState *state, QWidget *parent)
     : QWidget(parent)
     , m_state(state)
 {
     const theme::Palette &p = theme::palette();
-    setStyleSheet(QStringLiteral("QWidget { background: %1; }").arg(p.surface.name()));
+    setAutoFillBackground(true);
+    QPalette background = palette();
+    background.setColor(QPalette::Window, p.surface);
+    setPalette(background);
 
     auto *layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
 
-    auto *header = new QWidget;
-    header->setProperty("role", "panelHeader");
-    header->setFixedHeight(32);
-    auto *headerLayout = new QHBoxLayout(header);
-    headerLayout->setContentsMargins(14, 0, 14, 0);
-    auto *headerTitle = new QLabel(tr("LIBRARY"));
-    headerTitle->setProperty("role", "panelTitle");
-    headerLayout->addWidget(headerTitle);
-    layout->addWidget(header);
+    m_tabs = new SegmentedTabs;
+    layout->addWidget(m_tabs, 1);
 
-    auto *body = new QWidget;
-    layout = new QVBoxLayout(body);
-    layout->setContentsMargins(12, 12, 12, 12);
-    layout->setSpacing(8);
-    qobject_cast<QVBoxLayout *>(this->layout())->addWidget(body, 1);
+    QWidget *shapesPage = makePage(&m_search, &m_shapes);
+    QWidget *animationsPage = makePage(&m_animationSearch, &m_animations);
 
-    m_search = new QLineEdit;
-    m_search->setPlaceholderText(tr("Search"));
-    m_search->setClearButtonEnabled(true);
-    layout->addWidget(m_search);
-
-    layout->addSpacing(4);
-    layout->addWidget(heading(tr("SHAPES")));
-    m_shapes = makeTree();
-    layout->addWidget(m_shapes, 3);
-
-    layout->addSpacing(4);
-    layout->addWidget(heading(tr("ANIMATIONS")));
-    m_animations = makeTree();
-    layout->addWidget(m_animations, 2);
+    m_tabs->addPage(tr("Shapes"), shapesPage);
+    m_tabs->addPage(tr("Animations"), animationsPage);
+    m_tabs->addPage(tr("Scene"), new SceneOutliner(m_state));
 
     build();
 
     connect(m_search, &QLineEdit::textChanged, this, &LibraryPanel::applySearch);
+    connect(m_animationSearch, &QLineEdit::textChanged, this, &LibraryPanel::applySearch);
     connect(m_shapes, &QTreeWidget::itemActivated, this, &LibraryPanel::activate);
     connect(m_shapes, &QTreeWidget::itemDoubleClicked, this, &LibraryPanel::activate);
     connect(m_animations, &QTreeWidget::itemActivated, this, &LibraryPanel::activate);
@@ -276,7 +281,8 @@ void LibraryPanel::build()
 
 void LibraryPanel::applySearch(const QString &needle)
 {
-    for (QTreeWidget *tree : {m_shapes, m_animations}) {
+    QTreeWidget *target = sender() == m_animationSearch ? m_animations : m_shapes;
+    for (QTreeWidget *tree : {target}) {
         for (int i = 0; i < tree->topLevelItemCount(); ++i) {
             QTreeWidgetItem *parent = tree->topLevelItem(i);
             int visibleChildren = 0;

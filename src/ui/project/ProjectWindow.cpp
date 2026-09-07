@@ -5,7 +5,6 @@
 #include "EditorState.h"
 #include "InspectorPanel.h"
 #include "LibraryPanel.h"
-#include "SceneOutliner.h"
 #include "RecentProjects.h"
 #include "SceneTemplate.h"
 #include "Theme.h"
@@ -23,6 +22,8 @@
 #include <QMessageBox>
 #include <QPushButton>
 #include <QSaveFile>
+#include <QScrollArea>
+#include <QSlider>
 #include <QSplitter>
 #include <QStackedWidget>
 #include <QTextStream>
@@ -76,6 +77,8 @@ ProjectWindow::ProjectWindow(QWidget *parent)
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
 
+    layout->addWidget(buildToolbar());
+
     m_pages = new QStackedWidget;
     m_pages->addWidget(buildEditPage());
     m_pages->addWidget(buildCodePage());
@@ -87,12 +90,117 @@ ProjectWindow::ProjectWindow(QWidget *parent)
 
     connect(m_state, &EditorState::modifiedChanged, this, [this] { updateTitle(); });
     connect(m_state, &EditorState::playheadChanged, this, [this] { updateTransport(); });
-    connect(m_state, &EditorState::documentChanged, this, [this] { updateTransport(); });
+    connect(m_state, &EditorState::documentChanged, this, [this] {
+        updateTransport();
+        updateViewerInfo();
+    });
     connect(m_state, &EditorState::historyChanged, this, &ProjectWindow::updateHistoryActions);
 
     showPage(Page::Edit);
     updateTitle();
     updateTransport();
+}
+
+QWidget *ProjectWindow::buildToolbar()
+{
+    const theme::Palette &p = theme::palette();
+
+    auto *bar = new QWidget;
+    bar->setFixedHeight(38);
+    bar->setStyleSheet(QStringLiteral("QWidget { background: %1; border-bottom: 1px solid %2; }")
+                           .arg(p.surfaceRaised.name(), p.border.name()));
+
+    auto *layout = new QHBoxLayout(bar);
+    layout->setContentsMargins(14, 0, 10, 0);
+    layout->setSpacing(6);
+
+    m_projectLabel = new QLabel;
+    QFont nameFont = theme::font(1, QFont::DemiBold);
+    nameFont.setPixelSize(12);
+    m_projectLabel->setFont(nameFont);
+    m_projectLabel->setStyleSheet(QStringLiteral("QLabel { color: %1; }").arg(p.text.name()));
+    layout->addWidget(m_projectLabel);
+
+    layout->addStretch(1);
+
+    auto *undoButton = new QPushButton(tr("Undo"));
+    auto *redoButton = new QPushButton(tr("Redo"));
+    for (QPushButton *button : {undoButton, redoButton}) {
+        button->setProperty("role", "quiet");
+        button->setCursor(Qt::PointingHandCursor);
+        button->setFixedHeight(26);
+    }
+    connect(undoButton, &QPushButton::clicked, m_state, &EditorState::undo);
+    connect(redoButton, &QPushButton::clicked, m_state, &EditorState::redo);
+    connect(m_state, &EditorState::historyChanged, this, [this, undoButton, redoButton] {
+        undoButton->setEnabled(m_state->canUndo());
+        redoButton->setEnabled(m_state->canRedo());
+    });
+    undoButton->setEnabled(false);
+    redoButton->setEnabled(false);
+
+    layout->addWidget(undoButton);
+    layout->addWidget(redoButton);
+
+    return bar;
+}
+
+QWidget *ProjectWindow::buildViewerHeader()
+{
+    const theme::Palette &p = theme::palette();
+
+    auto *bar = new QWidget;
+    bar->setFixedHeight(30);
+    bar->setStyleSheet(QStringLiteral("QWidget { background: %1; border-bottom: 1px solid %2; }")
+                           .arg(p.surfaceRaised.name(), p.border.name()));
+
+    auto *layout = new QHBoxLayout(bar);
+    layout->setContentsMargins(14, 0, 14, 0);
+
+    auto *title = new QLabel(tr("VIEWER"));
+    title->setProperty("role", "panelTitle");
+    layout->addWidget(title);
+    layout->addStretch(1);
+
+    m_viewerInfoLabel = new QLabel;
+    m_viewerInfoLabel->setProperty("role", "subtitle");
+    layout->addWidget(m_viewerInfoLabel);
+
+    return bar;
+}
+
+QWidget *ProjectWindow::buildTimelineBar()
+{
+    const theme::Palette &p = theme::palette();
+
+    auto *bar = new QWidget;
+    bar->setFixedHeight(30);
+    bar->setStyleSheet(QStringLiteral("QWidget { background: %1; border-top: 1px solid %2;"
+                                      " border-bottom: 1px solid %2; }")
+                           .arg(p.surfaceRaised.name(), p.border.name()));
+
+    auto *layout = new QHBoxLayout(bar);
+    layout->setContentsMargins(14, 0, 14, 0);
+    layout->setSpacing(10);
+
+    auto *title = new QLabel(tr("TIMELINE"));
+    title->setProperty("role", "panelTitle");
+    layout->addWidget(title);
+    layout->addStretch(1);
+
+    auto *zoomLabel = new QLabel(tr("Zoom"));
+    zoomLabel->setProperty("role", "subtitle");
+    layout->addWidget(zoomLabel);
+
+    m_zoomSlider = new QSlider(Qt::Horizontal);
+    m_zoomSlider->setFixedWidth(130);
+    m_zoomSlider->setRange(12, 400);
+    m_zoomSlider->setValue(90);
+    connect(m_zoomSlider, &QSlider::valueChanged, this,
+            [this](int value) { m_timeline->setScale(value); });
+    layout->addWidget(m_zoomSlider);
+
+    return bar;
 }
 
 QWidget *ProjectWindow::buildEditPage()
@@ -110,26 +218,13 @@ QWidget *ProjectWindow::buildEditPage()
     centreLayout->setContentsMargins(0, 0, 0, 0);
     centreLayout->setSpacing(0);
 
+    centreLayout->addWidget(buildViewerHeader());
     m_canvas = new CanvasView(m_state);
     centreLayout->addWidget(m_canvas, 1);
     centreLayout->addWidget(buildTransportBar());
 
-    // The library and the scene share the left column: what you can add, and
-    // what you have added.
-    auto *library = new LibraryPanel(m_state);
-    library->setMinimumWidth(180);
-
-    auto *outliner = new SceneOutliner(m_state);
-    outliner->setMinimumHeight(90);
-
-    auto *leftColumn = new QSplitter(Qt::Vertical);
-    leftColumn->setHandleWidth(1);
-    leftColumn->setChildrenCollapsible(false);
-    leftColumn->addWidget(library);
-    leftColumn->addWidget(outliner);
-    leftColumn->setStretchFactor(0, 3);
-    leftColumn->setStretchFactor(1, 1);
-    leftColumn->setSizes({520, 220});
+    auto *leftColumn = new LibraryPanel(m_state);
+    leftColumn->setMinimumWidth(190);
     m_inspector = new InspectorPanel(m_state);
     m_inspector->setMinimumWidth(220);
 
@@ -146,14 +241,28 @@ QWidget *ProjectWindow::buildEditPage()
 
     m_timeline = new TimelineView(m_state);
 
+    auto *timelineColumn = new QWidget;
+    auto *timelineLayout = new QVBoxLayout(timelineColumn);
+    timelineLayout->setContentsMargins(0, 0, 0, 0);
+    timelineLayout->setSpacing(0);
+    auto *timelineScroll = new QScrollArea;
+    timelineScroll->setWidget(m_timeline);
+    timelineScroll->setWidgetResizable(true);
+    timelineScroll->setFrameShape(QFrame::NoFrame);
+    timelineScroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    timelineScroll->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+
+    timelineLayout->addWidget(buildTimelineBar());
+    timelineLayout->addWidget(timelineScroll, 1);
+
     auto *split = new QSplitter(Qt::Vertical);
     split->setHandleWidth(1);
     split->setChildrenCollapsible(false);
     split->addWidget(upper);
-    split->addWidget(m_timeline);
+    split->addWidget(timelineColumn);
     split->setStretchFactor(0, 1);
     split->setStretchFactor(1, 0);
-    split->setSizes({620, 260});
+    split->setSizes({560, 320});
     split->setStyleSheet(QStringLiteral("QSplitter::handle { background: %1; }").arg(p.border.name()));
     upper->setStyleSheet(QStringLiteral("QSplitter::handle { background: %1; }").arg(p.border.name()));
 
@@ -427,6 +536,9 @@ bool ProjectWindow::openProject(const QString &projectFile)
 
     updateTitle();
     updateTransport();
+    updateViewerInfo();
+    if (m_zoomSlider && m_timeline)
+        m_zoomSlider->setValue(int(m_timeline->scale()));
     m_canvas->setFocus();
     return true;
 }
@@ -476,6 +588,21 @@ void ProjectWindow::updateTitle()
                              ? tr("Project")
                              : m_state->document().metadata.name;
     setWindowTitle(isModified() ? tr("%1 — edited").arg(name) : name);
+
+    if (m_projectLabel)
+        m_projectLabel->setText(isModified() ? tr("%1 •").arg(name) : name);
+}
+
+void ProjectWindow::updateViewerInfo()
+{
+    if (!m_viewerInfoLabel)
+        return;
+
+    const Document &document = m_state->document();
+    m_viewerInfoLabel->setText(QStringLiteral("%1 × %2  ·  %3 fps")
+                                   .arg(document.render.width)
+                                   .arg(document.render.height)
+                                   .arg(document.render.fps));
 }
 
 void ProjectWindow::updateTransport()
