@@ -23,6 +23,10 @@ class SceneOutliner : public QWidget
 public:
     explicit SceneOutliner(EditorState *state, QWidget *parent = nullptr);
 
+protected:
+    void keyPressEvent(QKeyEvent *event) override;
+    bool eventFilter(QObject *watched, QEvent *event) override;
+
 private:
     void rebuild();
     void syncSelectionFromState();

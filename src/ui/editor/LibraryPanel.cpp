@@ -13,6 +13,7 @@
 #include <QtMath>
 
 #include <QHBoxLayout>
+#include <QShortcut>
 #include <QHeaderView>
 #include <QLabel>
 #include <QLineEdit>
@@ -235,10 +236,17 @@ LibraryPanel::LibraryPanel(EditorState *state, QWidget *parent)
 
     connect(m_search, &QLineEdit::textChanged, this, &LibraryPanel::applySearch);
     connect(m_animationSearch, &QLineEdit::textChanged, this, &LibraryPanel::applySearch);
-    connect(m_shapes, &QTreeWidget::itemActivated, this, &LibraryPanel::activate);
+    // Only itemDoubleClicked: a double-click emits itemActivated as well, so
+    // connecting both added everything twice. Return is handled separately.
     connect(m_shapes, &QTreeWidget::itemDoubleClicked, this, &LibraryPanel::activate);
-    connect(m_animations, &QTreeWidget::itemActivated, this, &LibraryPanel::activate);
     connect(m_animations, &QTreeWidget::itemDoubleClicked, this, &LibraryPanel::activate);
+
+    for (QTreeWidget *tree : {m_shapes, m_animations}) {
+        auto *enter = new QShortcut(QKeySequence(Qt::Key_Return), tree);
+        enter->setContext(Qt::WidgetShortcut);
+        connect(enter, &QShortcut::activated, this,
+                [this, tree] { activate(tree->currentItem()); });
+    }
     connect(m_state, &EditorState::selectionChanged, this, &LibraryPanel::refreshEnabledState);
 
     refreshEnabledState();

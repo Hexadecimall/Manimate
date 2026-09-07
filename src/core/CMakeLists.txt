@@ -11,6 +11,7 @@ add_library(manimation_core STATIC
     Catalog.cpp
     RateFunctions.cpp
     SceneEvaluator.cpp
+    CodeGenerator.cpp
     RecentProjects.cpp
 )
 

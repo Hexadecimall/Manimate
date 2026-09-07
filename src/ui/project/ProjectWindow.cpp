@@ -2,7 +2,9 @@
 
 #include "CanvasView.h"
 #include "CodeEditor.h"
+#include "CodeGenerator.h"
 #include "EditorState.h"
+#include "RenderJob.h"
 #include "InspectorPanel.h"
 #include "LibraryPanel.h"
 #include "RecentProjects.h"
@@ -22,7 +24,9 @@
 #include <QMessageBox>
 #include <QPushButton>
 #include <QSaveFile>
+#include <QPlainTextEdit>
 #include <QScrollArea>
+#include <QScrollBar>
 #include <QSlider>
 #include <QSplitter>
 #include <QStackedWidget>
@@ -79,9 +83,12 @@ ProjectWindow::ProjectWindow(QWidget *parent)
 
     layout->addWidget(buildToolbar());
 
+    m_renderJob = new RenderJob(this);
+
     m_pages = new QStackedWidget;
     m_pages->addWidget(buildEditPage());
     m_pages->addWidget(buildCodePage());
+    m_pages->addWidget(buildExportPage());
     layout->addWidget(m_pages, 1);
     layout->addWidget(buildPageBar());
 
@@ -93,6 +100,7 @@ ProjectWindow::ProjectWindow(QWidget *parent)
     connect(m_state, &EditorState::documentChanged, this, [this] {
         updateTransport();
         updateViewerInfo();
+        syncCodeFromScene();
     });
     connect(m_state, &EditorState::historyChanged, this, &ProjectWindow::updateHistoryActions);
 
@@ -340,6 +348,29 @@ QWidget *ProjectWindow::buildCodePage()
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
 
+    const theme::Palette &warn = theme::palette();
+    m_codeStaleBar = new QWidget;
+    m_codeStaleBar->setFixedHeight(34);
+    m_codeStaleBar->setStyleSheet(
+        QStringLiteral("QWidget { background: %1; border-bottom: 1px solid %2; }")
+            .arg(theme::mix(warn.surfaceRaised, warn.accent, 0.22).name(), warn.border.name()));
+
+    auto *staleLayout = new QHBoxLayout(m_codeStaleBar);
+    staleLayout->setContentsMargins(14, 0, 10, 0);
+    auto *staleText = new QLabel(tr("The scene has changed since this code was edited by hand."));
+    staleText->setProperty("role", "subtitle");
+    staleLayout->addWidget(staleText);
+    staleLayout->addStretch(1);
+
+    auto *regenerate = new QPushButton(tr("Regenerate from scene"));
+    regenerate->setCursor(Qt::PointingHandCursor);
+    regenerate->setFixedHeight(24);
+    connect(regenerate, &QPushButton::clicked, this, [this] { syncCodeFromScene(true); });
+    staleLayout->addWidget(regenerate);
+
+    m_codeStaleBar->setVisible(false);
+    layout->addWidget(m_codeStaleBar);
+
     m_codeEditor = new CodeEditor;
     layout->addWidget(m_codeEditor, 1);
 
@@ -373,6 +404,150 @@ QWidget *ProjectWindow::buildCodePage()
     // Kept up to date whenever a project is opened.
     scriptLabel->setObjectName(QStringLiteral("scriptLabel"));
     return page;
+}
+
+QWidget *ProjectWindow::buildExportPage()
+{
+    const theme::Palette &p = theme::palette();
+
+    auto *page = new QWidget;
+    auto *layout = new QVBoxLayout(page);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(0);
+
+    auto *header = new QWidget;
+    header->setProperty("role", "panelHeader");
+    header->setFixedHeight(32);
+    auto *headerLayout = new QHBoxLayout(header);
+    headerLayout->setContentsMargins(14, 0, 14, 0);
+    auto *headerTitle = new QLabel(tr("EXPORT"));
+    headerTitle->setProperty("role", "panelTitle");
+    headerLayout->addWidget(headerTitle);
+    headerLayout->addStretch(1);
+
+    m_renderStatus = new QLabel;
+    m_renderStatus->setProperty("role", "subtitle");
+    headerLayout->addWidget(m_renderStatus);
+    layout->addWidget(header);
+
+    auto *body = new QWidget;
+    auto *bodyLayout = new QVBoxLayout(body);
+    bodyLayout->setContentsMargins(22, 20, 22, 20);
+    bodyLayout->setSpacing(14);
+
+    auto *explain = new QLabel(
+        tr("Renders this project's Python with Manim and puts the video in the "
+           "project's output folder. The render runs alongside the editor, so "
+           "you can keep working while it goes."));
+    explain->setProperty("role", "subtitle");
+    explain->setWordWrap(true);
+    bodyLayout->addWidget(explain);
+
+    auto *buttons = new QHBoxLayout;
+    buttons->setSpacing(10);
+
+    m_renderButton = new QPushButton(tr("Render Video"));
+    m_renderButton->setProperty("role", "primary");
+    m_renderButton->setCursor(Qt::PointingHandCursor);
+    m_renderButton->setMinimumHeight(34);
+    connect(m_renderButton, &QPushButton::clicked, this, &ProjectWindow::startRender);
+
+    auto *openFolder = new QPushButton(tr("Open Output Folder"));
+    openFolder->setCursor(Qt::PointingHandCursor);
+    openFolder->setMinimumHeight(34);
+    connect(openFolder, &QPushButton::clicked, this, [this] {
+        QDesktopServices::openUrl(QUrl::fromLocalFile(m_layout.outputDir));
+    });
+
+    buttons->addWidget(m_renderButton);
+    buttons->addWidget(openFolder);
+    buttons->addStretch(1);
+    bodyLayout->addLayout(buttons);
+
+    m_renderLog = new QPlainTextEdit;
+    m_renderLog->setReadOnly(true);
+    m_renderLog->setFrameShape(QFrame::NoFrame);
+    QFont mono = theme::font(1);
+    mono.setStyleHint(QFont::Monospace);
+    mono.setFamily(QStringLiteral("Menlo"));
+    mono.setPixelSize(11);
+    m_renderLog->setFont(mono);
+    m_renderLog->setStyleSheet(QStringLiteral("QPlainTextEdit { background: %1; color: %2;"
+                                              " border: 1px solid %3; border-radius: 6px; }")
+                                   .arg(p.window.name(), p.textMuted.name(), p.border.name()));
+    bodyLayout->addWidget(m_renderLog, 1);
+
+    layout->addWidget(body, 1);
+
+    connect(m_renderJob, &RenderJob::started, this, [this](const QString &command) {
+        m_renderLog->clear();
+        m_renderLog->appendPlainText(command);
+        m_renderLog->appendPlainText(QString());
+        m_renderButton->setText(tr("Cancel Render"));
+        m_renderStatus->setText(tr("Rendering…"));
+    });
+    connect(m_renderJob, &RenderJob::output, this,
+            [this](const QString &line) { m_renderLog->appendPlainText(line); });
+    connect(m_renderJob, &RenderJob::finished, this, [this](bool ok, const QString &message) {
+        m_renderLog->appendPlainText(QString());
+        m_renderLog->appendPlainText(message);
+        m_renderButton->setText(tr("Render Video"));
+        m_renderStatus->setText(ok ? tr("Done") : tr("Failed"));
+    });
+
+    return page;
+}
+
+void ProjectWindow::startRender()
+{
+    if (m_renderJob->isRunning()) {
+        m_renderJob->cancel();
+        return;
+    }
+
+    // Whatever is on screen is what gets rendered, so save it first.
+    if (!save())
+        return;
+
+    QString version;
+    if (!RenderJob::manimAvailable(&version)) {
+        m_renderLog->clear();
+        m_renderLog->appendPlainText(
+            tr("Manim is not importable by the Python on this system.\n"
+               "Install it with:  python3 -m pip install manim"));
+        m_renderStatus->setText(tr("Manim not found"));
+        return;
+    }
+
+    m_renderStatus->setText(tr("Manim %1").arg(version));
+    m_renderJob->start(m_layout, m_scriptPath, m_state->document().sceneClassName,
+                       m_state->document().render);
+}
+
+void ProjectWindow::syncCodeFromScene(bool force)
+{
+    const QString generated = codegen::generate(m_state->document());
+    if (generated == m_generatedCode && !force)
+        return;
+
+    const bool handEdited = !m_generatedCode.isEmpty()
+                            && m_codeEditor->toPlainText() != m_generatedCode;
+
+    if (handEdited && !force) {
+        // The scene moved on, but so did the code, by hand. Say so rather than
+        // silently throwing away whichever one loses.
+        if (m_codeStaleBar)
+            m_codeStaleBar->setVisible(true);
+        return;
+    }
+
+    const int scrollPosition = m_codeEditor->verticalScrollBar()->value();
+    m_codeEditor->setPlainText(generated);
+    m_codeEditor->verticalScrollBar()->setValue(scrollPosition);
+    m_generatedCode = generated;
+
+    if (m_codeStaleBar)
+        m_codeStaleBar->setVisible(false);
 }
 
 QWidget *ProjectWindow::buildPageBar()
@@ -411,13 +586,16 @@ QWidget *ProjectWindow::buildPageBar()
 
     m_editPageButton = makePageButton(tr("Edit"));
     m_codePageButton = makePageButton(tr("Code"));
+    m_exportPageButton = makePageButton(tr("Export"));
 
     connect(m_editPageButton, &QPushButton::clicked, this, [this] { showPage(Page::Edit); });
     connect(m_codePageButton, &QPushButton::clicked, this, [this] { showPage(Page::Code); });
+    connect(m_exportPageButton, &QPushButton::clicked, this, [this] { showPage(Page::Export); });
 
     layout->addStretch(1);
     layout->addWidget(m_editPageButton);
     layout->addWidget(m_codePageButton);
+    layout->addWidget(m_exportPageButton);
     layout->addStretch(1);
 
     return bar;
@@ -425,16 +603,24 @@ QWidget *ProjectWindow::buildPageBar()
 
 ProjectWindow::Page ProjectWindow::currentPage() const
 {
-    return m_pages->currentIndex() == 0 ? Page::Edit : Page::Code;
+    switch (m_pages->currentIndex()) {
+    case 0:
+        return Page::Edit;
+    case 1:
+        return Page::Code;
+    default:
+        return Page::Export;
+    }
 }
 
 void ProjectWindow::showPage(Page page)
 {
-    m_pages->setCurrentIndex(page == Page::Edit ? 0 : 1);
+    m_pages->setCurrentIndex(page == Page::Edit ? 0 : page == Page::Code ? 1 : 2);
     m_editPageButton->setChecked(page == Page::Edit);
     m_codePageButton->setChecked(page == Page::Code);
+    m_exportPageButton->setChecked(page == Page::Export);
 
-    if (page == Page::Edit)
+    if (page != Page::Edit)
         stopPlayback();
 }
 
@@ -530,6 +716,8 @@ bool ProjectWindow::openProject(const QString &projectFile)
     }
 
     m_state->setDocument(std::move(document), m_layout);
+    m_generatedCode.clear();
+    syncCodeFromScene(m_codeEditor->toPlainText().trimmed().isEmpty());
 
     RecentProjects::touch(m_layout.projectFile, m_state->document().metadata.name,
                           m_state->document().metadata.description);

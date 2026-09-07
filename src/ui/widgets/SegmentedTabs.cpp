@@ -11,7 +11,9 @@
 namespace mn::ui {
 namespace {
 
-constexpr int kSidePadding = 14;
+// Tabs run from the panel's edge: a gap before the first one reads as a
+// misalignment rather than as breathing room.
+constexpr int kSidePadding = 0;
 constexpr int kTabPadding = 15;
 
 QFont tabFont()

@@ -20,6 +20,7 @@ add_library(manimation_ui STATIC
     editor/LibraryPanel.cpp
     editor/InspectorPanel.cpp
     editor/SceneOutliner.cpp
+    export/RenderJob.cpp
     project/ProjectWindow.cpp
 )
 
@@ -33,6 +34,7 @@ target_include_directories(manimation_ui PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/project
     ${CMAKE_CURRENT_SOURCE_DIR}/render
     ${CMAKE_CURRENT_SOURCE_DIR}/editor
+    ${CMAKE_CURRENT_SOURCE_DIR}/export
 )
 
 target_link_libraries(manimation_ui PUBLIC Manimation::Core Qt6::Widgets)

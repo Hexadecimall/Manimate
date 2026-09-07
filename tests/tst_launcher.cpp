@@ -5,6 +5,7 @@
 #include "RecentProjectsModel.h"
 #include "AppWindow.h"
 #include "CodeEditor.h"
+#include "CodeGenerator.h"
 #include "EditorState.h"
 #include "SceneEvaluator.h"
 #include "ProjectWindow.h"
@@ -12,6 +13,7 @@
 #include "TitleBar.h"
 
 #include <QApplication>
+#include <QDebug>
 #include <QMenuBar>
 #include <QToolButton>
 #include <QDateTime>
@@ -48,6 +50,8 @@ private slots:
     void snapshot();
     void projectSnapshot();
 
+    void generatesRunnablePython();
+    void solverExpressesOverlapExactly();
     void addingAnObjectSelectsIt();
     void animationsChangeWhatTheCanvasWouldDraw();
     void undoRestoresWhatWasThere();
@@ -284,6 +288,74 @@ void LauncherTest::snapshot()
     QTest::qWait(120);
 
     QVERIFY(window.grab().save(QString::fromUtf8(target)));
+}
+
+void LauncherTest::generatesRunnablePython()
+{
+    EditorState state;
+    state.setDocument(Document::createNew(QStringLiteral("Demo")), {});
+    state.documentForWriting().sceneClassName = QStringLiteral("Demo");
+
+    const ObjectId circle = state.addObject(QStringLiteral("manim.Circle"));
+    state.setObjectParam(circle, QStringLiteral("position"), QPointF(-2, 0));
+    state.setObjectParam(circle, QStringLiteral("color"), QColor(0x58, 0xC4, 0xDD));
+
+    const ObjectId label = state.addObject(QStringLiteral("manim.Text"));
+    state.setObjectParam(label, QStringLiteral("text"), QStringLiteral("Hello"));
+
+    const ClipId create = state.addClip(circle, QStringLiteral("manim.Create"));
+    state.setClipTiming(create, 0.0, 1.0, 0);
+    const ClipId write = state.addClip(label, QStringLiteral("manim.Write"));
+    state.setClipTiming(write, 0.5, 1.0, 1);
+    const ClipId shift = state.addClip(circle, QStringLiteral("manim.Shift"));
+    state.setClipTiming(shift, 2.0, 1.0, 0);
+    state.setClipParam(shift, QStringLiteral("by"), QPointF(3, 0));
+
+    const QString code = codegen::generate(state.document());
+
+    QVERIFY(code.startsWith(QStringLiteral("from manim import *")));
+    QVERIFY(code.contains(QStringLiteral("class Demo(Scene):")));
+    QVERIFY(code.contains(QStringLiteral("def construct(self):")));
+
+    // Constructors carry only what differs from Manim's own defaults.
+    QVERIFY(code.contains(QStringLiteral("Circle(")));
+    QVERIFY(code.contains(QStringLiteral("circle.move_to([-2, 0, 0])")));
+    QVERIFY(code.contains(QStringLiteral("Text(\"Hello\"")));
+
+    // The shift became an .animate call carrying its own timing.
+    QVERIFY(code.contains(QStringLiteral(".animate(run_time=1).shift([3, 0, 0])")));
+
+    // Nothing left of the placeholder that stood in for timing.
+    QVERIFY(!code.contains(QStringLiteral("placeholder")));
+}
+
+void LauncherTest::solverExpressesOverlapExactly()
+{
+    EditorState state;
+    state.setDocument(Document::createNew(QStringLiteral("Overlap")), {});
+
+    const ObjectId a = state.addObject(QStringLiteral("manim.Circle"));
+    const ObjectId b = state.addObject(QStringLiteral("manim.Square"));
+
+    // Two clips overlapping only partway: A runs 0-2s, B runs 0.5-1.5s.
+    const ClipId first = state.addClip(a, QStringLiteral("manim.Create"));
+    state.setClipTiming(first, 0.0, 2.0, 0);
+    const ClipId second = state.addClip(b, QStringLiteral("manim.FadeIn"));
+    state.setClipTiming(second, 0.5, 1.0, 1);
+
+    const QString code = codegen::constructBody(state.document(), 0);
+
+    // One play() holds both, and the later one waits out its offset first.
+    QCOMPARE(code.count(QStringLiteral("self.play(")), 1);
+    QVERIFY(code.contains(QStringLiteral("Succession(Wait(0.5), FadeIn(")));
+
+    // A clip that starts a clear gap later gets its own play, after a wait.
+    const ClipId third = state.addClip(a, QStringLiteral("manim.Shift"));
+    state.setClipTiming(third, 5.0, 1.0, 0);
+
+    const QString later = codegen::constructBody(state.document(), 0);
+    QCOMPARE(later.count(QStringLiteral("self.play(")), 2);
+    QVERIFY(later.contains(QStringLiteral("self.wait(3)")));
 }
 
 void LauncherTest::addingAnObjectSelectsIt()

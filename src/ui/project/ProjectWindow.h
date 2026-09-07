@@ -5,6 +5,7 @@
 #include "Project.h"
 
 class QLabel;
+class QPlainTextEdit;
 class QPushButton;
 class QSlider;
 class QSplitter;
@@ -46,7 +47,7 @@ public:
     bool save();
 
     /// Which page is showing.
-    enum class Page { Edit, Code };
+    enum class Page { Edit, Code, Export };
     Page currentPage() const;
     void showPage(Page page);
 
@@ -63,6 +64,12 @@ private:
     QWidget *buildTimelineBar();
     QWidget *buildEditPage();
     QWidget *buildCodePage();
+    QWidget *buildExportPage();
+
+    /// Rewrite the code page from the scene, unless it has been hand-edited.
+    void syncCodeFromScene(bool force = false);
+
+    void startRender();
     QWidget *buildTransportBar();
     QWidget *buildPageBar();
 
@@ -88,6 +95,17 @@ private:
     QStackedWidget *m_pages = nullptr;
     QPushButton *m_editPageButton = nullptr;
     QPushButton *m_codePageButton = nullptr;
+    QPushButton *m_exportPageButton = nullptr;
+
+    /// The code exactly as generated, so a hand edit can be told apart from a
+    /// scene change.
+    QString m_generatedCode;
+    QWidget *m_codeStaleBar = nullptr;
+
+    class RenderJob *m_renderJob = nullptr;
+    QPushButton *m_renderButton = nullptr;
+    QPlainTextEdit *m_renderLog = nullptr;
+    QLabel *m_renderStatus = nullptr;
 
     CanvasView *m_canvas = nullptr;
     TimelineView *m_timeline = nullptr;

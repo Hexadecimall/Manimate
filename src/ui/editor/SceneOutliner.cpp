@@ -7,6 +7,7 @@
 #include "Theme.h"
 
 #include <QHBoxLayout>
+#include <QKeyEvent>
 #include <QLabel>
 #include <QListWidget>
 #include <QMenu>
@@ -39,6 +40,7 @@ SceneOutliner::SceneOutliner(EditorState *state, QWidget *parent)
     m_list->setSelectionMode(QAbstractItemView::SingleSelection);
     m_list->setContextMenuPolicy(Qt::CustomContextMenu);
     m_list->setUniformItemSizes(true);
+    m_list->installEventFilter(this);
     layout->addWidget(m_list, 1);
 
     connect(m_list, &QListWidget::itemSelectionChanged, this, [this] {
@@ -122,6 +124,34 @@ void SceneOutliner::itemChanged(QListWidgetItem *item)
         object->name = item->text();
     m_state->setModified(true);
     Q_EMIT m_state->documentChanged();
+}
+
+bool SceneOutliner::eventFilter(QObject *watched, QEvent *event)
+{
+    if (watched == m_list && event->type() == QEvent::KeyPress) {
+        auto *key = static_cast<QKeyEvent *>(event);
+        if (key->key() == Qt::Key_Delete || key->key() == Qt::Key_Backspace) {
+            keyPressEvent(key);
+            if (key->isAccepted())
+                return true;
+        }
+    }
+    return QWidget::eventFilter(watched, event);
+}
+
+void SceneOutliner::keyPressEvent(QKeyEvent *event)
+{
+    // Backspace as well as Delete: on a Mac keyboard backspace is the delete
+    // key, and expecting the forward-delete key is expecting a full-size one.
+    if (event->key() == Qt::Key_Delete || event->key() == Qt::Key_Backspace) {
+        const QListWidgetItem *item = m_list->currentItem();
+        if (item) {
+            m_state->removeObject(ObjectId(item->data(kObjectIdRole).toULongLong()));
+            event->accept();
+            return;
+        }
+    }
+    QWidget::keyPressEvent(event);
 }
 
 void SceneOutliner::showContextMenu(const QPoint &position)
