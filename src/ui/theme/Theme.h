@@ -40,9 +40,9 @@ struct Palette
 
     /// The interface's accent. Warm rather than cold, so it reads as an
     /// editing application; Manim's own palette still colours the scene.
-    QColor accent{0xC0, 0x2E, 0x22};
-    QColor accentHover{0xD8, 0x3B, 0x2C};
-    QColor accentPressed{0x99, 0x23, 0x1A};
+    QColor accent{0xE5, 0x2E, 0x22};
+    QColor accentHover{0xF5, 0x47, 0x3A};
+    QColor accentPressed{0xBE, 0x24, 0x19};
     QColor onAccent{0xFA, 0xEC, 0xEA};
 
     QColor danger{0xE5, 0x48, 0x4D};
