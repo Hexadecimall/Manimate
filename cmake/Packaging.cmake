@@ -132,9 +132,14 @@ else()
     set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "${CPACK_PACKAGE_HOMEPAGE_URL}")
     set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Manimate")
     set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
-    # Qt travels inside the package, so only the system libraries it cannot
-    # carry are declared.
-    set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+
+    # Qt, Python and the libraries Manim draws with all travel inside the
+    # package. Asking dpkg-shlibdeps to work out dependencies would have it
+    # try to resolve those private copies against the system's packages, which
+    # it cannot do and rightly refuses to guess at. The few things that are
+    # genuinely expected from the system are named instead.
+    set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS OFF)
+    set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6, libstdc++6, libgl1, libglib2.0-0")
     set(CPACK_PACKAGING_INSTALL_PREFIX /usr)
 endif()
 
