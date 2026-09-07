@@ -49,9 +49,10 @@ public:
     /// Corner radius of the window itself.
     static constexpr int kCornerRadius = 10;
 
-    /// Radius a widget sitting inside the shell should use to nest cleanly
-    /// against the window's corner.
-    static constexpr int kInnerCornerRadius = kCornerRadius - 1;
+    /// Radius a widget touching the window's edge should use so its own
+    /// corner follows the window's exactly. The shell draws no border, so
+    /// there is nothing to inset for and the two radii are the same.
+    static constexpr int kInnerCornerRadius = kCornerRadius;
 
 protected:
     void paintEvent(QPaintEvent *event) override;

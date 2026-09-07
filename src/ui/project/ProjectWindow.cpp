@@ -555,9 +555,17 @@ QWidget *ProjectWindow::buildPageBar()
     const theme::Palette &p = theme::palette();
 
     auto *bar = new QWidget;
+    bar->setObjectName(QStringLiteral("pageBar"));
+    bar->setAttribute(Qt::WA_StyledBackground, true);
     bar->setFixedHeight(kPageBarHeight);
-    bar->setStyleSheet(QStringLiteral("QWidget { background: %1; border-top: 1px solid %2; }")
-                           .arg(p.surface.name(), p.border.name()));
+    bar->setStyleSheet(QStringLiteral("QWidget#pageBar {"
+                                      "  background: %1;"
+                                      "  border-top: 1px solid %2;"
+                                      "  border-bottom-left-radius: %3px;"
+                                      "  border-bottom-right-radius: %3px;"
+                                      "}")
+                           .arg(p.surface.name(), p.border.name())
+                           .arg(AppWindow::kInnerCornerRadius));
 
     auto *layout = new QHBoxLayout(bar);
     layout->setContentsMargins(14, 6, 14, 6);

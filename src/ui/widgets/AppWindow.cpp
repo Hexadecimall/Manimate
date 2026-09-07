@@ -47,12 +47,16 @@ AppWindow::AppWindow(QWidget *parent)
     m_shell = new QWidget(central);
     m_shell->setObjectName(QStringLiteral("shell"));
     m_shell->setAttribute(Qt::WA_StyledBackground, true);
+    // No border. A border plus the inset needed to keep children off it left a
+    // ring of the shell's own background showing between the two, which is a
+    // second edge by another name. The shadow separates the window from what
+    // is behind it; the panels' own colours do the rest.
     m_shell->setStyleSheet(QStringLiteral("QWidget#shell {"
                                           "  background: %1;"
-                                          "  border: 1px solid %2;"
-                                          "  border-radius: %3px;"
+                                          "  border: none;"
+                                          "  border-radius: %2px;"
                                           "}")
-                               .arg(p.window.name(), p.border.name())
+                               .arg(p.window.name())
                                .arg(kCornerRadius));
 
     // A real blurred shadow. Hand-drawing one as concentric rounded outlines
@@ -66,9 +70,9 @@ AppWindow::AppWindow(QWidget *parent)
     m_shell->setGraphicsEffect(shadow);
 
     m_shellLayout = new QVBoxLayout(m_shell);
-    // One pixel of inset so a child's own background never paints over the
-    // shell's border. Two rounded edges a pixel apart read as a double border.
-    m_shellLayout->setContentsMargins(1, 1, 1, 1);
+    // Children run to the edge: whatever sits in a corner rounds it itself,
+    // at the window's own radius.
+    m_shellLayout->setContentsMargins(0, 0, 0, 0);
     m_shellLayout->setSpacing(0);
 
     m_titleBar = new TitleBar(m_shell);
@@ -142,12 +146,10 @@ void AppWindow::applyMaximisedState()
 
     m_shell->setStyleSheet(QStringLiteral("QWidget#shell {"
                                           "  background: %1;"
-                                          "  border: %2;"
-                                          "  border-radius: %3px;"
+                                          "  border: none;"
+                                          "  border-radius: %2px;"
                                           "}")
-                               .arg(p.window.name(),
-                                    filling ? QStringLiteral("none")
-                                            : QStringLiteral("1px solid %1").arg(p.border.name()))
+                               .arg(p.window.name())
                                .arg(filling ? 0 : kCornerRadius));
     update();
 }
