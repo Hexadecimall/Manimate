@@ -17,7 +17,14 @@ else()
 endif()
 
 if(APPLE AND CMAKE_OSX_ARCHITECTURES)
-    string(REPLACE ";" "-" MANIMATION_ARCH "${CMAKE_OSX_ARCHITECTURES}")
+    # A build covering more than one architecture is a universal binary, and
+    # that is what the package should be called.
+    list(LENGTH CMAKE_OSX_ARCHITECTURES MANIMATION_ARCH_COUNT)
+    if(MANIMATION_ARCH_COUNT GREATER 1)
+        set(MANIMATION_ARCH universal)
+    else()
+        set(MANIMATION_ARCH "${CMAKE_OSX_ARCHITECTURES}")
+    endif()
 else()
     set(MANIMATION_ARCH "${CMAKE_SYSTEM_PROCESSOR}")
 endif()
