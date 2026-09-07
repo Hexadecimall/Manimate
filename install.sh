@@ -175,17 +175,18 @@ install_macos() {
         note "/Applications is not writable, using $target"
     fi
 
-    rm -rf "$target/$(basename "$app")"
+    name=$(basename "$app")
+    rm -rf "${target:?}/${name:?}"
     cp -R "$app" "$target/" || die "could not copy into $target"
 
     # A downloaded bundle is quarantined; clear it so it opens without a detour
     # through System Settings.
-    xattr -dr com.apple.quarantine "$target/$(basename "$app")" 2>/dev/null || true
+    xattr -dr com.apple.quarantine "$target/$name" 2>/dev/null || true
 
     hdiutil detach "$mountpoint" -quiet >/dev/null 2>&1 || true
     trap cleanup EXIT INT TERM
 
-    printf '%s✓%s Installed %s\n' "$GREEN" "$RESET" "$target/$(basename "$app")"
+    printf '%s✓%s Installed %s\n' "$GREEN" "$RESET" "$target/$name"
     note "Open it from Launchpad, or: open -a Manimation"
 }
 
@@ -218,10 +219,13 @@ DESKTOP
     # The AppImage carries its own icon; extract just that one file.
     (cd "$TMP" && "$bindir/Manimation" --appimage-extract '*.png' >/dev/null 2>&1) || true
     extracted=$(find "$TMP/squashfs-root" -maxdepth 2 -name '*.png' 2>/dev/null | head -n 1 || true)
-    [ -n "$extracted" ] && cp "$extracted" "$icondir/app.manimation.editor.png"
+    if [ -n "$extracted" ]; then
+        cp "$extracted" "$icondir/app.manimation.editor.png"
+    fi
 
-    command -v update-desktop-database >/dev/null 2>&1 \
-        && update-desktop-database "$appdir" >/dev/null 2>&1 || true
+    if command -v update-desktop-database >/dev/null 2>&1; then
+        update-desktop-database "$appdir" >/dev/null 2>&1 || true
+    fi
 
     printf '%s✓%s Installed %s\n' "$GREEN" "$RESET" "$bindir/Manimation"
 
