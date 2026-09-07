@@ -107,15 +107,17 @@ QPushButton:hover  { background: %(surfaceHover)s; border-color: %(borderStrong)
 QPushButton:pressed { background: %(surfaceActive)s; }
 QPushButton:disabled { color: %(textFaint)s; border-color: %(surface)s; }
 
+/* Primary is a raised neutral with an accent hairline, not a slab of colour:
+   the accent reads as an accent only while it stays scarce. */
 QPushButton[role="primary"] {
-    background: %(accent)s;
-    color: %(onAccent)s;
-    border: none;
+    background: %(surfaceActive)s;
+    color: %(text)s;
+    border: 1px solid %(accent)s;
     font-weight: 600;
 }
-QPushButton[role="primary"]:hover   { background: %(accentHover)s; }
-QPushButton[role="primary"]:pressed { background: %(accentPressed)s; }
-QPushButton[role="primary"]:disabled { background: %(surfaceHover)s; color: %(textFaint)s; }
+QPushButton[role="primary"]:hover   { background: %(surfaceHover)s; border-color: %(accentHover)s; }
+QPushButton[role="primary"]:pressed { background: %(surfaceRaised)s; }
+QPushButton[role="primary"]:disabled { background: %(surfaceRaised)s; color: %(textFaint)s; border-color: %(border)s; }
 
 QPushButton[role="quiet"] {
     background: transparent;

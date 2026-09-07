@@ -112,10 +112,10 @@ void CanvasView::paintEvent(QPaintEvent *)
         if (!bounds.isNull()) {
             const QRectF outline = bounds.adjusted(-4, -4, 4, 4);
             painter.setBrush(Qt::NoBrush);
-            painter.setPen(QPen(p.accent, 1.2));
+            painter.setPen(QPen(p.text, 1.2));
             painter.drawRect(outline);
 
-            painter.setBrush(p.accent);
+            painter.setBrush(p.text);
             painter.setPen(Qt::NoPen);
             for (const QPointF &corner : {outline.topLeft(), outline.topRight(),
                                           outline.bottomLeft(), outline.bottomRight()}) {

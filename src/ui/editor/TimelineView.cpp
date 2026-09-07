@@ -33,9 +33,9 @@ QColor clipColour(const catalog::AnimationSpec *spec)
     // Desaturated against the accent, so a timeline full of clips does not
     // become the loudest thing on the screen.
     if (spec->isEntrance)
-        return theme::mix(p.accent, p.textMuted, 0.42);
+        return theme::mix(p.manimBlue, p.textMuted, 0.45);
     if (spec->isExit)
-        return theme::mix(p.danger, p.textMuted, 0.38);
+        return theme::mix(p.danger, p.textMuted, 0.42);
     if (spec->effect == catalog::Effect::Wait)
         return p.textFaint;
     return theme::mix(p.violet, p.textMuted, 0.32);

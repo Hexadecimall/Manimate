@@ -109,7 +109,7 @@ void ProjectCardDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
     shape.addRoundedRect(card, theme::kRadius + 2, theme::kRadius + 2);
     painter->fillPath(shape, background);
 
-    painter->setPen(QPen(selected ? p.accent : p.border, 1.0));
+    painter->setPen(QPen(selected ? p.borderStrong : p.border, 1.0));
     painter->drawPath(shape);
 
     const QString name = index.data(RecentProjectsModel::NameRole).toString();
