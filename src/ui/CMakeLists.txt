@@ -1,4 +1,4 @@
-add_library(manimation_ui STATIC
+add_library(manimate_ui STATIC
     theme/Theme.cpp
     widgets/Wordmark.cpp
     widgets/WindowButton.cpp
@@ -24,9 +24,9 @@ add_library(manimation_ui STATIC
     project/ProjectWindow.cpp
 )
 
-add_library(Manimation::Ui ALIAS manimation_ui)
+add_library(Manimate::Ui ALIAS manimate_ui)
 
-target_include_directories(manimation_ui PUBLIC
+target_include_directories(manimate_ui PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/theme
     ${CMAKE_CURRENT_SOURCE_DIR}/widgets
     ${CMAKE_CURRENT_SOURCE_DIR}/launcher
@@ -40,8 +40,8 @@ target_include_directories(manimation_ui PUBLIC
 # The only Objective-C++ in the project: macOS draws a window shadow of its
 # own, and it has to be told not to.
 if(APPLE)
-    target_sources(manimation_ui PRIVATE widgets/MacWindow.mm)
-    target_link_libraries(manimation_ui PRIVATE "-framework AppKit")
+    target_sources(manimate_ui PRIVATE widgets/MacWindow.mm)
+    target_link_libraries(manimate_ui PRIVATE "-framework AppKit")
 endif()
 
-target_link_libraries(manimation_ui PUBLIC Manimation::Core Qt6::Widgets)
+target_link_libraries(manimate_ui PUBLIC Manimate::Core Qt6::Widgets)

@@ -302,15 +302,15 @@ void CodeEditorTest::windowTracksModification()
     QVERIFY(window.isModified());
 }
 
-/// Writes a PNG of the editor when MANIMATION_UI_SNAPSHOT names a path, so the
+/// Writes a PNG of the editor when MANIMATE_UI_SNAPSHOT names a path, so the
 /// highlighting can be looked at rather than only asserted about.
 void CodeEditorTest::snapshot()
 {
-    const QByteArray target = qgetenv("MANIMATION_UI_SNAPSHOT");
+    const QByteArray target = qgetenv("MANIMATE_UI_SNAPSHOT");
     if (target.isEmpty())
-        QSKIP("MANIMATION_UI_SNAPSHOT is not set");
+        QSKIP("MANIMATE_UI_SNAPSHOT is not set");
 
-    const QByteArray source = qgetenv("MANIMATION_UI_SNAPSHOT_SOURCE");
+    const QByteArray source = qgetenv("MANIMATE_UI_SNAPSHOT_SOURCE");
     QVERIFY(!source.isEmpty());
 
     mn::theme::apply(*qApp);

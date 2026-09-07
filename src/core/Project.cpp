@@ -88,6 +88,13 @@ ProjectLayout layoutFor(const QString &rootDir, const QString &name)
 
 bool ensureDirectories(const ProjectLayout &layout, QString *errorOut)
 {
+    // A project made before the rename keeps its derived state in a folder of
+    // the old name. Move it rather than leaving the old one orphaned and
+    // silently rebuilding everything beside it.
+    const QString legacy = join(layout.root, QLatin1String(kLegacyInternalDirName));
+    if (QFileInfo(legacy).isDir() && !QFileInfo(layout.internalDir).exists())
+        QDir().rename(legacy, layout.internalDir);
+
     const QStringList directories = {
         layout.root,     layout.internalDir, layout.cacheDir,  layout.intermediateDir,
         layout.backupsDir, layout.exportDir, layout.outputDir, layout.assetsDir,

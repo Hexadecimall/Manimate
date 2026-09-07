@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Install Manimation on Windows.
+    Install Manimate on Windows.
 
 .DESCRIPTION
     Downloads the newest build for this machine and installs it. By default it
@@ -17,7 +17,7 @@
     Unpack the .zip to a local folder instead of running the installer.
 
 .PARAMETER Prefix
-    Where -Portable installs to. Default: %LOCALAPPDATA%\Programs\Manimation
+    Where -Portable installs to. Default: %LOCALAPPDATA%\Programs\Manimate
 
 .PARAMETER Silent
     Run the installer without its interface.
@@ -38,7 +38,7 @@ param(
     [string] $Channel = 'dev',
     [string] $Version,
     [switch] $Portable,
-    [string] $Prefix = (Join-Path $env:LOCALAPPDATA 'Programs\Manimation'),
+    [string] $Prefix = (Join-Path $env:LOCALAPPDATA 'Programs\Manimate'),
     [switch] $Silent,
     [switch] $List
 )
@@ -62,7 +62,7 @@ function Get-Architecture {
 }
 
 function Get-Releases {
-    $headers = @{ 'Accept' = 'application/vnd.github+json'; 'User-Agent' = 'manimation-installer' }
+    $headers = @{ 'Accept' = 'application/vnd.github+json'; 'User-Agent' = 'manimate-installer' }
     if ($Version) {
         try {
             return @(Invoke-RestMethod -Uri "$Api/tags/$Version" -Headers $headers)
@@ -73,7 +73,7 @@ function Get-Releases {
     return @(Invoke-RestMethod -Uri "${Api}?per_page=60" -Headers $headers)
 }
 
-# Assets are named Manimation-<version>-windows-<arch>.<ext>, so matching on the
+# Assets are named Manimate-<version>-windows-<arch>.<ext>, so matching on the
 # asset name works whatever the release tag happens to be called.
 function Select-Asset {
     param([object[]] $Releases, [string] $Arch)
@@ -105,7 +105,7 @@ if ($List) {
     exit 0
 }
 
-$temp = Join-Path ([System.IO.Path]::GetTempPath()) ("manimation-" + [guid]::NewGuid().ToString('N'))
+$temp = Join-Path ([System.IO.Path]::GetTempPath()) ("manimate-" + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $temp -Force | Out-Null
 $download = Join-Path $temp $asset.name
 
@@ -134,12 +134,12 @@ try {
             Copy-Item -Path (Join-Path $temp '*') -Destination $Prefix -Recurse -Force -Exclude $asset.name
         }
 
-        $exe = Get-ChildItem -Path $Prefix -Filter 'Manimation.exe' -Recurse |
+        $exe = Get-ChildItem -Path $Prefix -Filter 'Manimate.exe' -Recurse |
                Select-Object -First 1
-        if (-not $exe) { throw "No Manimation.exe inside $($asset.name)." }
+        if (-not $exe) { throw "No Manimate.exe inside $($asset.name)." }
 
         $startMenu = Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs'
-        $shortcut = Join-Path $startMenu 'Manimation.lnk'
+        $shortcut = Join-Path $startMenu 'Manimate.lnk'
         $shell = New-Object -ComObject WScript.Shell
         $link = $shell.CreateShortcut($shortcut)
         $link.TargetPath = $exe.FullName
@@ -157,7 +157,7 @@ try {
         if ($process.ExitCode -ne 0) {
             throw "The installer exited with code $($process.ExitCode)."
         }
-        Write-Done 'Installed Manimation'
+        Write-Done 'Installed Manimate'
     }
 } finally {
     Remove-Item $temp -Recurse -Force -ErrorAction SilentlyContinue

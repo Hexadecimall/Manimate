@@ -36,6 +36,7 @@ private slots:
     void createRefusesToOverwriteExistingFolder();
     void resolveFindsProjectFromFileOrFolder();
     void ensureDirectoriesRestoresDeletedFolders();
+    void aProjectFromBeforeTheRenameIsMigrated();
 
     void scanFindsSceneSubclasses();
     void scanIgnoresClassesThatAreNotScenes();
@@ -370,6 +371,34 @@ void DocumentTest::ensureDirectoriesRestoresDeletedFolders()
     QVERIFY(QFileInfo(layout.backupsDir).isDir());
 }
 
+void DocumentTest::aProjectFromBeforeTheRenameIsMigrated()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+
+    ProjectLayout layout;
+    QVERIFY(project::create(dir.path(), QStringLiteral("Older"), &layout, nullptr));
+
+    // Put the project back the way the previous name left it: derived state in
+    // a folder called Manimation, with something inside worth keeping.
+    const QString legacy = QDir(layout.root).filePath(QStringLiteral("Manimation"));
+    QVERIFY(QDir(layout.internalDir).removeRecursively());
+    QVERIFY(QDir().mkpath(legacy + QStringLiteral("/cache")));
+    QFile marker(legacy + QStringLiteral("/cache/keep.txt"));
+    QVERIFY(marker.open(QIODevice::WriteOnly));
+    marker.write("still here");
+    marker.close();
+
+    QString error;
+    QVERIFY2(project::ensureDirectories(layout, &error), qPrintable(error));
+
+    // Moved, not rebuilt alongside: the old folder is gone and its contents
+    // are in the new one.
+    QVERIFY(!QFileInfo(legacy).exists());
+    QVERIFY(QFileInfo(layout.internalDir).isDir());
+    QVERIFY(QFileInfo(layout.internalDir + QStringLiteral("/cache/keep.txt")).isFile());
+}
+
 void DocumentTest::scanFindsSceneSubclasses()
 {
     const QString source = QStringLiteral(R"(
@@ -422,7 +451,7 @@ void DocumentTest::scanDetectsManimImports()
     QVERIFY(python_import::scan(QStringLiteral("from manim import *")).importsManim);
     QVERIFY(python_import::scan(QStringLiteral("import manim")).importsManim);
     QVERIFY(python_import::scan(QStringLiteral("from manim.animation.creation import Create")).importsManim);
-    QVERIFY(!python_import::scan(QStringLiteral("import manimation")).importsManim);
+    QVERIFY(!python_import::scan(QStringLiteral("import manimate")).importsManim);
     QVERIFY(!python_import::scan(QStringLiteral("# from manim import *")).importsManim);
 }
 

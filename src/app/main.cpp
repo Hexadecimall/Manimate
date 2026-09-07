@@ -44,10 +44,10 @@ void openProject(mn::ui::LauncherWindow *launcher, const QString &projectFile)
 int main(int argc, char *argv[])
 {
     QApplication application(argc, argv);
-    QApplication::setApplicationName(QStringLiteral("Manimation"));
+    QApplication::setApplicationName(QStringLiteral("Manimate"));
     QApplication::setApplicationVersion(mn::version::string());
-    QApplication::setOrganizationName(QStringLiteral("Manimation"));
-    QApplication::setOrganizationDomain(QStringLiteral("manimation.app"));
+    QApplication::setOrganizationName(QStringLiteral("Manimate"));
+    QApplication::setOrganizationDomain(QStringLiteral("manimate.app"));
 
     QCommandLineParser parser;
     parser.setApplicationDescription(QStringLiteral("Visual editor for Manim."));

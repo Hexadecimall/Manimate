@@ -1,4 +1,4 @@
-# Manimation
+# Manimate
 
 A visual editor for [Manim](https://www.manim.community). Design a scene on a
 canvas and a timeline, and export Python you can run with `manim` on its own.
@@ -65,7 +65,7 @@ ctest --test-dir build
 ```
 My Project/
   My Project.manproj    the document; the only irreplaceable file
-  Manimation/           derived state, safe to delete
+  Manimate/           derived state, safe to delete
   export/               standalone Python, runnable with `manim`
   output/               rendered video
   assets/               images, audio, anything the scene references

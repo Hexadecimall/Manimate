@@ -238,12 +238,12 @@ Document Document::fromJson(const QJsonObject &object, QString *errorOut)
     const int format = object.value(QLatin1String(kFormatKey)).toInt(-1);
     if (format < 0) {
         if (errorOut)
-            *errorOut = QStringLiteral("Not a Manimation project: missing format version.");
+            *errorOut = QStringLiteral("Not a Manimate project: missing format version.");
         return document;
     }
     if (format > version::kProjectFormat && errorOut) {
         *errorOut = QStringLiteral(
-                        "This project was made with a newer version of Manimation "
+                        "This project was made with a newer version of Manimate "
                         "(format %1, this build understands %2).")
                         .arg(format)
                         .arg(version::kProjectFormat);
@@ -326,7 +326,7 @@ bool Document::load(const QString &filePath, Document *out, QString *errorOut)
     }
     if (!json.isObject()) {
         if (errorOut)
-            *errorOut = QStringLiteral("Not a Manimation project: the file is not a JSON object.");
+            *errorOut = QStringLiteral("Not a Manimate project: the file is not a JSON object.");
         return false;
     }
 

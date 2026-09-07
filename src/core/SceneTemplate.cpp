@@ -14,7 +14,7 @@ QString starterScript(const Document &document)
     const QString sceneClass = document.sceneClassName.isEmpty()
                                    ? QStringLiteral("MainScene")
                                    : document.sceneClassName;
-    const QString title = document.metadata.name.isEmpty() ? QStringLiteral("Manimation")
+    const QString title = document.metadata.name.isEmpty() ? QStringLiteral("Manimate")
                                                            : document.metadata.name;
 
     // Escaped for a Python double-quoted string.
@@ -29,7 +29,7 @@ QString starterScript(const Document &document)
                "class %1(Scene):\n"
                "    def construct(self):\n"
                "        title = Text(\"%2\", font_size=48)\n"
-               "        subtitle = Text(\"Made with Manimation\", font_size=24, color=BLUE_C)\n"
+               "        subtitle = Text(\"Made with Manimate\", font_size=24, color=BLUE_C)\n"
                "        subtitle.next_to(title, DOWN)\n"
                "\n"
                "        self.play(Write(title))\n"

@@ -39,7 +39,7 @@ constexpr int kSidebarWidth = 340;
 
 QString projectFilter()
 {
-    return QObject::tr("Manimation Project (*.%1)").arg(QLatin1String(project::kExtension));
+    return QObject::tr("Manimate Project (*.%1)").arg(QLatin1String(project::kExtension));
 }
 
 QString describeCount(int count)
@@ -65,7 +65,7 @@ QPushButton *sidebarButton(const QString &text, const QString &role)
 LauncherWindow::LauncherWindow(QWidget *parent)
     : AppWindow(parent)
 {
-    setWindowTitle(tr("Manimation"));
+    setWindowTitle(tr("Manimate"));
     setAcceptDrops(true);
     resize(1080, 700);
     setMinimumSize(880, 560);
@@ -104,14 +104,14 @@ void LauncherWindow::buildMenus()
     fileMenu->addAction(tr("Quit"), QKeySequence::Quit, qApp, &QApplication::quit);
 
     auto *helpMenu = new QMenu(tr("Help"), this);
-    helpMenu->addAction(tr("About Manimation"), this, &LauncherWindow::showAbout);
+    helpMenu->addAction(tr("About Manimate"), this, &LauncherWindow::showAbout);
 
     setMenus({fileMenu, helpMenu});
 }
 
 void LauncherWindow::showAbout()
 {
-    QMessageBox box(QMessageBox::NoIcon, tr("About Manimation"), tr("Manimation %1").arg(version::string()),
+    QMessageBox box(QMessageBox::NoIcon, tr("About Manimate"), tr("Manimate %1").arg(version::string()),
                     QMessageBox::Ok, this);
     box.setInformativeText(tr("A visual editor for Manim."));
     box.exec();
@@ -325,7 +325,7 @@ void LauncherWindow::openProject(const QString &path)
     const auto layout = project::resolve(path);
     if (!layout) {
         reportError(tr("Cannot open that"),
-                    tr("%1 is not a Manimation project.").arg(QDir::toNativeSeparators(path)));
+                    tr("%1 is not a Manimate project.").arg(QDir::toNativeSeparators(path)));
         return;
     }
 

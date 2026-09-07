@@ -11,7 +11,7 @@ class Document;
 ///
 ///   My Project/
 ///     My Project.manproj    the document; the only irreplaceable file
-///     Manimation/           derived state, safe to delete
+///     Manimate/           derived state, safe to delete
 ///       cache/ intermediate/ backups/
 ///     export/               standalone Python, runnable with `manim`
 ///     output/               rendered video
@@ -37,7 +37,11 @@ namespace project {
 inline constexpr auto kExtension = "manproj";
 
 /// Name of the folder holding derived state.
-inline constexpr auto kInternalDirName = "Manimation";
+inline constexpr auto kInternalDirName = "Manimate";
+
+/// What that folder was called before the application was renamed. A project
+/// made under the old name is migrated the first time it is opened.
+inline constexpr auto kLegacyInternalDirName = "Manimation";
 
 /// Strip characters that are illegal or awkward in a folder name. Returns an
 /// empty string if nothing usable is left.
@@ -63,7 +67,7 @@ bool create(const QString &parentDir, const QString &name, ProjectLayout *layout
 std::optional<ProjectLayout> resolve(const QString &path);
 
 /// Recreate any missing derived folders. Called on open so a project whose
-/// Manimation/ folder was deleted still works.
+/// Manimate/ folder was deleted still works.
 bool ensureDirectories(const ProjectLayout &layout, QString *errorOut = nullptr);
 
 } // namespace project

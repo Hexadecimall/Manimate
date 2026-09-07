@@ -91,7 +91,7 @@ NewProjectDialog::NewProjectDialog(QWidget *parent, const QString &importSource)
     auto *subtitle = new QLabel(importing
                                     ? tr("Builds a project round an existing script. The file is "
                                          "copied into the project's export folder untouched.")
-                                    : tr("Manimation creates a folder holding the project, its "
+                                    : tr("Manimate creates a folder holding the project, its "
                                          "exported Python, its rendered video and its assets."));
     subtitle->setProperty("role", "subtitle");
     subtitle->setWordWrap(true);
@@ -225,7 +225,7 @@ void NewProjectDialog::refreshPreview()
     }
 
     const QString root = QDir(location).filePath(name);
-    m_previewLabel->setText(tr("Creates %1 containing the project file, Manimation/, export/, "
+    m_previewLabel->setText(tr("Creates %1 containing the project file, Manimate/, export/, "
                                "output/ and assets/.")
                                 .arg(QDir::toNativeSeparators(root)));
     m_createButton->setEnabled(true);

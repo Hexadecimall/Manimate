@@ -83,8 +83,8 @@ private:
 void LauncherTest::initTestCase()
 {
     // Keep the test's recent-project list out of the real application's.
-    QCoreApplication::setOrganizationName(QStringLiteral("Manimation"));
-    QCoreApplication::setApplicationName(QStringLiteral("ManimationLauncherTest"));
+    QCoreApplication::setOrganizationName(QStringLiteral("Manimate"));
+    QCoreApplication::setApplicationName(QStringLiteral("ManimateLauncherTest"));
     QVERIFY(m_dir.isValid());
 }
 
@@ -275,13 +275,13 @@ void LauncherTest::projectWindowSavesBackToTheScript()
     QVERIFY(QString::fromUtf8(file.readAll()).contains(QStringLiteral("# edited")));
 }
 
-/// Writes a PNG of the launcher when MANIMATION_UI_SNAPSHOT names a path.
+/// Writes a PNG of the launcher when MANIMATE_UI_SNAPSHOT names a path.
 /// Skipped otherwise, so the suite stays headless-friendly.
 void LauncherTest::snapshot()
 {
-    const QByteArray target = qgetenv("MANIMATION_UI_SNAPSHOT");
+    const QByteArray target = qgetenv("MANIMATE_UI_SNAPSHOT");
     if (target.isEmpty())
-        QSKIP("MANIMATION_UI_SNAPSHOT is not set");
+        QSKIP("MANIMATE_UI_SNAPSHOT is not set");
 
     seed(QStringLiteral("Fourier Series"), QStringLiteral("Building a square wave from rotating vectors"), 12);
     seed(QStringLiteral("Linear Algebra Intro"), QStringLiteral("Vectors, spans and basis, chapter 1"), 60 * 5);
@@ -859,9 +859,9 @@ void LauncherTest::repaintIsFastEnoughForPlayback()
 /// Writes a PNG of a project window, so the wired-up editor can be looked at.
 void LauncherTest::projectSnapshot()
 {
-    const QByteArray target = qgetenv("MANIMATION_PROJECT_SNAPSHOT");
+    const QByteArray target = qgetenv("MANIMATE_PROJECT_SNAPSHOT");
     if (target.isEmpty())
-        QSKIP("MANIMATION_PROJECT_SNAPSHOT is not set");
+        QSKIP("MANIMATE_PROJECT_SNAPSHOT is not set");
 
     // Its own directory: the launcher snapshot seeds projects into m_dir, and
     // a name that is already taken there would collide.

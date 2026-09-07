@@ -53,7 +53,7 @@ void Wordmark::setSubtitle(const QString &subtitle)
 QSize Wordmark::sizeHint() const
 {
     const int glyphWidth = m_glyphSize * 3 + kGlyphGap * 2;
-    const int textWidth = QFontMetrics(wordmarkFont(m_glyphSize)).horizontalAdvance(QStringLiteral("MANIMATION"));
+    const int textWidth = QFontMetrics(wordmarkFont(m_glyphSize)).horizontalAdvance(QStringLiteral("MANIMATE"));
 
     int height = m_glyphSize;
     if (!m_subtitle.isEmpty())
@@ -106,10 +106,10 @@ void Wordmark::paintEvent(QPaintEvent *)
     QFont nameFont = wordmarkFont(m_glyphSize);
     const qreal available = width() - x;
     if (available > 0) {
-        qreal needed = QFontMetrics(nameFont).horizontalAdvance(QStringLiteral("MANIMATION"));
+        qreal needed = QFontMetrics(nameFont).horizontalAdvance(QStringLiteral("MANIMATE"));
         while (needed > available && nameFont.pixelSize() > 9) {
             nameFont.setPixelSize(nameFont.pixelSize() - 1);
-            needed = QFontMetrics(nameFont).horizontalAdvance(QStringLiteral("MANIMATION"));
+            needed = QFontMetrics(nameFont).horizontalAdvance(QStringLiteral("MANIMATE"));
         }
     }
     const QFontMetrics nameMetrics(nameFont);
@@ -125,7 +125,7 @@ void Wordmark::paintEvent(QPaintEvent *)
     painter.setFont(nameFont);
     painter.setPen(p.text);
     const QRectF nameRect(x, textTop, width() - x, nameMetrics.height());
-    painter.drawText(nameRect, Qt::AlignLeft | Qt::AlignVCenter, QStringLiteral("MANIMATION"));
+    painter.drawText(nameRect, Qt::AlignLeft | Qt::AlignVCenter, QStringLiteral("MANIMATE"));
 
     if (!m_subtitle.isEmpty()) {
         const QFont small = subtitleFont(m_glyphSize);

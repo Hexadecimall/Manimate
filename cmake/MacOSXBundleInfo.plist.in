@@ -30,14 +30,14 @@
     <array>
         <dict>
             <key>CFBundleTypeName</key>
-            <string>Manimation Project</string>
+            <string>Manimate Project</string>
             <key>CFBundleTypeRole</key>
             <string>Editor</string>
             <key>LSHandlerRank</key>
             <string>Owner</string>
             <key>LSItemContentTypes</key>
             <array>
-                <string>app.manimation.project</string>
+                <string>app.manimate.project</string>
             </array>
         </dict>
     </array>
@@ -45,9 +45,9 @@
     <array>
         <dict>
             <key>UTTypeIdentifier</key>
-            <string>app.manimation.project</string>
+            <string>app.manimate.project</string>
             <key>UTTypeDescription</key>
-            <string>Manimation Project</string>
+            <string>Manimate Project</string>
             <key>UTTypeConformsTo</key>
             <array>
                 <string>public.data</string>

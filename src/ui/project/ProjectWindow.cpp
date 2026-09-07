@@ -754,7 +754,7 @@ bool ProjectWindow::openProject(const QString &projectFile)
     const auto resolved = project::resolve(projectFile);
     if (!resolved) {
         QMessageBox::warning(this, tr("Cannot open that"),
-                             tr("%1 is not a Manimation project.")
+                             tr("%1 is not a Manimate project.")
                                  .arg(QDir::toNativeSeparators(projectFile)));
         return false;
     }

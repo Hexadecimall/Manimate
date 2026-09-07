@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 #
-# Install Manimation on macOS or Linux.
+# Install Manimate on macOS or Linux.
 #
 #   curl -fsSL https://raw.githubusercontent.com/Hexadecimall/Manimation/main/install.sh | sh
 #
@@ -81,7 +81,7 @@ esac
 # --------------------------------------------------------------- discovery ---
 
 # Pull the release list once and pick the newest asset built for this machine.
-# Assets are named Manimation-<version>-<platform>-<arch>.<ext>, so matching on
+# Assets are named Manimate-<version>-<platform>-<arch>.<ext>, so matching on
 # the asset name works whatever the tag happens to be called.
 fetch_releases() {
     if [ -n "$VERSION" ]; then
@@ -146,7 +146,7 @@ fi
 
 # ---------------------------------------------------------------- download ---
 
-TMP=$(mktemp -d "${TMPDIR:-/tmp}/manimation.XXXXXX")
+TMP=$(mktemp -d "${TMPDIR:-/tmp}/manimate.XXXXXX")
 cleanup() { rm -rf "$TMP"; }
 trap cleanup EXIT INT TERM
 
@@ -187,7 +187,7 @@ install_macos() {
     trap cleanup EXIT INT TERM
 
     printf '%s✓%s Installed %s\n' "$GREEN" "$RESET" "$target/$name"
-    note "Open it from Launchpad, or: open -a Manimation"
+    note "Open it from Launchpad, or: open -a Manimate"
 }
 
 install_linux_appimage() {
@@ -195,7 +195,7 @@ install_linux_appimage() {
     mkdir -p "$bindir"
 
     step "Installing to $bindir"
-    install -m 0755 "$TMP/$FILE" "$bindir/Manimation" \
+    install -m 0755 "$TMP/$FILE" "$bindir/Manimate" \
         || die "could not write to $bindir"
 
     # A desktop entry and icon, so it shows up in the application menu.
@@ -203,40 +203,40 @@ install_linux_appimage() {
     icondir="$PREFIX/share/icons/hicolor/256x256/apps"
     mkdir -p "$appdir" "$icondir"
 
-    cat > "$appdir/app.manimation.editor.desktop" <<DESKTOP
+    cat > "$appdir/app.manimate.editor.desktop" <<DESKTOP
 [Desktop Entry]
 Type=Application
-Name=Manimation
+Name=Manimate
 GenericName=Manim Editor
 Comment=Design Manim scenes on a canvas and a timeline
-Exec=$bindir/Manimation %f
-Icon=app.manimation.editor
+Exec=$bindir/Manimate %f
+Icon=app.manimate.editor
 Terminal=false
 Categories=Graphics;AudioVideo;Video;
-StartupWMClass=Manimation
+StartupWMClass=Manimate
 DESKTOP
 
     # The AppImage carries its own icon; extract just that one file.
-    (cd "$TMP" && "$bindir/Manimation" --appimage-extract '*.png' >/dev/null 2>&1) || true
+    (cd "$TMP" && "$bindir/Manimate" --appimage-extract '*.png' >/dev/null 2>&1) || true
     extracted=$(find "$TMP/squashfs-root" -maxdepth 2 -name '*.png' 2>/dev/null | head -n 1 || true)
     if [ -n "$extracted" ]; then
-        cp "$extracted" "$icondir/app.manimation.editor.png"
+        cp "$extracted" "$icondir/app.manimate.editor.png"
     fi
 
     if command -v update-desktop-database >/dev/null 2>&1; then
         update-desktop-database "$appdir" >/dev/null 2>&1 || true
     fi
 
-    printf '%s✓%s Installed %s\n' "$GREEN" "$RESET" "$bindir/Manimation"
+    printf '%s✓%s Installed %s\n' "$GREEN" "$RESET" "$bindir/Manimate"
 
     case ":$PATH:" in
         *":$bindir:"*) ;;
-        *) note "$bindir is not on your PATH; add it to run Manimation from a shell" ;;
+        *) note "$bindir is not on your PATH; add it to run Manimate from a shell" ;;
     esac
 }
 
 install_linux_tarball() {
-    libdir="$PREFIX/share/manimation"
+    libdir="$PREFIX/share/manimate"
     bindir="$PREFIX/bin"
 
     step "Installing to $libdir"
@@ -245,11 +245,11 @@ install_linux_tarball() {
     tar -xzf "$TMP/$FILE" -C "$libdir" --strip-components=1 \
         || die "could not extract $FILE"
 
-    binary=$(find "$libdir" -type f -name Manimation -perm -u+x | head -n 1)
-    [ -n "$binary" ] || die "no Manimation binary inside $FILE"
+    binary=$(find "$libdir" -type f -name Manimate -perm -u+x | head -n 1)
+    [ -n "$binary" ] || die "no Manimate binary inside $FILE"
 
-    ln -sf "$binary" "$bindir/Manimation"
-    printf '%s✓%s Installed %s\n' "$GREEN" "$RESET" "$bindir/Manimation"
+    ln -sf "$binary" "$bindir/Manimate"
+    printf '%s✓%s Installed %s\n' "$GREEN" "$RESET" "$bindir/Manimate"
 }
 
 case "$PLATFORM" in

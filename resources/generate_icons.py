@@ -1,4 +1,4 @@
-"""Render the Manimation app icon to PNG/ICNS/ICO with no external deps."""
+"""Render the Manimate app icon to PNG/ICNS/ICO with no external deps."""
 import math, os, struct, subprocess, sys, zlib
 
 BG      = (0x14, 0x16, 0x1A)
@@ -121,7 +121,7 @@ def main(out_dir):
         f.write(ico_bytes([(s, pngs[s]) for s in (16, 32, 48, 64, 128, 256)]))
     print("ico")
 
-    iconset = os.path.join(out_dir, "Manimation.iconset")
+    iconset = os.path.join(out_dir, "Manimate.iconset")
     os.makedirs(iconset, exist_ok=True)
     mapping = {
         "icon_16x16.png": 16, "icon_16x16@2x.png": 32,

@@ -82,7 +82,7 @@ struct ProjectMetadata
     QDateTime created;
     QDateTime modified;
 
-    /// Version of Manimation that last wrote the file.
+    /// Version of Manimate that last wrote the file.
     QString writtenBy;
 
     /// Number of times the project has been saved.
@@ -93,7 +93,7 @@ struct ProjectMetadata
 };
 
 /// The whole editable project: everything the editor knows, and the only thing
-/// that needs backing up. Contents of the Manimation/ folder are derived from
+/// that needs backing up. Contents of the Manimate/ folder are derived from
 /// this and can be deleted without loss.
 class Document
 {

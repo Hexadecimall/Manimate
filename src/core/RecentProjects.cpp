@@ -21,8 +21,50 @@ QString RecentProject::rootDir() const
     return QFileInfo(projectFile).absolutePath();
 }
 
+namespace {
+
+/// The list was written under the application's former name. Carried over the
+/// first time the new one runs, so renaming does not look like losing every
+/// project you had open.
+void migrateFromFormerName()
+{
+    QSettings settings;
+    if (settings.contains(QStringLiteral("%1/size").arg(QLatin1String(kArrayKey))))
+        return;
+    if (settings.value(QStringLiteral("migratedRecents")).toBool())
+        return;
+
+    QSettings former(QSettings::NativeFormat, QSettings::UserScope,
+                     QStringLiteral("Manimation"), QStringLiteral("Manimation"));
+    const int count = former.beginReadArray(QLatin1String(kArrayKey));
+    if (count > 0) {
+        QVector<RecentProject> carried;
+        for (int i = 0; i < count; ++i) {
+            former.setArrayIndex(i);
+            RecentProject entry;
+            entry.projectFile = former.value(QStringLiteral("file")).toString();
+            entry.name = former.value(QStringLiteral("name")).toString();
+            entry.description = former.value(QStringLiteral("description")).toString();
+            entry.lastOpened = former.value(QStringLiteral("lastOpened")).toDateTime();
+            if (!entry.projectFile.isEmpty())
+                carried.append(entry);
+        }
+        former.endArray();
+        if (!carried.isEmpty())
+            RecentProjects::save(carried);
+    } else {
+        former.endArray();
+    }
+
+    settings.setValue(QStringLiteral("migratedRecents"), true);
+}
+
+} // namespace
+
 QVector<RecentProject> RecentProjects::load()
 {
+    migrateFromFormerName();
+
     QVector<RecentProject> entries;
     QSettings settings;
     const int count = settings.beginReadArray(QLatin1String(kArrayKey));

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.24)
 
-project(Manimation
+project(Manimate
     VERSION 0.1.0
     DESCRIPTION "Visual editor for Manim"
     LANGUAGES CXX)
@@ -23,7 +23,7 @@ endif()
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-option(MANIMATION_BUILD_TESTS "Build the test suite" ON)
+option(MANIMATE_BUILD_TESTS "Build the test suite" ON)
 
 find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Widgets)
 qt_standard_project_setup()
@@ -32,7 +32,7 @@ add_subdirectory(src/core)
 add_subdirectory(src/ui)
 add_subdirectory(src/app)
 
-if(MANIMATION_BUILD_TESTS)
+if(MANIMATE_BUILD_TESTS)
     find_package(Qt6 REQUIRED COMPONENTS Test)
     enable_testing()
     add_subdirectory(tests)

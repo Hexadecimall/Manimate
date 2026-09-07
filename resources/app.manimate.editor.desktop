@@ -1,11 +1,11 @@
 [Desktop Entry]
 Type=Application
-Name=Manimation
+Name=Manimate
 GenericName=Manim Editor
 Comment=Design Manim scenes on a canvas and a timeline
-Exec=Manimation %f
-Icon=app.manimation.editor
+Exec=Manimate %f
+Icon=app.manimate.editor
 Terminal=false
 Categories=Graphics;AudioVideo;Video;
-MimeType=application/x-manimation-project;
-StartupWMClass=Manimation
+MimeType=application/x-manimate-project;
+StartupWMClass=Manimate
