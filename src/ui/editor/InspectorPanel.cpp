@@ -6,6 +6,7 @@
 #include "SegmentedTabs.h"
 #include "Theme.h"
 
+#include <QApplication>
 #include <QCheckBox>
 #include <QColorDialog>
 #include <QComboBox>
@@ -137,6 +138,12 @@ InspectorPanel::InspectorPanel(EditorState *state, QWidget *parent)
 
     connect(m_state, &EditorState::selectionChanged, this, &InspectorPanel::rebuild);
     connect(m_state, &EditorState::documentChanged, this, &InspectorPanel::rebuild);
+
+    // Any rebuild held back while typing runs as soon as focus leaves.
+    connect(qApp, &QApplication::focusChanged, this, [this](QWidget *, QWidget *now) {
+        if (m_rebuildPending && !(now && isAncestorOf(now)))
+            rebuild();
+    });
 
     rebuild();
 }
@@ -433,6 +440,20 @@ void InspectorPanel::fillPage(QScrollArea *page, int which)
 
 void InspectorPanel::rebuild()
 {
+    // A text field reports every keystroke, so typing changes the document,
+    // which asks the panel to rebuild, which destroys the field being typed in
+    // and throws the cursor elsewhere. (The number fields do not hit this:
+    // keyboard tracking is off, so they only report on Enter or focus-out.)
+    // Holding the rebuild until focus leaves keeps the canvas updating live
+    // without pulling the field out from under the cursor.
+    if (QWidget *focused = QApplication::focusWidget()) {
+        if (isAncestorOf(focused)) {
+            m_rebuildPending = true;
+            return;
+        }
+    }
+    m_rebuildPending = false;
+
     fillPage(m_objectPage, 0);
     fillPage(m_clipPage, 1);
     fillPage(m_scenePage, 2);

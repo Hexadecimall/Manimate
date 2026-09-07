@@ -53,6 +53,10 @@ private:
     /// True while the tabs are being switched in response to a selection, so
     /// the switch is not mistaken for the user choosing a tab.
     bool m_syncing = false;
+
+    /// A rebuild held back because a field of this panel has focus. Runs once
+    /// the focus leaves.
+    bool m_rebuildPending = false;
 };
 
 } // namespace mn::ui

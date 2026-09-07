@@ -20,9 +20,12 @@
 #include <QDateTime>
 #include <QDir>
 #include <QLineEdit>
+#include <QTest>
+#include <QTreeWidget>
 #include <QListView>
 #include <QTemporaryDir>
 #include <QTest>
+#include <QTreeWidget>
 
 using namespace mn;
 using namespace mn::ui;
@@ -51,6 +54,7 @@ private slots:
     void snapshot();
     void projectSnapshot();
     void repaintIsFastEnoughForPlayback();
+    void typingInATextFieldKeepsFocus();
 
     void generatesRunnablePython();
     void solverExpressesOverlapExactly();
@@ -424,6 +428,47 @@ void LauncherTest::undoRestoresWhatWasThere()
     QCOMPARE(state.document().objects.size(), 1);
 }
 
+void LauncherTest::typingInATextFieldKeepsFocus()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+
+    ProjectLayout layout;
+    QVERIFY(project::create(dir.path(), QStringLiteral("Typing"), &layout, nullptr));
+
+    ProjectWindow window;
+    QVERIFY(window.openProject(layout.projectFile));
+
+    EditorState *state = window.state();
+    const ObjectId text = state->addObject(QStringLiteral("manim.Text"));
+    state->selectObject(text);
+
+    window.resize(1300, 820);
+    window.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&window));
+    QTest::qWait(50);
+
+    // Find the inspector's text field: the one holding the object's own text.
+    QLineEdit *field = nullptr;
+    for (QLineEdit *candidate : window.findChildren<QLineEdit *>()) {
+        if (candidate->text() == QStringLiteral("Text") && candidate->isVisible())
+            field = candidate;
+    }
+    QVERIFY(field);
+
+    field->setFocus();
+    QTRY_COMPARE(QApplication::focusWidget(), field);
+
+    // Every keystroke changes the document, which used to rebuild the panel
+    // and destroy this very widget.
+    QTest::keyClicks(field, QStringLiteral("Hello"));
+
+    QCOMPARE(QApplication::focusWidget(), field);
+    QCOMPARE(field->text(), QStringLiteral("TextHello"));
+    QCOMPARE(state->document().findObject(text)->params.value(QStringLiteral("text")).toString(),
+             QStringLiteral("TextHello"));
+}
+
 /// Playback repaints the whole window on every frame, so a frame has to cost
 /// less than the frame budget or playback silently runs slow.
 void LauncherTest::repaintIsFastEnoughForPlayback()
@@ -528,6 +573,7 @@ void LauncherTest::projectSnapshot()
 
     state->selectClip(c5);
     state->setPlayhead(3.9);
+
 
     window.resize(1420, 900);
     window.show();

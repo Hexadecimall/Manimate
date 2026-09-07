@@ -185,7 +185,12 @@ QTreeView::item:selected, QListView::item:selected {
 QTreeView::item:disabled, QListView::item:disabled {
     color: %(textFaint)s;
 }
-QTreeView::branch { background: transparent; }
+QTreeView::branch,
+QTreeView::branch:selected,
+QTreeView::branch:hover,
+QTreeView::branch:selected:active {
+    background: transparent;
+}
 
 QListView::indicator, QTreeView::indicator, QCheckBox::indicator {
     width: 13px;
@@ -342,8 +347,12 @@ void apply(QApplication &application)
     qtPalette.setColor(QPalette::PlaceholderText, p.textFaint);
     qtPalette.setColor(QPalette::Button, p.surfaceRaised);
     qtPalette.setColor(QPalette::ButtonText, p.text);
-    qtPalette.setColor(QPalette::Highlight, p.accent);
-    qtPalette.setColor(QPalette::HighlightedText, p.onAccent);
+    // Neutral, not the accent. Anything the native style paints for a
+    // selected row that the stylesheet does not cover — the branch column of a
+    // tree, most visibly — comes from here, and an accent-coloured Highlight
+    // put a solid red block beside every selected item.
+    qtPalette.setColor(QPalette::Highlight, p.surfaceActive);
+    qtPalette.setColor(QPalette::HighlightedText, p.text);
     qtPalette.setColor(QPalette::ToolTipBase, p.surfaceRaised);
     qtPalette.setColor(QPalette::ToolTipText, p.text);
     qtPalette.setColor(QPalette::Link, p.accent);

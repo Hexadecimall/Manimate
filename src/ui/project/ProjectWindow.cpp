@@ -84,8 +84,6 @@ ProjectWindow::ProjectWindow(QWidget *parent)
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
 
-    layout->addWidget(buildToolbar());
-
     m_renderJob = new RenderJob(this);
 
     m_pages = new QStackedWidget;
@@ -97,6 +95,7 @@ ProjectWindow::ProjectWindow(QWidget *parent)
 
     setContent(content);
     buildMenus();
+    buildTitleBarActions();
 
     connect(m_state, &EditorState::modifiedChanged, this, [this] { updateTitle(); });
     connect(m_state, &EditorState::playheadChanged, this, [this] { updateTransport(); });
@@ -112,48 +111,26 @@ ProjectWindow::ProjectWindow(QWidget *parent)
     updateTransport();
 }
 
-QWidget *ProjectWindow::buildToolbar()
+void ProjectWindow::buildTitleBarActions()
 {
-    const theme::Palette &p = theme::palette();
-
-    auto *bar = new QWidget;
-    bar->setFixedHeight(38);
-    bar->setStyleSheet(QStringLiteral("QWidget { background: %1; border-bottom: 1px solid %2; }")
-                           .arg(p.surfaceRaised.name(), p.border.name()));
-
-    auto *layout = new QHBoxLayout(bar);
-    layout->setContentsMargins(14, 0, 10, 0);
-    layout->setSpacing(6);
-
-    m_projectLabel = new QLabel;
-    QFont nameFont = theme::font(1, QFont::DemiBold);
-    nameFont.setPixelSize(12);
-    m_projectLabel->setFont(nameFont);
-    m_projectLabel->setStyleSheet(QStringLiteral("QLabel { color: %1; }").arg(p.text.name()));
-    layout->addWidget(m_projectLabel);
-
-    layout->addStretch(1);
-
     auto *undoButton = new QPushButton(tr("Undo"));
     auto *redoButton = new QPushButton(tr("Redo"));
     for (QPushButton *button : {undoButton, redoButton}) {
         button->setProperty("role", "quiet");
         button->setCursor(Qt::PointingHandCursor);
-        button->setFixedHeight(26);
+        button->setFixedHeight(24);
+        button->setEnabled(false);
     }
+
     connect(undoButton, &QPushButton::clicked, m_state, &EditorState::undo);
     connect(redoButton, &QPushButton::clicked, m_state, &EditorState::redo);
     connect(m_state, &EditorState::historyChanged, this, [this, undoButton, redoButton] {
         undoButton->setEnabled(m_state->canUndo());
         redoButton->setEnabled(m_state->canRedo());
     });
-    undoButton->setEnabled(false);
-    redoButton->setEnabled(false);
 
-    layout->addWidget(undoButton);
-    layout->addWidget(redoButton);
-
-    return bar;
+    titleBar()->addTrailingWidget(undoButton);
+    titleBar()->addTrailingWidget(redoButton);
 }
 
 QWidget *ProjectWindow::buildViewerHeader()
@@ -787,9 +764,6 @@ void ProjectWindow::updateTitle()
                              ? tr("Project")
                              : m_state->document().metadata.name;
     setWindowTitle(isModified() ? tr("%1 — edited").arg(name) : name);
-
-    if (m_projectLabel)
-        m_projectLabel->setText(isModified() ? tr("%1 •").arg(name) : name);
 }
 
 void ProjectWindow::updateViewerInfo()

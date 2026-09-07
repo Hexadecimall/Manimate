@@ -59,7 +59,9 @@ protected:
     void closeEvent(QCloseEvent *event) override;
 
 private:
-    QWidget *buildToolbar();
+    /// Undo and redo live in the title bar; the window has no toolbar of its
+    /// own, because a second strip naming the project only repeated it.
+    void buildTitleBarActions();
     QWidget *buildViewerHeader();
     QWidget *buildTimelineBar();
     QWidget *buildEditPage();
@@ -112,7 +114,6 @@ private:
     InspectorPanel *m_inspector = nullptr;
     CodeEditor *m_codeEditor = nullptr;
 
-    QLabel *m_projectLabel = nullptr;
     QLabel *m_viewerInfoLabel = nullptr;
     QSlider *m_zoomSlider = nullptr;
     QPushButton *m_playButton = nullptr;
