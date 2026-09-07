@@ -177,7 +177,7 @@ QTreeView::item:hover, QListView::item:hover {
     background: %(surfaceHover)s;
 }
 QTreeView::item:selected, QListView::item:selected {
-    background: %(accentSoft)s;
+    background: %(surfaceActive)s;
     color: %(text)s;
 }
 QTreeView::item:disabled, QListView::item:disabled {
@@ -221,7 +221,7 @@ QWidget[role="group"] {
 }
 
 QLabel[role="groupTitle"] {
-    color: %(accent)s;
+    color: %(textMuted)s;
     font-size: 10px;
     font-weight: 700;
     letter-spacing: 1.1px;
@@ -233,7 +233,7 @@ QLabel[role="field"] {
 }
 
 QSplitter::handle { background: %(border)s; }
-QSplitter::handle:hover { background: %(accent)s; }
+QSplitter::handle:hover { background: %(borderStrong)s; }
 
 QScrollBar:vertical {
     background: transparent;
@@ -267,7 +267,7 @@ QSlider::groove:horizontal {
     border-radius: 2px;
 }
 QSlider::sub-page:horizontal {
-    background: %(accent)s;
+    background: %(textFaint)s;
     border-radius: 2px;
 }
 QSlider::handle:horizontal {
@@ -277,7 +277,7 @@ QSlider::handle:horizontal {
     margin: -4px 0;
     border-radius: 6px;
 }
-QSlider::handle:horizontal:hover { background: %(accent)s; }
+QSlider::handle:horizontal:hover { background: %(text)s; }
 
 QMenu {
     background: %(surfaceRaised)s;

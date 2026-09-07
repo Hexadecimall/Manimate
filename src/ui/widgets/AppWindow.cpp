@@ -66,7 +66,9 @@ AppWindow::AppWindow(QWidget *parent)
     m_shell->setGraphicsEffect(shadow);
 
     m_shellLayout = new QVBoxLayout(m_shell);
-    m_shellLayout->setContentsMargins(0, 0, 0, 0);
+    // One pixel of inset so a child's own background never paints over the
+    // shell's border. Two rounded edges a pixel apart read as a double border.
+    m_shellLayout->setContentsMargins(1, 1, 1, 1);
     m_shellLayout->setSpacing(0);
 
     m_titleBar = new TitleBar(m_shell);

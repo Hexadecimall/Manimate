@@ -132,7 +132,7 @@ QWidget *LauncherWindow::buildSidebar()
                                           "  border-bottom-left-radius: %3px;"
                                           "}")
                                .arg(p.surface.name(), p.border.name())
-                               .arg(AppWindow::kCornerRadius));
+                               .arg(AppWindow::kInnerCornerRadius));
 
     auto *layout = new QVBoxLayout(sidebar);
     layout->setContentsMargins(28, 34, 28, 24);

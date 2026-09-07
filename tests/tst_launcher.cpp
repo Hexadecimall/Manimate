@@ -357,9 +357,14 @@ void LauncherTest::projectSnapshot()
     if (target.isEmpty())
         QSKIP("MANIMATION_PROJECT_SNAPSHOT is not set");
 
+    // Its own directory: the launcher snapshot seeds projects into m_dir, and
+    // a name that is already taken there would collide.
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+
     ProjectLayout layout;
     QString error;
-    QVERIFY2(project::create(m_dir.path(), QStringLiteral("Fourier Series"), &layout, &error),
+    QVERIFY2(project::create(dir.path(), QStringLiteral("Fourier Series"), &layout, &error),
              qPrintable(error));
 
     theme::apply(*qApp);

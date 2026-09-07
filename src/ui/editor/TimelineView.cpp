@@ -30,13 +30,15 @@ QColor clipColour(const catalog::AnimationSpec *spec)
     const theme::Palette &p = theme::palette();
     if (!spec)
         return p.textFaint;
+    // Desaturated against the accent, so a timeline full of clips does not
+    // become the loudest thing on the screen.
     if (spec->isEntrance)
-        return p.accent;
+        return theme::mix(p.accent, p.textMuted, 0.42);
     if (spec->isExit)
-        return p.danger;
+        return theme::mix(p.danger, p.textMuted, 0.38);
     if (spec->effect == catalog::Effect::Wait)
         return p.textFaint;
-    return p.violet;
+    return theme::mix(p.violet, p.textMuted, 0.32);
 }
 
 QString formatTime(double seconds)

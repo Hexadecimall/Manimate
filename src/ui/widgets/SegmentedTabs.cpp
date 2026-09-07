@@ -111,10 +111,13 @@ void SegmentedTabs::paintEvent(QPaintEvent *)
         painter.setPen(active ? p.text : p.textMuted);
         painter.drawText(box, Qt::AlignCenter, m_titles.at(i));
 
-        // The active tab is marked by a bar in the accent, the way a selected
-        // page is marked everywhere else in the application.
+        // The active tab is marked by a short bar in the accent: the accent's
+        // one job in the chrome, so it still means something.
         if (active) {
-            painter.fillRect(QRectF(box.left(), box.bottom() - 2, box.width(), 2), p.accent);
+            const qreal inset = 10.0;
+            painter.fillRect(QRectF(box.left() + inset, box.bottom() - 2,
+                                    box.width() - inset * 2, 2),
+                             p.accent);
         }
     }
 

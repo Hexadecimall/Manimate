@@ -405,7 +405,7 @@ QWidget *ProjectWindow::buildPageBar()
                            "QPushButton:hover { background: %2; color: %3; }"
                            "QPushButton:checked { background: %4; color: %5; font-weight: 600; }")
                 .arg(p.textMuted.name(), p.surfaceHover.name(), p.text.name(),
-                     theme::mix(p.surfaceHover, p.accent, 0.30).name(), p.text.name()));
+                     p.surfaceActive.name(), p.text.name()));
         return button;
     };
 
