@@ -7,6 +7,33 @@ canvas and a timeline, and export Python you can run with `manim` on its own.
 
 Early. The project model and the launcher are in place; the editor is next.
 
+## Installing
+
+Builds are published for macOS (Apple silicon and Intel), Linux and Windows.
+Everything is bundled, so Qt does not need to be installed.
+
+**macOS and Linux**
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/Hexadecimall/Manimation/main/install.sh | sh
+```
+
+**Windows**
+
+```powershell
+irm https://raw.githubusercontent.com/Hexadecimall/Manimation/main/install.ps1 | iex
+```
+
+Both take `--channel stable` (`-Channel stable`) for released builds rather than
+the newest one off `main`, and `--list` (`-List`) to print what they would
+install without touching anything. On Windows, `-Portable` unpacks the zip
+instead of running the installer, and needs no administrator rights.
+
+Or take the package for your platform straight from
+[Releases](https://github.com/Hexadecimall/Manimation/releases): a `.dmg` on
+macOS, an `.AppImage` or tarball on Linux, an installer or portable `.zip` on
+Windows.
+
 ## Building
 
 Requires CMake 3.24+, a C++20 compiler and Qt 6.5+.

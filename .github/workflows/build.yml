@@ -1,0 +1,229 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: ${{ matrix.platform }} ${{ matrix.arch }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: macos-14, platform: macos, arch: arm64 }
+          - { os: macos-13, platform: macos, arch: x86_64 }
+          - { os: ubuntu-22.04, platform: linux, arch: x86_64 }
+          - { os: windows-2022, platform: windows, arch: x86_64 }
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read the project version
+        id: version
+        shell: bash
+        run: |
+          version=$(sed -n 's/^[[:space:]]*VERSION[[:space:]]\{1,\}\([0-9][0-9.]*\)[[:space:]]*$/\1/p' CMakeLists.txt | head -n 1)
+          test -n "$version" || { echo "could not read VERSION from CMakeLists.txt" >&2; exit 1; }
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      # Qt 6 on a bare Ubuntu runner needs its X and GL dependencies, and
+      # linuxdeploy needs FUSE to run its own AppImage.
+      - name: Install Linux dependencies
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libgl1-mesa-dev libglu1-mesa-dev libegl1-mesa-dev \
+            libxkbcommon-dev libxkbcommon-x11-dev \
+            libxcb1-dev libxcb-cursor-dev libxcb-icccm4-dev libxcb-image0-dev \
+            libxcb-keysyms1-dev libxcb-randr0-dev libxcb-render-util0-dev \
+            libxcb-shape0-dev libxcb-sync-dev libxcb-xfixes0-dev \
+            libxcb-xinerama0-dev libxcb-xkb-dev \
+            libfontconfig1-dev libfreetype6-dev \
+            libfuse2 desktop-file-utils file
+
+      - name: Install NSIS
+        if: matrix.platform == 'windows'
+        run: choco install nsis --no-progress -y
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: 6.8.3
+          cache: true
+
+      - name: Configure
+        shell: bash
+        run: |
+          cmake -S . -B build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=12.0
+
+      - name: Build
+        run: cmake --build build --config Release --parallel
+
+      - name: Test
+        working-directory: build
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: ctest --build-config Release --output-on-failure
+
+      - name: Package
+        working-directory: build
+        run: cpack --config CPackConfig.cmake -C Release
+
+      # linuxdeploy produces the AppImage users expect; CPack's tarball is kept
+      # alongside it for anyone who would rather unpack it themselves.
+      - name: Build AppImage
+        if: matrix.platform == 'linux'
+        shell: bash
+        run: |
+          cmake --install build --prefix AppDir/usr
+
+          base="https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous"
+          curl -fsSL -o linuxdeploy.AppImage "$base/linuxdeploy-x86_64.AppImage"
+          curl -fsSL -o linuxdeploy-plugin-qt.AppImage \
+            "https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage"
+          chmod +x linuxdeploy.AppImage linuxdeploy-plugin-qt.AppImage
+
+          export QMAKE="$QT_ROOT_DIR/bin/qmake6"
+          export EXTRA_QT_MODULES=""
+          export OUTPUT="Manimation-${{ steps.version.outputs.version }}-linux-x86_64.AppImage"
+
+          ./linuxdeploy.AppImage \
+            --appdir AppDir \
+            --plugin qt \
+            --desktop-file AppDir/usr/share/applications/app.manimation.editor.desktop \
+            --icon-file AppDir/usr/share/icons/hicolor/256x256/apps/app.manimation.editor.png \
+            --output appimage
+
+          mkdir -p build/dist
+          mv "$OUTPUT" build/dist/
+
+      - name: Collect packages
+        shell: bash
+        run: |
+          mkdir -p dist
+          # Everything CPack and linuxdeploy produced, and nothing else.
+          find build -maxdepth 2 \
+            \( -name '*.dmg' -o -name '*.exe' -o -name '*.zip' \
+               -o -name '*.tar.gz' -o -name '*.AppImage' \) \
+            -not -path '*/_CPack_Packages/*' -exec cp {} dist/ \;
+          ls -lh dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: manimation-${{ matrix.platform }}-${{ matrix.arch }}
+          path: dist/*
+          if-no-files-found: error
+
+  release:
+    name: release ${{ matrix.platform }} ${{ matrix.arch }}
+    needs: build
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        include:
+          - { platform: macos, arch: arm64 }
+          - { platform: macos, arch: x86_64 }
+          - { platform: linux, arch: x86_64 }
+          - { platform: windows, arch: x86_64 }
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read the project version
+        id: version
+        run: |
+          version=$(sed -n 's/^[[:space:]]*VERSION[[:space:]]\{1,\}\([0-9][0-9.]*\)[[:space:]]*$/\1/p' CMakeLists.txt | head -n 1)
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: manimation-${{ matrix.platform }}-${{ matrix.arch }}
+          path: dist
+
+      # One release per platform and architecture, so a user (or install.sh)
+      # can go straight to the build for their machine.
+      #
+      # A push to main republishes the moving `-dev` release at that commit; a
+      # pushed `v*` tag publishes a permanent one. Done with the REST API
+      # directly, so the workflow depends on no CLI beyond curl.
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          version="${{ steps.version.outputs.version }}"
+          suffix="${{ matrix.platform }}-${{ matrix.arch }}"
+
+          if [ "${{ startsWith(github.ref, 'refs/tags/v') }}" = "true" ]; then
+            tag="v${version}-${suffix}"
+            title="Manimation ${version} — ${{ matrix.platform }} ${{ matrix.arch }}"
+            prerelease=false
+            notes="Release build of ${version} for ${{ matrix.platform }} ${{ matrix.arch }}."
+          else
+            tag="v${version}-${suffix}-dev"
+            title="Manimation ${version} — ${{ matrix.platform }} ${{ matrix.arch }} (dev)"
+            prerelease=true
+            notes="Development build from \`main\` at ${SHA}. Overwritten by every push."
+          fi
+
+          api="https://api.github.com/repos/${REPO}"
+          auth="Authorization: Bearer ${GH_TOKEN}"
+          accept="Accept: application/vnd.github+json"
+
+          # A dev release moves with main, so clear the previous one first. A
+          # tagged release is permanent and must never be replaced silently.
+          existing=$(curl -fsSL -H "$auth" -H "$accept" "${api}/releases/tags/${tag}" || true)
+          release_id=$(printf '%s' "$existing" | sed -n 's/.*"id": *\([0-9]*\).*/\1/p' | head -n 1)
+
+          if [ -n "$release_id" ]; then
+            if [ "$prerelease" = "false" ]; then
+              echo "Release ${tag} already exists; refusing to replace a tagged release." >&2
+              exit 1
+            fi
+            echo "Replacing existing dev release ${tag} (${release_id})"
+            curl -fsSL -X DELETE -H "$auth" -H "$accept" "${api}/releases/${release_id}" >/dev/null
+            curl -fsSL -X DELETE -H "$auth" -H "$accept" \
+              "${api}/git/refs/tags/${tag}" >/dev/null 2>&1 || true
+          fi
+
+          created=$(curl -fsSL -X POST -H "$auth" -H "$accept" \
+            "${api}/releases" \
+            -d "$(printf '{"tag_name":"%s","target_commitish":"%s","name":"%s","body":"%s","prerelease":%s,"draft":false}' \
+                  "$tag" "$SHA" "$title" "$notes" "$prerelease")")
+
+          release_id=$(printf '%s' "$created" | sed -n 's/.*"id": *\([0-9]*\).*/\1/p' | head -n 1)
+          test -n "$release_id" || { echo "could not create release ${tag}" >&2; exit 1; }
+          echo "Created ${tag} (${release_id})"
+
+          for file in dist/*; do
+            name=$(basename "$file")
+            echo "Uploading ${name}"
+            curl -fsSL -X POST -H "$auth" -H "$accept" \
+              -H "Content-Type: application/octet-stream" \
+              --data-binary @"$file" \
+              "https://uploads.github.com/repos/${REPO}/releases/${release_id}/assets?name=${name}" \
+              >/dev/null
+          done
+
+          echo "Published ${tag}"
