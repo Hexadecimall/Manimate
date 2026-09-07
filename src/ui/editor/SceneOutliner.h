@@ -2,6 +2,7 @@
 
 #include "Types.h"
 
+#include <QVector>
 #include <QWidget>
 
 class QListWidget;
@@ -32,6 +33,9 @@ private:
     void syncSelectionFromState();
     void itemChanged(QListWidgetItem *item);
     void showContextMenu(const QPoint &position);
+
+    /// Ids of every selected row, topmost first.
+    QVector<ObjectId> selectedObjects() const;
 
     EditorState *m_state;
     QListWidget *m_list = nullptr;

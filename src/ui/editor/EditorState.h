@@ -55,6 +55,12 @@ public Q_SLOTS:
     /// Add an animation for `objectId` at the playhead, on a free track.
     ClipId addClip(ObjectId objectId, const QString &animationId);
 
+    /// Put `ids` inside a new group, which then carries them all.
+    ObjectId groupObjects(const QVector<ObjectId> &ids);
+
+    /// Take `id` out of whatever group holds it.
+    void ungroupObject(ObjectId id);
+
     void removeObject(ObjectId id);
     void removeClip(ClipId id);
     void deleteSelection();
@@ -66,6 +72,14 @@ public Q_SLOTS:
     void setClipParam(ClipId id, const QString &key, const QVariant &value);
     void setClipTiming(ClipId id, double start, double duration, int track);
     void setClipRateFunction(ClipId id, const QString &name);
+
+    /// Copy `sourceFile` into the project's assets and place it at the
+    /// playhead. Returns the new clip, or an invalid id if the copy failed.
+    ClipId addAudio(const QString &sourceFile);
+
+    void setAudioTiming(ClipId id, double start);
+    void setAudioGain(ClipId id, double gain);
+    void removeAudio(ClipId id);
 
     void setTimelineDuration(double seconds);
 
@@ -93,6 +107,10 @@ private:
     ClipId m_selectedClip = kInvalidClipId;
     double m_playhead = 0.0;
     bool m_modified = false;
+
+    /// Audio clips get ids from their own counter; they share no space with
+    /// the animation clips.
+    ClipId m_nextAudioId = 1;
 
     QVector<QJsonObject> m_undo;
     QVector<QJsonObject> m_redo;

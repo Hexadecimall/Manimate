@@ -2,6 +2,10 @@
 
 #include "Catalog.h"
 
+#include <QDir>
+#include <QFile>
+#include <QFileInfo>
+
 #include <algorithm>
 
 namespace mn::ui {
@@ -208,12 +212,77 @@ ClipId EditorState::addClip(ObjectId objectId, const QString &animationId)
     return id;
 }
 
+ObjectId EditorState::groupObjects(const QVector<ObjectId> &ids)
+{
+    QVector<ObjectId> members;
+    for (const ObjectId id : ids) {
+        if (m_document.findObject(id))
+            members.append(id);
+    }
+    if (members.size() < 2)
+        return kInvalidObjectId;
+
+    beginEdit();
+
+    SceneObject group;
+    group.type = QStringLiteral("manim.VGroup");
+    group.name = QStringLiteral("Group");
+    group.params = catalog::defaultParams(*catalog::findMobject(group.type));
+
+    int highest = 0;
+    for (const SceneObject &existing : m_document.objects)
+        highest = qMax(highest, existing.zOrder);
+    group.zOrder = highest + 1;
+
+    const ObjectId groupId = m_document.addObject(std::move(group));
+
+    // The members keep the positions they already have: the group starts at the
+    // origin so nothing moves the moment it is created.
+    for (const ObjectId id : members) {
+        if (SceneObject *object = m_document.findObject(id))
+            object->parentId = groupId;
+    }
+
+    commit();
+    selectObject(groupId);
+    return groupId;
+}
+
+void EditorState::ungroupObject(ObjectId id)
+{
+    SceneObject *object = m_document.findObject(id);
+    if (!object || object->parentId == kInvalidObjectId)
+        return;
+
+    const SceneObject *parent = m_document.findObject(object->parentId);
+    const QPointF carried =
+        parent ? parent->params.value(QStringLiteral("position")).toPointF() : QPointF();
+
+    beginEdit();
+    // Keep it where it appears: what the group contributed becomes its own.
+    object->params.insert(QStringLiteral("position"),
+                          object->params.value(QStringLiteral("position")).toPointF() + carried);
+    object->parentId = kInvalidObjectId;
+    commit();
+}
+
 void EditorState::removeObject(ObjectId id)
 {
     if (!m_document.findObject(id))
         return;
     beginEdit();
-    m_document.removeObject(id);
+
+    // Deleting a group deletes what it holds, which is what the scene list
+    // shows and so what the user is asking for.
+    QVector<ObjectId> doomed{id};
+    for (int i = 0; i < doomed.size(); ++i) {
+        for (const SceneObject &object : m_document.objects) {
+            if (object.parentId == doomed.at(i) && !doomed.contains(object.id))
+                doomed.append(object.id);
+        }
+    }
+    for (int i = doomed.size() - 1; i >= 0; --i)
+        m_document.removeObject(doomed.at(i));
     if (m_selectedObject == id)
         clearSelection();
     commit();
@@ -309,6 +378,70 @@ void EditorState::setClipRateFunction(ClipId id, const QString &name)
         return;
     beginEdit();
     clip->rateFunc = name;
+    commit();
+}
+
+ClipId EditorState::addAudio(const QString &sourceFile)
+{
+    const QFileInfo info(sourceFile);
+    if (!info.isFile() || m_layout.assetsDir.isEmpty())
+        return kInvalidClipId;
+
+    // Copied in, so the project carries its own sound and stays portable.
+    QDir().mkpath(m_layout.assetsDir);
+    const QString target = QDir(m_layout.assetsDir).filePath(info.fileName());
+    if (QFileInfo(target).absoluteFilePath() != info.absoluteFilePath()) {
+        QFile::remove(target);
+        if (!QFile::copy(sourceFile, target))
+            return kInvalidClipId;
+    }
+
+    beginEdit();
+
+    AudioClip clip;
+    clip.id = m_nextAudioId++;
+    clip.asset = info.fileName();
+    clip.start = m_playhead;
+    m_document.timeline.audio.append(clip);
+
+    commit();
+    return clip.id;
+}
+
+void EditorState::setAudioTiming(ClipId id, double start)
+{
+    for (AudioClip &clip : m_document.timeline.audio) {
+        if (clip.id != id)
+            continue;
+        const double clamped = qMax(0.0, start);
+        if (qFuzzyCompare(clip.start + 1.0, clamped + 1.0))
+            return;
+        clip.start = clamped;
+        commit();
+        return;
+    }
+}
+
+void EditorState::setAudioGain(ClipId id, double gain)
+{
+    for (AudioClip &clip : m_document.timeline.audio) {
+        if (clip.id != id)
+            continue;
+        if (qFuzzyCompare(clip.gain + 1.0, gain + 1.0))
+            return;
+        clip.gain = gain;
+        commit();
+        return;
+    }
+}
+
+void EditorState::removeAudio(ClipId id)
+{
+    const qsizetype removed = m_document.timeline.audio.removeIf(
+        [id](const AudioClip &clip) { return clip.id == id; });
+    if (removed == 0)
+        return;
+    beginEdit();
     commit();
 }
 

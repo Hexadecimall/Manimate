@@ -278,13 +278,59 @@ QString constructBody(const Document &document, int indentLevel)
     QSet<QString> taken;
     QHash<ObjectId, QString> variables;
 
-    for (const SceneObject &object : document.objects) {
+    // A group has to be written after the things it holds, so order by depth.
+    QVector<const SceneObject *> ordered;
+    for (const SceneObject &object : document.objects)
+        ordered.append(&object);
+
+    auto depthOf = [&document](const SceneObject *object) {
+        int depth = 0;
+        ObjectId ancestor = object->parentId;
+        while (ancestor != kInvalidObjectId && depth < 64) {
+            const SceneObject *parent = document.findObject(ancestor);
+            if (!parent)
+                break;
+            ++depth;
+            ancestor = parent->parentId;
+        }
+        return depth;
+    };
+    std::stable_sort(ordered.begin(), ordered.end(),
+                     [&depthOf](const SceneObject *a, const SceneObject *b) {
+                         return depthOf(a) > depthOf(b);
+                     });
+
+    for (const SceneObject *pointer : std::as_const(ordered)) {
+        const SceneObject &object = *pointer;
         const catalog::MobjectSpec *spec = catalog::findMobject(object.type);
         if (!spec)
             continue;
 
         const QString variable = variableName(object, taken);
         variables.insert(object.id, variable);
+
+        if (spec->shape == catalog::ShapeKind::Group) {
+            QStringList members;
+            for (const SceneObject &child : document.objects) {
+                if (child.parentId == object.id && variables.contains(child.id))
+                    members.append(variables.value(child.id));
+            }
+            lines.append(pad + QStringLiteral("%1 = VGroup(%2)")
+                                   .arg(variable, members.join(QStringLiteral(", "))));
+            for (const QString &placement : placementFor(object, *spec, variable))
+                lines.append(pad + placement);
+            continue;
+        }
+
+        if (spec->shape == catalog::ShapeKind::Custom) {
+            // Written by hand, emitted exactly as written.
+            const QString expression =
+                catalog::paramOr(object.params, spec->params, QStringLiteral("expression")).toString();
+            lines.append(pad + QStringLiteral("%1 = %2").arg(variable, expression));
+            for (const QString &placement : placementFor(object, *spec, variable))
+                lines.append(pad + placement);
+            continue;
+        }
 
         lines.append(pad + QStringLiteral("%1 = %2").arg(variable, constructorFor(object, *spec)));
         for (const QString &placement : placementFor(object, *spec, variable))
@@ -295,10 +341,13 @@ QString constructBody(const Document &document, int indentLevel)
         }
     }
 
-    // Anything never animated on has to be added, or it never appears.
+    // Anything never animated on has to be added, or it never appears. A child
+    // is added by its group, so only the outermost objects are listed.
     QStringList staticObjects;
     for (const SceneObject &object : document.objects) {
         if (!variables.contains(object.id) || !object.visible)
+            continue;
+        if (object.parentId != kInvalidObjectId)
             continue;
         bool hasEntrance = false;
         for (const Clip &clip : document.timeline.clips) {
@@ -314,6 +363,26 @@ QString constructBody(const Document &document, int indentLevel)
     if (!staticObjects.isEmpty()) {
         lines.append(QString());
         lines.append(pad + QStringLiteral("self.add(%1)").arg(staticObjects.join(QStringLiteral(", "))));
+    }
+
+    // -------------------------------------------------------------- audio ---
+    // Manim takes sounds one at a time with an offset from the start of the
+    // scene, so the whole audio timeline is written out before anything plays.
+    if (!document.timeline.audio.isEmpty()) {
+        lines.append(QString());
+        for (const AudioClip &clip : document.timeline.audio) {
+            if (clip.asset.isEmpty())
+                continue;
+
+            QStringList arguments{quote(QStringLiteral("assets/") + clip.asset)};
+            if (qAbs(clip.start) > kEpsilon)
+                arguments.append(QStringLiteral("time_offset=%1").arg(number(clip.start)));
+            if (qAbs(clip.gain) > kEpsilon)
+                arguments.append(QStringLiteral("gain=%1").arg(number(clip.gain)));
+
+            lines.append(pad + QStringLiteral("self.add_sound(%1)")
+                                   .arg(arguments.join(QStringLiteral(", "))));
+        }
     }
 
     // ----------------------------------------------------------- timeline ---

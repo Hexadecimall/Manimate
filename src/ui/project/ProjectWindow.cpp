@@ -18,6 +18,7 @@
 #include <QDesktopServices>
 #include <QDir>
 #include <QFile>
+#include <QFileDialog>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QMenu>
@@ -175,6 +176,24 @@ QWidget *ProjectWindow::buildTimelineBar()
     title->setProperty("role", "panelTitle");
     layout->addWidget(title);
     layout->addStretch(1);
+
+    auto *addAudio = new QPushButton(tr("Add Sound…"));
+    addAudio->setProperty("role", "quiet");
+    addAudio->setCursor(Qt::PointingHandCursor);
+    addAudio->setFixedHeight(24);
+    connect(addAudio, &QPushButton::clicked, this, [this] {
+        const QString chosen = QFileDialog::getOpenFileName(
+            this, tr("Add Sound"), m_layout.assetsDir,
+            tr("Audio (*.wav *.mp3 *.m4a *.aiff *.flac *.ogg)"));
+        if (chosen.isEmpty())
+            return;
+        if (m_state->addAudio(chosen) == kInvalidClipId) {
+            QMessageBox::warning(this, tr("Cannot add that"),
+                                 tr("The file could not be copied into the project's assets."));
+        }
+    });
+    layout->addWidget(addAudio);
+    layout->addSpacing(8);
 
     auto *zoomLabel = new QLabel(tr("Zoom"));
     zoomLabel->setProperty("role", "subtitle");

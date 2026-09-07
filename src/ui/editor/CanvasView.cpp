@@ -1,6 +1,8 @@
 #include "CanvasView.h"
 
 #include "EditorState.h"
+#include "Catalog.h"
+#include "Document.h"
 #include "SceneRenderer.h"
 #include "Theme.h"
 
@@ -134,6 +136,131 @@ void CanvasView::paintEvent(QPaintEvent *)
     }
 }
 
+QRectF CanvasView::selectionOutline() const
+{
+    const ObjectId selected = m_state->selectedObject();
+    if (selected == kInvalidObjectId)
+        return {};
+
+    const evaluator::ObjectState state =
+        evaluator::evaluateObject(m_state->document(), selected, m_state->playhead());
+    const QTransform toPixels = SceneRenderer::sceneToPixels(m_state->document(), frameRect());
+    const QRectF bounds = SceneRenderer::boundsInPixels(state, toPixels);
+    if (bounds.isNull())
+        return {};
+    return bounds.adjusted(-4, -4, 4, 4);
+}
+
+CanvasView::Handle CanvasView::handleAt(const QPointF &widgetPoint) const
+{
+    const QRectF outline = selectionOutline();
+    if (outline.isNull())
+        return Handle::None;
+
+    // A little larger than the handle is drawn, so it can actually be grabbed.
+    constexpr double kGrab = 9.0;
+    const struct {
+        Handle handle;
+        QPointF corner;
+    } corners[] = {
+        {Handle::TopLeft, outline.topLeft()},
+        {Handle::TopRight, outline.topRight()},
+        {Handle::BottomLeft, outline.bottomLeft()},
+        {Handle::BottomRight, outline.bottomRight()},
+    };
+
+    for (const auto &entry : corners) {
+        if (QLineF(widgetPoint, entry.corner).length() <= kGrab)
+            return entry.handle;
+    }
+    return Handle::None;
+}
+
+Qt::CursorShape CanvasView::cursorFor(Handle handle)
+{
+    switch (handle) {
+    case Handle::TopLeft:
+    case Handle::BottomRight:
+        return Qt::SizeFDiagCursor;
+    case Handle::TopRight:
+    case Handle::BottomLeft:
+        return Qt::SizeBDiagCursor;
+    default:
+        return Qt::ArrowCursor;
+    }
+}
+
+void CanvasView::resizeTo(const QPointF &scenePoint)
+{
+    const ObjectId selected = m_state->selectedObject();
+    const SceneObject *object = m_state->document().findObject(selected);
+    if (!object)
+        return;
+
+    const catalog::MobjectSpec *spec = catalog::findMobject(object->type);
+    if (!spec)
+        return;
+
+    // How far the pointer is from the object's centre, in scene units. The
+    // object is sized so its own half-extent matches that.
+    const QPointF centre = object->params.value(QStringLiteral("position")).toPointF();
+    const double halfWidth = qMax(0.02, qAbs(scenePoint.x() - centre.x()));
+    const double halfHeight = qMax(0.02, qAbs(scenePoint.y() - centre.y()));
+
+    auto has = [spec](const QString &id) {
+        for (const catalog::ParamSpec &param : spec->params) {
+            if (param.id == id)
+                return true;
+        }
+        return false;
+    };
+    auto startValue = [this](const QString &id, double fallback) {
+        const QVariant value = m_resizeStartParams.value(id);
+        return value.isValid() ? value.toDouble() : fallback;
+    };
+
+    // Each shape is sized through whatever parameter actually controls it, so
+    // resizing edits the shape rather than piling a scale factor on top of it.
+    if (has(QStringLiteral("width")) && has(QStringLiteral("height"))) {
+        m_state->setObjectParam(selected, QStringLiteral("width"), halfWidth * 2.0);
+        m_state->setObjectParam(selected, QStringLiteral("height"), halfHeight * 2.0);
+        return;
+    }
+
+    const double extent = qMax(halfWidth, halfHeight);
+
+    if (has(QStringLiteral("side_length"))) {
+        m_state->setObjectParam(selected, QStringLiteral("side_length"), extent * 2.0);
+        return;
+    }
+    if (has(QStringLiteral("radius"))) {
+        m_state->setObjectParam(selected, QStringLiteral("radius"), extent);
+        return;
+    }
+    if (has(QStringLiteral("outer_radius"))) {
+        // Keep the inner radius in proportion, or a star inverts itself.
+        const double startOuter = qMax(0.001, startValue(QStringLiteral("outer_radius"), 1.0));
+        const double ratio = extent / startOuter;
+        m_state->setObjectParam(selected, QStringLiteral("outer_radius"), extent);
+        if (has(QStringLiteral("inner_radius"))) {
+            m_state->setObjectParam(selected, QStringLiteral("inner_radius"),
+                                    startValue(QStringLiteral("inner_radius"), 0.5) * ratio);
+        }
+        return;
+    }
+    if (has(QStringLiteral("length"))) {
+        m_state->setObjectParam(selected, QStringLiteral("length"), extent * 2.0);
+        return;
+    }
+
+    // Anything with no size of its own — text, a formula, a group — scales.
+    const double startExtent = qMax(0.02, qMax(qAbs(m_resizeStartExtent.x()),
+                                               qAbs(m_resizeStartExtent.y())));
+    const double startScale = startValue(QStringLiteral("scale"), 1.0);
+    m_state->setObjectParam(selected, QStringLiteral("scale"),
+                            qBound(0.01, startScale * extent / startExtent, 100.0));
+}
+
 void CanvasView::mousePressEvent(QMouseEvent *event)
 {
     if (event->button() != Qt::LeftButton) {
@@ -142,6 +269,20 @@ void CanvasView::mousePressEvent(QMouseEvent *event)
     }
 
     setFocus();
+
+    // A corner handle resizes; anywhere else selects or drags.
+    if (const Handle handle = handleAt(event->position()); handle != Handle::None) {
+        const evaluator::ObjectState state = evaluator::evaluateObject(
+            m_state->document(), m_state->selectedObject(), m_state->playhead());
+        const QPainterPath shape = SceneRenderer::shapeOf(state);
+        const QRectF bounds = shape.boundingRect();
+
+        m_resizing = handle;
+        m_resizeStartExtent = QPointF(bounds.width() / 2.0, bounds.height() / 2.0);
+        m_resizeStartParams = state.params;
+        m_dragMoved = false;
+        return;
+    }
 
     const QPointF scenePoint = toScene(event->position());
     const auto states = evaluator::evaluate(m_state->document(), m_state->playhead());
@@ -164,7 +305,18 @@ void CanvasView::mousePressEvent(QMouseEvent *event)
 
 void CanvasView::mouseMoveEvent(QMouseEvent *event)
 {
+    if (m_resizing != Handle::None) {
+        if (!m_dragMoved) {
+            m_state->beginEdit();
+            m_dragMoved = true;
+        }
+        resizeTo(toScene(event->position()));
+        return;
+    }
+
     if (m_dragging == kInvalidObjectId) {
+        // Show what a corner would do before it is grabbed.
+        setCursor(cursorFor(handleAt(event->position())));
         QWidget::mouseMoveEvent(event);
         return;
     }
@@ -188,6 +340,8 @@ void CanvasView::mouseReleaseEvent(QMouseEvent *event)
 {
     Q_UNUSED(event);
     m_dragging = kInvalidObjectId;
+    m_resizing = Handle::None;
+    m_resizeStartParams.clear();
     m_dragMoved = false;
 }
 

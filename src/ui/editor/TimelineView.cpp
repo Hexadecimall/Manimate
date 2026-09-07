@@ -22,6 +22,7 @@ constexpr int kHeaderWidth = 116;
 constexpr int kLeftPadding = 8;
 constexpr double kTrimHandle = 6.0;
 constexpr int kMinimumTracks = 3;
+constexpr int kAudioHeight = 34;
 
 /// Clips are tinted by what the animation does, so the timeline is readable
 /// at a glance: entrances, motion and exits look different.
@@ -80,7 +81,7 @@ QSize TimelineView::minimumSizeHint() const
     // Tall enough for every track plus the empty one that accepts a drop, so
     // the scroll area around it knows when there is more than fits.
     const int tracks = qMax(kMinimumTracks, int(m_state->document().timeline.tracks.size()) + 1);
-    return {600, kRulerHeight + tracks * (kTrackHeight + kTrackGap) + 10};
+    return {600, kRulerHeight + tracks * (kTrackHeight + kTrackGap) + kAudioHeight + 16};
 }
 
 void TimelineView::setScale(double pixelsPerSecond)
@@ -139,6 +140,7 @@ void TimelineView::paintEvent(QPaintEvent *)
 
     const double duration = m_state->timelineDuration();
     const int trackCount = qMax(kMinimumTracks, int(document.timeline.tracks.size()) + 1);
+    const double audioTop = kRulerHeight + trackCount * (kTrackHeight + kTrackGap) + 6;
 
     // ------------------------------------------------------------- lanes ----
     for (int track = 0; track < trackCount; ++track) {
@@ -243,6 +245,40 @@ void TimelineView::paintEvent(QPaintEvent *)
         }
     }
 
+    // -------------------------------------------------------------- audio ---
+    // One lane, because Manim mixes every sound into the same track; there is
+    // nothing for a second lane to mean.
+    {
+        const QRectF lane(kHeaderWidth, audioTop, width() - kHeaderWidth, kAudioHeight);
+        painter.fillRect(lane, theme::mix(p.window, p.surface, 0.42));
+
+        QFont clipFont = theme::font(1, QFont::DemiBold);
+        clipFont.setPixelSize(11);
+
+        for (const AudioClip &clip : document.timeline.audio) {
+            // A sound has no length here: Manim is told when to start it and
+            // plays it to its end, whatever that is.
+            const double x = xAt(clip.start);
+            const QRectF box(x, audioTop + 3, qMax(80.0, 1.5 * m_scale), kAudioHeight - 6);
+
+            QPainterPath shape;
+            shape.addRoundedRect(box, 5, 5);
+            painter.fillPath(shape, theme::mix(p.surfaceRaised, p.teal, 0.28));
+            painter.setPen(QPen(theme::mix(p.teal, p.border, 0.5), 1.0));
+            painter.setBrush(Qt::NoBrush);
+            painter.drawPath(shape);
+
+            painter.fillRect(QRectF(box.left(), box.top(), 3, box.height()), p.teal);
+
+            painter.setFont(clipFont);
+            painter.setPen(p.text);
+            const QRectF label = box.adjusted(10, 0, -7, 0);
+            painter.drawText(label, Qt::AlignVCenter | Qt::AlignLeft,
+                             QFontMetricsF(clipFont).elidedText(clip.asset, Qt::ElideMiddle,
+                                                               label.width()));
+        }
+    }
+
     // --------------------------------------------------------- playhead ----
     const double playX = xAt(m_state->playhead());
     if (playX >= kHeaderWidth) {
@@ -259,6 +295,15 @@ void TimelineView::paintEvent(QPaintEvent *)
 
     // Mask anything drawn over the track headers.
     painter.fillRect(QRectF(0, kRulerHeight, kHeaderWidth, height() - kRulerHeight), p.surface);
+
+    {
+        QFont font = theme::font(1, QFont::DemiBold);
+        font.setPixelSize(11);
+        painter.setFont(font);
+        painter.setPen(document.timeline.audio.isEmpty() ? p.textFaint : p.text);
+        painter.drawText(QRectF(0, audioTop, kHeaderWidth, kAudioHeight).adjusted(14, 0, -8, 0),
+                         Qt::AlignVCenter | Qt::AlignLeft, tr("Audio"));
+    }
     for (int track = 0; track < trackCount; ++track) {
         const QRectF header(0, kRulerHeight + track * (kTrackHeight + kTrackGap), kHeaderWidth,
                             kTrackHeight);

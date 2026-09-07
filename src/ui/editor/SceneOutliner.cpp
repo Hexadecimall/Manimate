@@ -37,7 +37,8 @@ SceneOutliner::SceneOutliner(EditorState *state, QWidget *parent)
     m_list = new QListWidget;
     m_list->setFrameShape(QFrame::NoFrame);
     m_list->setIconSize(QSize(18, 18));
-    m_list->setSelectionMode(QAbstractItemView::SingleSelection);
+    // Several rows at once, so they can be grouped together.
+    m_list->setSelectionMode(QAbstractItemView::ExtendedSelection);
     m_list->setContextMenuPolicy(Qt::CustomContextMenu);
     m_list->setUniformItemSizes(true);
     m_list->installEventFilter(this);
@@ -74,7 +75,21 @@ void SceneOutliner::rebuild()
     });
 
     for (const SceneObject *object : std::as_const(objects)) {
-        auto *item = new QListWidgetItem(object->name, m_list);
+        // A child is indented under the group that holds it.
+        QString label = object->name;
+        int depth = 0;
+        ObjectId ancestor = object->parentId;
+        while (ancestor != kInvalidObjectId && depth < 8) {
+            const SceneObject *parent = m_state->document().findObject(ancestor);
+            if (!parent)
+                break;
+            ++depth;
+            ancestor = parent->parentId;
+        }
+        if (depth > 0)
+            label.prepend(QString(depth * 4, QLatin1Char(' ')));
+
+        auto *item = new QListWidgetItem(label, m_list);
         item->setData(kObjectIdRole, qulonglong(object->id));
         item->setIcon(LibraryPanel::shapeIcon(object->type));
         item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
@@ -115,13 +130,14 @@ void SceneOutliner::itemChanged(QListWidgetItem *item)
         return;
 
     const bool visible = item->checkState() == Qt::Checked;
-    if (object->visible == visible && object->name == item->text())
+    const QString typed = item->text().trimmed();
+    if (object->visible == visible && object->name == typed)
         return;
 
     m_state->beginEdit();
     object->visible = visible;
-    if (!item->text().isEmpty())
-        object->name = item->text();
+    if (!typed.isEmpty())
+        object->name = typed;
     m_state->setModified(true);
     Q_EMIT m_state->documentChanged();
 }
@@ -154,6 +170,14 @@ void SceneOutliner::keyPressEvent(QKeyEvent *event)
     QWidget::keyPressEvent(event);
 }
 
+QVector<ObjectId> SceneOutliner::selectedObjects() const
+{
+    QVector<ObjectId> ids;
+    for (const QListWidgetItem *item : m_list->selectedItems())
+        ids.append(ObjectId(item->data(kObjectIdRole).toULongLong()));
+    return ids;
+}
+
 void SceneOutliner::showContextMenu(const QPoint &position)
 {
     QListWidgetItem *item = m_list->itemAt(position);
@@ -161,10 +185,22 @@ void SceneOutliner::showContextMenu(const QPoint &position)
         return;
 
     const ObjectId id = ObjectId(item->data(kObjectIdRole).toULongLong());
+    const QVector<ObjectId> selection = selectedObjects();
+    const SceneObject *object = m_state->document().findObject(id);
 
     QMenu menu(this);
     QAction *rename = menu.addAction(tr("Rename"));
     QAction *hide = menu.addAction(item->checkState() == Qt::Checked ? tr("Hide") : tr("Show"));
+    menu.addSeparator();
+
+    QAction *group = menu.addAction(selection.size() > 1
+                                        ? tr("Group %1 objects").arg(selection.size())
+                                        : tr("Group"));
+    group->setEnabled(selection.size() > 1);
+
+    QAction *ungroup = menu.addAction(tr("Ungroup"));
+    ungroup->setEnabled(object && object->parentId != kInvalidObjectId);
+
     menu.addSeparator();
     QAction *remove = menu.addAction(tr("Delete"));
 
@@ -174,8 +210,13 @@ void SceneOutliner::showContextMenu(const QPoint &position)
         m_list->editItem(item);
     } else if (chosen == hide) {
         item->setCheckState(item->checkState() == Qt::Checked ? Qt::Unchecked : Qt::Checked);
+    } else if (chosen == group) {
+        m_state->groupObjects(selection);
+    } else if (chosen == ungroup) {
+        m_state->ungroupObject(id);
     } else if (chosen == remove) {
-        m_state->removeObject(id);
+        for (const ObjectId selected : selection)
+            m_state->removeObject(selected);
     }
 }
 

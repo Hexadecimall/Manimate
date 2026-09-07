@@ -62,6 +62,8 @@ private slots:
     void solverExpressesOverlapExactly();
     void positionCentresTheBoundingBox();
     void pythonBlocksBecomeControlFlow();
+    void groupsCarryTheirChildren();
+    void audioBecomesAddSound();
     void catalogCoversABroadRangeOfManim();
     void addingAnObjectSelectsIt();
     void animationsChangeWhatTheCanvasWouldDraw();
@@ -446,6 +448,80 @@ void LauncherTest::pythonBlocksBecomeControlFlow()
 
     // A block is not an animation, so it is not wrapped in a play() of its own.
     QVERIFY(!code.contains(QStringLiteral("self.play(Code")));
+}
+
+void LauncherTest::groupsCarryTheirChildren()
+{
+    EditorState state;
+    state.setDocument(Document::createNew(QStringLiteral("Grouping")), {});
+
+    const ObjectId circle = state.addObject(QStringLiteral("manim.Circle"));
+    const ObjectId square = state.addObject(QStringLiteral("manim.Square"));
+    state.setObjectParam(circle, QStringLiteral("position"), QPointF(-1, 0));
+    state.setObjectParam(square, QStringLiteral("position"), QPointF(1, 0));
+
+    const ObjectId group = state.groupObjects({circle, square});
+    QVERIFY(group != kInvalidObjectId);
+    QCOMPARE(state.document().findObject(circle)->parentId, group);
+
+    // Moving the group moves what it holds, without touching their own values.
+    state.setObjectParam(group, QStringLiteral("position"), QPointF(0, 2));
+    const evaluator::ObjectState child =
+        evaluator::evaluateObject(state.document(), circle, 0.0);
+    QCOMPARE(child.offset, QPointF(0, 2));
+    QCOMPARE(state.document().findObject(circle)->params.value(QStringLiteral("position")).toPointF(),
+             QPointF(-1, 0));
+
+    // The group is written after its members, and adds them itself.
+    const QString code = codegen::constructBody(state.document(), 0);
+    const int circleAt = int(code.indexOf(QStringLiteral("circle = Circle")));
+    const int groupAt = int(code.indexOf(QStringLiteral("group = VGroup(")));
+    QVERIFY(circleAt >= 0 && groupAt > circleAt);
+    QVERIFY(code.contains(QStringLiteral("group = VGroup(circle, square)")));
+    QVERIFY(code.contains(QStringLiteral("self.add(group)")));
+    QVERIFY(!code.contains(QStringLiteral("self.add(circle")));
+
+    // Deleting the group takes its children with it.
+    state.removeObject(group);
+    QCOMPARE(state.document().objects.size(), 0);
+}
+
+void LauncherTest::audioBecomesAddSound()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+
+    ProjectLayout layout;
+    QVERIFY(project::create(dir.path(), QStringLiteral("Sound"), &layout, nullptr));
+
+    // A file to add. Its contents do not matter; it is only ever copied.
+    const QString source = QDir(dir.path()).filePath(QStringLiteral("chime.wav"));
+    QFile file(source);
+    QVERIFY(file.open(QIODevice::WriteOnly));
+    file.write("RIFF----WAVEfmt ");
+    file.close();
+
+    Document document;
+    QVERIFY(Document::load(layout.projectFile, &document, nullptr));
+
+    EditorState state;
+    state.setDocument(std::move(document), layout);
+    state.setPlayhead(1.5);
+
+    const ClipId audio = state.addAudio(source);
+    QVERIFY(audio != kInvalidClipId);
+
+    // Copied into the project, so the project carries its own sound.
+    QVERIFY(QFileInfo(QDir(layout.assetsDir).filePath(QStringLiteral("chime.wav"))).isFile());
+
+    state.setAudioGain(audio, -6.0);
+
+    const QString code = codegen::constructBody(state.document(), 0);
+    QVERIFY(code.contains(
+        QStringLiteral("self.add_sound(\"assets/chime.wav\", time_offset=1.5, gain=-6)")));
+
+    state.removeAudio(audio);
+    QVERIFY(!codegen::constructBody(state.document(), 0).contains(QStringLiteral("add_sound")));
 }
 
 void LauncherTest::catalogCoversABroadRangeOfManim()

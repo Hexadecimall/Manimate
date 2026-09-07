@@ -195,6 +195,32 @@ ObjectState evaluateObject(const Document &document, ObjectId id, double time)
     if (hasEntrance && !entered)
         state.visible = false;
 
+    // A child moves with its group. Walked upwards rather than downwards so a
+    // single object can be evaluated on its own, without building the tree.
+    ObjectId ancestor = object->parentId;
+    int guard = 0;
+    while (ancestor != kInvalidObjectId && guard++ < 64) {
+        const SceneObject *parent = document.findObject(ancestor);
+        if (!parent)
+            break;
+
+        const ObjectState parentState = evaluateObject(document, ancestor, time);
+        if (!parentState.visible)
+            state.visible = false;
+
+        state.opacity *= parentState.opacity;
+        state.scale *= parentState.scale;
+        state.rotationDegrees += parentState.rotationDegrees;
+
+        // The parent's own position is where the group sits, so a child is
+        // carried by it as well as by whatever animated the group.
+        const QPointF parentOrigin =
+            parentState.params.value(QStringLiteral("position")).toPointF();
+        state.offset += parentState.offset + parentOrigin;
+
+        ancestor = parent->parentId;
+    }
+
     return state;
 }
 

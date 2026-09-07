@@ -59,11 +59,35 @@ struct Clip
     static Clip fromJson(const QJsonObject &object);
 };
 
+/// A sound placed on the timeline.
+///
+/// Manim has no audio timeline: it takes sounds one at a time with an offset
+/// from the start of the scene, which is exactly what this holds. Audio is kept
+/// apart from the animation clips because it animates nothing — it has no
+/// mobject, no easing, and no bearing on what the canvas draws.
+struct AudioClip
+{
+    ClipId id = kInvalidClipId;
+
+    /// Path to the file, relative to the project's assets folder.
+    QString asset;
+
+    /// Where it starts, in seconds from the beginning of the scene.
+    double start = 0.0;
+
+    /// Loudness adjustment in decibels, as Manim's add_sound takes it.
+    double gain = 0.0;
+
+    QJsonObject toJson() const;
+    static AudioClip fromJson(const QJsonObject &object);
+};
+
 /// The absolute-time arrangement of every animation in the document.
 struct Timeline
 {
     QVector<Track> tracks;
     QVector<Clip> clips;
+    QVector<AudioClip> audio;
 
     /// Explicit end of the video. Anything past it is still exported; this is
     /// the point the editor pads to with a final wait.
