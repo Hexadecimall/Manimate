@@ -16,27 +16,29 @@ namespace mn::theme {
 /// produces.
 struct Palette
 {
-    /// The deepest surface: what shows behind and between panels.
-    QColor window{0x16, 0x17, 0x1A};
+    /// The deepest surface: what shows behind and between panels. Slate
+    /// rather than neutral grey — a trace of blue keeps a near-black interface
+    /// from looking muddy.
+    QColor window{0x14, 0x16, 0x1B};
 
     /// A panel's own background.
-    QColor surface{0x1F, 0x20, 0x24};
+    QColor surface{0x1D, 0x21, 0x27};
 
     /// Raised within a panel: headers, toolbars, clips.
-    QColor surfaceRaised{0x26, 0x27, 0x2C};
-    QColor surfaceHover{0x2F, 0x30, 0x37};
-    QColor surfaceActive{0x38, 0x39, 0x42};
+    QColor surfaceRaised{0x25, 0x2A, 0x32};
+    QColor surfaceHover{0x2E, 0x34, 0x3E};
+    QColor surfaceActive{0x38, 0x3F, 0x4B};
 
     /// Panels are separated by lines DARKER than they are, which is what makes
     /// a dense editing interface read as panels rather than as boxes.
-    QColor border{0x0E, 0x0F, 0x11};
+    QColor border{0x0D, 0x0F, 0x13};
 
     /// A lighter line, for outlines inside a panel.
-    QColor borderStrong{0x3B, 0x3D, 0x46};
+    QColor borderStrong{0x3E, 0x45, 0x52};
 
-    QColor text{0xDA, 0xDC, 0xE2};
-    QColor textMuted{0x8E, 0x92, 0x9C};
-    QColor textFaint{0x5E, 0x62, 0x6C};
+    QColor text{0xDC, 0xE0, 0xE7};
+    QColor textMuted{0x91, 0x99, 0xA6};
+    QColor textFaint{0x60, 0x68, 0x75};
 
     /// The interface's accent. Warm rather than cold, so it reads as an
     /// editing application; Manim's own palette still colours the scene.
