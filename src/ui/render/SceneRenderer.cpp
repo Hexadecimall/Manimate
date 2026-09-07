@@ -183,6 +183,137 @@ QPainterPath gridPath(double xRange, double yRange, bool axesOnly, bool tips)
     return path;
 }
 
+/// An isometric projection, so a solid reads as a solid on a flat canvas.
+/// The canvas stands in for the render rather than reproducing it: Manim's own
+/// camera decides the real view, and only the render knows where that is.
+QPointF isometric(double x, double y, double z)
+{
+    constexpr double kCos = 0.8660254;   // cos(30 degrees)
+    constexpr double kSin = 0.5;
+    return QPointF((x - z) * kCos, y + (x + z) * kSin);
+}
+
+QPainterPath boxWireframe(double width, double height, double depth)
+{
+    const double hw = width / 2.0;
+    const double hh = height / 2.0;
+    const double hd = depth / 2.0;
+
+    const QPointF corners[8] = {
+        isometric(-hw, -hh, -hd), isometric(hw, -hh, -hd),
+        isometric(hw, hh, -hd),   isometric(-hw, hh, -hd),
+        isometric(-hw, -hh, hd),  isometric(hw, -hh, hd),
+        isometric(hw, hh, hd),    isometric(-hw, hh, hd),
+    };
+
+    QPainterPath path;
+    const int edges[12][2] = {{0, 1}, {1, 2}, {2, 3}, {3, 0}, {4, 5}, {5, 6},
+                              {6, 7}, {7, 4}, {0, 4}, {1, 5}, {2, 6}, {3, 7}};
+    for (const auto &edge : edges) {
+        path.moveTo(corners[edge[0]]);
+        path.lineTo(corners[edge[1]]);
+    }
+    return path;
+}
+
+/// A sphere as an outline with two great circles, the usual way of drawing one.
+QPainterPath sphereWireframe(double radius)
+{
+    QPainterPath path;
+    path.addEllipse(QPointF(0, 0), radius, radius);
+    path.addEllipse(QPointF(0, 0), radius, radius * 0.35);
+    path.addEllipse(QPointF(0, 0), radius * 0.35, radius);
+    return path;
+}
+
+QPainterPath dashedLine(const QPointF &start, const QPointF &end, double dash)
+{
+    QPainterPath path;
+    const QLineF line(start, end);
+    const double length = line.length();
+    if (length <= 0.0 || dash <= 0.0)
+        return path;
+
+    const int steps = qMax(1, int(length / (dash * 2.0)));
+    for (int i = 0; i < steps; ++i) {
+        const double a = double(i) * 2.0 * dash / length;
+        const double b = qMin(1.0, (double(i) * 2.0 + 1.0) * dash / length);
+        path.moveTo(line.pointAt(a));
+        path.lineTo(line.pointAt(b));
+    }
+    return path;
+}
+
+QPainterPath bracePath(double length, double depth)
+{
+    // A curly brace, drawn as two hooks meeting at a central point.
+    QPainterPath path;
+    const double half = length / 2.0;
+    path.moveTo(-half, 0);
+    path.quadTo(-half + depth, 0, -half + depth, -depth);
+    path.lineTo(-depth, -depth);
+    path.quadTo(0, -depth, 0, -depth * 2.0);
+    path.quadTo(0, -depth, depth, -depth);
+    path.lineTo(half - depth, -depth);
+    path.quadTo(half - depth, 0, half, 0);
+    return path;
+}
+
+QVector<double> numberList(const QString &text)
+{
+    QVector<double> values;
+    for (const QString &part : text.split(QRegularExpression(QStringLiteral("[,\\s]+")),
+                                          Qt::SkipEmptyParts)) {
+        bool ok = false;
+        const double value = part.toDouble(&ok);
+        if (ok)
+            values.append(value);
+    }
+    return values;
+}
+
+QPainterPath gridOfCells(const QString &rows, double cellWidth, double cellHeight, bool brackets)
+{
+    const QStringList lines = rows.split(QLatin1Char('\n'), Qt::SkipEmptyParts);
+    int columns = 0;
+    for (const QString &line : lines)
+        columns = qMax(columns, int(line.split(QLatin1Char(',')).size()));
+    if (lines.isEmpty() || columns == 0)
+        return {};
+
+    const double width = columns * cellWidth;
+    const double height = lines.size() * cellHeight;
+
+    QPainterPath path;
+    if (brackets) {
+        // A matrix is drawn with brackets rather than a full grid.
+        const double hw = width / 2.0;
+        const double hh = height / 2.0;
+        const double lip = cellWidth * 0.18;
+        path.moveTo(-hw + lip, hh);
+        path.lineTo(-hw, hh);
+        path.lineTo(-hw, -hh);
+        path.lineTo(-hw + lip, -hh);
+        path.moveTo(hw - lip, hh);
+        path.lineTo(hw, hh);
+        path.lineTo(hw, -hh);
+        path.lineTo(hw - lip, -hh);
+        return path;
+    }
+
+    for (int c = 0; c <= columns; ++c) {
+        const double x = -width / 2.0 + c * cellWidth;
+        path.moveTo(x, -height / 2.0);
+        path.lineTo(x, height / 2.0);
+    }
+    for (int r = 0; r <= lines.size(); ++r) {
+        const double y = -height / 2.0 + r * cellHeight;
+        path.moveTo(-width / 2.0, y);
+        path.lineTo(width / 2.0, y);
+    }
+    return path;
+}
+
 } // namespace
 
 QRectF SceneRenderer::frameRectFor(const Document &document, const QRectF &viewport)
@@ -293,6 +424,272 @@ QPainterPath SceneRenderer::shapeOf(const evaluator::ObjectState &state)
                         numberParam(p, QStringLiteral("y_range"), 3.0), true,
                         p.value(QStringLiteral("tips")).toBool());
         break;
+
+    case ShapeKind::Arc: {
+        const double radius = numberParam(p, QStringLiteral("radius"), 1.0);
+        const double from = numberParam(p, QStringLiteral("start_angle"), 0.0);
+        const double sweep = numberParam(p, QStringLiteral("angle"), 90.0);
+        path.arcMoveTo(QRectF(-radius, -radius, radius * 2, radius * 2), from);
+        path.arcTo(QRectF(-radius, -radius, radius * 2, radius * 2), from, sweep);
+        break;
+    }
+    case ShapeKind::Sector: {
+        const double radius = numberParam(p, QStringLiteral("radius"), 1.0);
+        const double from = numberParam(p, QStringLiteral("start_angle"), 0.0);
+        const double sweep = numberParam(p, QStringLiteral("angle"), 90.0);
+        path.moveTo(0, 0);
+        path.arcTo(QRectF(-radius, -radius, radius * 2, radius * 2), from, sweep);
+        path.closeSubpath();
+        break;
+    }
+    case ShapeKind::Annulus: {
+        const double inner = numberParam(p, QStringLiteral("inner_radius"), 0.6);
+        const double outer = numberParam(p, QStringLiteral("outer_radius"), 1.0);
+        path.addEllipse(QPointF(0, 0), outer, outer);
+        path.addEllipse(QPointF(0, 0), inner, inner);
+        path.setFillRule(Qt::OddEvenFill);
+        break;
+    }
+    case ShapeKind::Cross: {
+        const double half = numberParam(p, QStringLiteral("size"), 1.0) / 2.0;
+        path.moveTo(-half, -half);
+        path.lineTo(half, half);
+        path.moveTo(-half, half);
+        path.lineTo(half, -half);
+        break;
+    }
+    case ShapeKind::Elbow: {
+        const double size = numberParam(p, QStringLiteral("width"), 0.5);
+        path.moveTo(0, size);
+        path.lineTo(0, 0);
+        path.lineTo(size, 0);
+        break;
+    }
+    case ShapeKind::Angle: {
+        const double radius = numberParam(p, QStringLiteral("radius"), 0.5);
+        const double sweep = numberParam(p, QStringLiteral("angle"), 90.0);
+        path.arcMoveTo(QRectF(-radius, -radius, radius * 2, radius * 2), 0);
+        path.arcTo(QRectF(-radius, -radius, radius * 2, radius * 2), 0, sweep);
+        break;
+    }
+
+    case ShapeKind::DashedLine:
+        path = dashedLine(pointParam(p, QStringLiteral("start")), pointParam(p, QStringLiteral("end")),
+                          numberParam(p, QStringLiteral("dash_length"), 0.15));
+        break;
+    case ShapeKind::DoubleArrow: {
+        const QPointF start = pointParam(p, QStringLiteral("start"));
+        const QPointF end = pointParam(p, QStringLiteral("end"));
+        const double tip = numberParam(p, QStringLiteral("tip_length"), 0.25);
+        path = arrow(start, end, tip);
+        path.addPath(arrow(end, start, tip));
+        break;
+    }
+    case ShapeKind::Vector:
+        path = arrow(QPointF(0, 0), pointParam(p, QStringLiteral("direction")),
+                     numberParam(p, QStringLiteral("tip_length"), 0.25));
+        break;
+    case ShapeKind::CurvedArrow: {
+        const QPointF start = pointParam(p, QStringLiteral("start"));
+        const QPointF end = pointParam(p, QStringLiteral("end"));
+        const double bend = numberParam(p, QStringLiteral("angle"), 45.0);
+        const QPointF middle = (start + end) / 2.0;
+        const QPointF away(-(end.y() - start.y()), end.x() - start.x());
+        const double lift = std::tan(qDegreesToRadians(bend) / 4.0);
+        path.moveTo(start);
+        path.quadTo(middle + away * lift, end);
+        // The tip follows the curve's own direction at the end.
+        const QPointF approach = end - (middle + away * lift);
+        const double angle = std::atan2(approach.y(), approach.x());
+        constexpr double spread = M_PI / 7.0;
+        const double tip = 0.22;
+        for (const double side : {angle + M_PI - spread, angle + M_PI + spread}) {
+            path.moveTo(end);
+            path.lineTo(end + QPointF(tip * std::cos(side), tip * std::sin(side)));
+        }
+        break;
+    }
+
+    case ShapeKind::Paragraph:
+        path = textPath(p.value(QStringLiteral("text")).toString(),
+                        numberParam(p, QStringLiteral("font_size"), 36), false, false);
+        break;
+    case ShapeKind::CodeBlock: {
+        path = textPath(p.value(QStringLiteral("code")).toString(),
+                        numberParam(p, QStringLiteral("font_size"), 24), false, false);
+        // A code block sits in a panel, which is most of what it looks like.
+        const QRectF bounds = path.boundingRect().adjusted(-0.25, -0.2, 0.25, 0.2);
+        QPainterPath framed;
+        framed.addRoundedRect(bounds, 0.12, 0.12);
+        framed.addPath(path);
+        path = framed;
+        break;
+    }
+    case ShapeKind::NumberText: {
+        const int places = p.value(QStringLiteral("num_decimal_places")).toInt();
+        path = textPath(QString::number(numberParam(p, QStringLiteral("number"), 0.0), 'f', places),
+                        numberParam(p, QStringLiteral("font_size"), 48), false, false);
+        break;
+    }
+
+    case ShapeKind::NumberLine: {
+        const double length = numberParam(p, QStringLiteral("length"), 8.0);
+        const double step = qMax(0.1, numberParam(p, QStringLiteral("step"), 1.0));
+        const double half = length / 2.0;
+        path.moveTo(-half, 0);
+        path.lineTo(half, 0);
+        for (double x = -half; x <= half + 1e-6; x += step) {
+            path.moveTo(x, -0.12);
+            path.lineTo(x, 0.12);
+        }
+        break;
+    }
+    case ShapeKind::BarChart: {
+        const QVector<double> values = numberList(p.value(QStringLiteral("values")).toString());
+        const double top = qMax(0.001, numberParam(p, QStringLiteral("y_range"), 6.0));
+        if (values.isEmpty())
+            break;
+        const double barWidth = 0.6;
+        const double gap = 0.25;
+        const double total = values.size() * barWidth + (values.size() - 1) * gap;
+        double x = -total / 2.0;
+        for (const double value : values) {
+            const double height = qBound(0.0, value / top, 1.0) * 3.0;
+            path.addRect(QRectF(x, 0, barWidth, height));
+            x += barWidth + gap;
+        }
+        break;
+    }
+    case ShapeKind::FunctionGraph: {
+        // The expression is not evaluated here; a representative curve stands
+        // in for it until the render, which is the thing that knows Python.
+        const double from = numberParam(p, QStringLiteral("x_min"), -4.0);
+        const double to = numberParam(p, QStringLiteral("x_max"), 4.0);
+        constexpr int kSamples = 96;
+        for (int i = 0; i <= kSamples; ++i) {
+            const double x = from + (to - from) * (double(i) / kSamples);
+            const QPointF point(x, std::sin(x));
+            if (i == 0)
+                path.moveTo(point);
+            else
+                path.lineTo(point);
+        }
+        break;
+    }
+    case ShapeKind::Table:
+        path = gridOfCells(p.value(QStringLiteral("rows")).toString(),
+                           numberParam(p, QStringLiteral("cell_width"), 1.2),
+                           numberParam(p, QStringLiteral("cell_height"), 0.8), false);
+        break;
+    case ShapeKind::Matrix:
+        path = gridOfCells(p.value(QStringLiteral("rows")).toString(),
+                           numberParam(p, QStringLiteral("cell_width"), 0.8),
+                           numberParam(p, QStringLiteral("cell_height"), 0.7), true);
+        break;
+    case ShapeKind::Brace:
+        path = bracePath(numberParam(p, QStringLiteral("length"), 2.0),
+                         numberParam(p, QStringLiteral("depth"), 0.3));
+        break;
+    case ShapeKind::Underline: {
+        const double half = numberParam(p, QStringLiteral("length"), 2.0) / 2.0;
+        path.moveTo(-half, 0);
+        path.lineTo(half, 0);
+        break;
+    }
+    case ShapeKind::SurroundingBox: {
+        const double buff = numberParam(p, QStringLiteral("buff"), 0.1);
+        const double width = numberParam(p, QStringLiteral("width"), 2.0) + buff * 2;
+        const double height = numberParam(p, QStringLiteral("height"), 1.0) + buff * 2;
+        path.addRect(-width / 2.0, -height / 2.0, width, height);
+        break;
+    }
+
+    case ShapeKind::Cube: {
+        const double side = numberParam(p, QStringLiteral("side_length"), 2.0);
+        path = boxWireframe(side, side, side);
+        break;
+    }
+    case ShapeKind::Prism:
+        path = boxWireframe(numberParam(p, QStringLiteral("width"), 2.0),
+                            numberParam(p, QStringLiteral("height"), 1.0),
+                            numberParam(p, QStringLiteral("depth"), 1.0));
+        break;
+    case ShapeKind::Sphere:
+        path = sphereWireframe(numberParam(p, QStringLiteral("radius"), 1.0));
+        break;
+    case ShapeKind::Cone: {
+        const double radius = numberParam(p, QStringLiteral("base_radius"), 1.0);
+        const double height = numberParam(p, QStringLiteral("height"), 2.0);
+        path.addEllipse(QPointF(0, -height / 2.0), radius, radius * 0.35);
+        path.moveTo(-radius, -height / 2.0);
+        path.lineTo(0, height / 2.0);
+        path.lineTo(radius, -height / 2.0);
+        break;
+    }
+    case ShapeKind::Cylinder: {
+        const double radius = numberParam(p, QStringLiteral("radius"), 1.0);
+        const double height = numberParam(p, QStringLiteral("height"), 2.0);
+        const double lift = radius * 0.35;
+        path.addEllipse(QPointF(0, height / 2.0), radius, lift);
+        path.addEllipse(QPointF(0, -height / 2.0), radius, lift);
+        path.moveTo(-radius, height / 2.0);
+        path.lineTo(-radius, -height / 2.0);
+        path.moveTo(radius, height / 2.0);
+        path.lineTo(radius, -height / 2.0);
+        break;
+    }
+    case ShapeKind::Torus: {
+        const double major = numberParam(p, QStringLiteral("major_radius"), 1.0);
+        const double minor = numberParam(p, QStringLiteral("minor_radius"), 0.35);
+        path.addEllipse(QPointF(0, 0), major + minor, (major + minor) * 0.45);
+        path.addEllipse(QPointF(0, 0), major - minor, (major - minor) * 0.45);
+        break;
+    }
+    case ShapeKind::Surface3D: {
+        // A saddle grid: enough to say "a surface goes here".
+        const double extent = numberParam(p, QStringLiteral("extent"), 2.0);
+        constexpr int kLines = 7;
+        for (int i = 0; i < kLines; ++i) {
+            const double u = -extent + 2 * extent * (double(i) / (kLines - 1));
+            for (int j = 0; j < kLines; ++j) {
+                const double v = -extent + 2 * extent * (double(j) / (kLines - 1));
+                const QPointF point = isometric(u, std::sin(u) * std::cos(v) * 0.6, v);
+                if (j == 0)
+                    path.moveTo(point);
+                else
+                    path.lineTo(point);
+            }
+        }
+        for (int j = 0; j < kLines; ++j) {
+            const double v = -extent + 2 * extent * (double(j) / (kLines - 1));
+            for (int i = 0; i < kLines; ++i) {
+                const double u = -extent + 2 * extent * (double(i) / (kLines - 1));
+                const QPointF point = isometric(u, std::sin(u) * std::cos(v) * 0.6, v);
+                if (i == 0)
+                    path.moveTo(point);
+                else
+                    path.lineTo(point);
+            }
+        }
+        break;
+    }
+
+    case ShapeKind::Group:
+        // Drawn by its children; a group has no outline of its own.
+        break;
+
+    case ShapeKind::Custom: {
+        // Hand-written Python cannot be drawn without running it, so the canvas
+        // shows a labelled placeholder and the render shows the truth.
+        const QString label = p.value(QStringLiteral("label")).toString();
+        QPainterPath box;
+        box.addRoundedRect(QRectF(-0.9, -0.45, 1.8, 0.9), 0.12, 0.12);
+        path = box;
+        QPainterPath caption = textPath(label.isEmpty() ? QStringLiteral("Custom") : label, 22,
+                                        false, false);
+        path.addPath(caption);
+        break;
+    }
     }
 
     return path;

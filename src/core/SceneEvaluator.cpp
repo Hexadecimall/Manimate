@@ -4,6 +4,7 @@
 #include "Document.h"
 #include "RateFunctions.h"
 
+#include <QtMath>
 #include <algorithm>
 
 namespace mn::evaluator {
@@ -159,7 +160,33 @@ ObjectState evaluateObject(const Document &document, ObjectId id, double time)
             break;
         }
 
+        case catalog::Effect::MoveTo: {
+            const QPointF to = catalog::paramOr(params, paramSpecs, QStringLiteral("to")).toPointF();
+            const QPointF from = state.params.value(QStringLiteral("position")).toPointF();
+            state.offset += (to - from) * p;
+            break;
+        }
+
+        case catalog::Effect::Fade: {
+            const double to = catalog::paramOr(params, paramSpecs, QStringLiteral("to")).toDouble();
+            state.opacity = 1.0 + (to - 1.0) * p;
+            break;
+        }
+
+        case catalog::Effect::Emphasise: {
+            // Emphasis returns the object to where it started, so it swells and
+            // settles rather than leaving anything behind.
+            const double swell = std::sin(p * M_PI);
+            const double factor =
+                catalog::paramOr(params, paramSpecs, QStringLiteral("scale_factor")).toDouble();
+            state.scale *= 1.0 + (factor > 0 ? factor - 1.0 : 0.15) * swell;
+            break;
+        }
+
+        case catalog::Effect::Code:
         case catalog::Effect::Wait:
+            // Neither shows anything on the canvas: a Python block runs at
+            // render time, and the canvas cannot know what it will do.
             break;
         }
     }

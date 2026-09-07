@@ -179,6 +179,21 @@ QString animationExpression(const Clip &clip, const catalog::AnimationSpec &spec
     const QString animate = QStringLiteral("%1.animate(%2)").arg(variable, timing.join(QStringLiteral(", ")));
 
     switch (spec.effect) {
+    case catalog::Effect::Code:
+        // Not an animation at all: a block of Python, placed in the sequence.
+        return {};
+
+    case catalog::Effect::MoveTo:
+        return animate
+               + QStringLiteral(".move_to(%1)")
+                     .arg(pointLiteral(
+                         catalog::paramOr(clip.params, spec.params, QStringLiteral("to")).toPointF()));
+    case catalog::Effect::Fade:
+        return animate
+               + QStringLiteral(".set_opacity(%1)")
+                     .arg(number(catalog::paramOr(clip.params, spec.params,
+                                                  QStringLiteral("to")).toDouble()));
+
     case catalog::Effect::Shift:
         return animate
                + QStringLiteral(".shift(%1)")
@@ -312,10 +327,33 @@ QString constructBody(const Document &document, int indentLevel)
             lines.append(pad + QStringLiteral("self.wait(%1)").arg(number(gap)));
         }
 
+        // A Python block is not an animation; it is written out on its own,
+        // in the sequence, with its target substituted in.
+        QStringList blocks;
+        for (const Clip *clip : cluster.clips) {
+            const catalog::AnimationSpec *spec = catalog::findAnimation(clip->type);
+            if (!spec || spec->effect != catalog::Effect::Code)
+                continue;
+
+            QString body =
+                catalog::paramOr(clip->params, spec->params, QStringLiteral("body")).toString();
+            if (body.trimmed().isEmpty())
+                continue;
+
+            // TARGET stands for whatever the block is attached to, so a block
+            // can be written once and pointed at different objects.
+            body.replace(QLatin1String("TARGET"), variables.value(clip->objectId,
+                                                                  QStringLiteral("self")));
+            for (const QString &line : body.split(QLatin1Char('\n')))
+                blocks.append(pad + line);
+        }
+
         QStringList expressions;
         for (const Clip *clip : cluster.clips) {
             const catalog::AnimationSpec *spec = catalog::findAnimation(clip->type);
-            if (!spec || !variables.contains(clip->objectId))
+            if (!spec || spec->effect == catalog::Effect::Code)
+                continue;
+            if (!variables.contains(clip->objectId))
                 continue;
 
             QString expression;
@@ -324,6 +362,8 @@ QString constructBody(const Document &document, int indentLevel)
             } else {
                 expression = animationExpression(*clip, *spec, variables.value(clip->objectId));
             }
+            if (expression.isEmpty())
+                continue;
 
             // A clip starting after its cluster does so exactly, by waiting
             // first. This is how an arbitrary offset survives into Manim.
@@ -335,8 +375,15 @@ QString constructBody(const Document &document, int indentLevel)
             expressions.append(expression);
         }
 
-        if (expressions.isEmpty())
+        if (!blocks.isEmpty()) {
+            lines.append(QString());
+            lines += blocks;
+        }
+
+        if (expressions.isEmpty()) {
+            cursor = qMax(cursor, cluster.end);
             continue;
+        }
 
         lines.append(QString());
         if (expressions.size() == 1) {

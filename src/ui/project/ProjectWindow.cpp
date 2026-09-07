@@ -499,6 +499,22 @@ void ProjectWindow::startRender()
         return;
     }
 
+    // A scene using formulae needs LaTeX, which cannot be bundled. Say which
+    // objects need it, rather than letting Manim raise FileNotFoundError.
+    const QStringList needLatex = RenderJob::objectsNeedingLatex(m_state->document());
+    if (!needLatex.isEmpty() && !RenderJob::latexAvailable()) {
+        m_renderLog->clear();
+        m_renderLog->appendPlainText(
+            tr("These objects are typeset through LaTeX, which is not installed:\n"
+               "    %1\n\n"
+               "Manim cannot render them without it. Either remove them, or install a\n"
+               "TeX distribution (MacTeX, TeX Live or MiKTeX) and render again.\n"
+               "Everything else in the scene would render fine.")
+                .arg(needLatex.join(QStringLiteral(", "))));
+        m_renderStatus->setText(tr("LaTeX not found"));
+        return;
+    }
+
     m_renderStatus->setText(tr("Manim %1").arg(version));
     m_renderJob->start(m_layout, m_scriptPath, m_state->document().sceneClassName,
                        m_state->document().render);

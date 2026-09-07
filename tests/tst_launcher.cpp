@@ -5,6 +5,7 @@
 #include "RecentProjectsModel.h"
 #include "AppWindow.h"
 #include "CodeEditor.h"
+#include "Catalog.h"
 #include "CodeGenerator.h"
 #include "EditorState.h"
 #include "SceneEvaluator.h"
@@ -60,6 +61,8 @@ private slots:
     void generatesRunnablePython();
     void solverExpressesOverlapExactly();
     void positionCentresTheBoundingBox();
+    void pythonBlocksBecomeControlFlow();
+    void catalogCoversABroadRangeOfManim();
     void addingAnObjectSelectsIt();
     void animationsChangeWhatTheCanvasWouldDraw();
     void undoRestoresWhatWasThere();
@@ -413,6 +416,64 @@ void LauncherTest::positionCentresTheBoundingBox()
     const QString withLine = codegen::constructBody(state.document(), 0);
     QVERIFY(withLine.contains(QStringLiteral("line.shift([2, 1, 0])")));
     QVERIFY(!withLine.contains(QStringLiteral("line.move_to")));
+}
+
+void LauncherTest::pythonBlocksBecomeControlFlow()
+{
+    EditorState state;
+    state.setDocument(Document::createNew(QStringLiteral("Logic")), {});
+
+    const ObjectId circle = state.addObject(QStringLiteral("manim.Circle"));
+    const ClipId create = state.addClip(circle, QStringLiteral("manim.Create"));
+    state.setClipTiming(create, 0.0, 1.0, 0);
+
+    const ClipId block = state.addClip(circle, QStringLiteral("manim.Code"));
+    state.setClipTiming(block, 2.0, 0.5, 1);
+    state.setClipParam(block, QStringLiteral("body"),
+                       QStringLiteral("for i in range(3):\n"
+                                      "    if i % 2 == 0:\n"
+                                      "        self.play(Indicate(TARGET))"));
+
+    const QString code = codegen::constructBody(state.document(), 0);
+
+    // The loop and the condition survive verbatim, indented into construct().
+    QVERIFY(code.contains(QStringLiteral("for i in range(3):")));
+    QVERIFY(code.contains(QStringLiteral("if i % 2 == 0:")));
+
+    // TARGET is replaced by the variable the block is attached to.
+    QVERIFY(code.contains(QStringLiteral("self.play(Indicate(circle))")));
+    QVERIFY(!code.contains(QStringLiteral("TARGET")));
+
+    // A block is not an animation, so it is not wrapped in a play() of its own.
+    QVERIFY(!code.contains(QStringLiteral("self.play(Code")));
+}
+
+void LauncherTest::catalogCoversABroadRangeOfManim()
+{
+    // Every entry must be drawable and nameable, or it is not usable.
+    for (const catalog::MobjectSpec &spec : catalog::mobjects()) {
+        QVERIFY2(!spec.pythonName.isEmpty(), qPrintable(spec.id));
+        QVERIFY2(!spec.displayName.isEmpty(), qPrintable(spec.id));
+        QVERIFY2(!spec.category.isEmpty(), qPrintable(spec.id));
+        QVERIFY2(catalog::findMobject(spec.id) == &spec, qPrintable(spec.id));
+
+        // A default instance has to produce something the canvas can draw,
+        // apart from a group, which is drawn by its children.
+        evaluator::ObjectState state;
+        state.type = spec.id;
+        state.params = catalog::defaultParams(spec);
+        if (spec.shape != catalog::ShapeKind::Group) {
+            QVERIFY2(!SceneRenderer::shapeOf(state).isEmpty(), qPrintable(spec.id));
+        }
+    }
+
+    for (const catalog::AnimationSpec &spec : catalog::animations()) {
+        QVERIFY2(!spec.pythonName.isEmpty(), qPrintable(spec.id));
+        QVERIFY2(catalog::findAnimation(spec.id) == &spec, qPrintable(spec.id));
+    }
+
+    qInfo("catalog: %lld mobjects, %lld animations",
+          catalog::mobjects().size(), catalog::animations().size());
 }
 
 void LauncherTest::addingAnObjectSelectsIt()

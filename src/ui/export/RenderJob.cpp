@@ -1,5 +1,7 @@
 #include "RenderJob.h"
 
+#include "Catalog.h"
+
 #include <QDir>
 #include <QFileInfo>
 #include <QDirIterator>
@@ -66,6 +68,29 @@ bool RenderJob::manimAvailable(QString *versionOut)
     if (versionOut)
         *versionOut = QString::fromUtf8(probe.readAllStandardOutput()).trimmed();
     return true;
+}
+
+bool RenderJob::latexAvailable()
+{
+    for (const QString &binary : {QStringLiteral("latex"), QStringLiteral("xelatex"),
+                                  QStringLiteral("pdflatex")}) {
+        if (!QStandardPaths::findExecutable(binary).isEmpty())
+            return true;
+    }
+    return false;
+}
+
+QStringList RenderJob::objectsNeedingLatex(const Document &document)
+{
+    const QStringList flagged = catalog::latexDependentIds();
+
+    QStringList names;
+    for (const SceneObject &object : document.objects) {
+        if (object.visible && flagged.contains(object.type))
+            names.append(object.name);
+    }
+    names.removeDuplicates();
+    return names;
 }
 
 bool RenderJob::isRunning() const

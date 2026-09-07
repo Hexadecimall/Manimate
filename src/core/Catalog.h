@@ -51,19 +51,63 @@ struct ParamSpec
 /// How the canvas draws a mobject. The renderer implements each of these; the
 /// catalog only names one and maps the entry's parameters onto it.
 enum class ShapeKind {
+    // Flat shapes
     Circle,
     Ellipse,
     Rectangle,
     RoundedRectangle,
     RegularPolygon,
     Star,
+    Arc,
+    Sector,
+    Annulus,
+    Cross,
+    Elbow,
+    Angle,
+
+    // Lines
     Line,
+    DashedLine,
     Arrow,
+    DoubleArrow,
+    Vector,
+    CurvedArrow,
+
     Dot,
+
+    // Text
     Text,
     MathText,
+    Paragraph,
+    CodeBlock,
+    NumberText,
+
+    // Graphs and layout
     NumberPlane,
     Axes,
+    NumberLine,
+    BarChart,
+    FunctionGraph,
+    Table,
+    Matrix,
+    Brace,
+    Underline,
+    SurroundingBox,
+
+    // Three dimensions, drawn as a wireframe standing in for the solid
+    Cube,
+    Sphere,
+    Cone,
+    Cylinder,
+    Torus,
+    Prism,
+    Surface3D,
+
+    /// A container: draws whatever its children draw.
+    Group,
+
+    /// Written by hand. Drawn as a labelled placeholder, emitted verbatim.
+    Custom,
 };
 
 /// A class that can exist in a scene.
@@ -78,6 +122,11 @@ struct MobjectSpec
 
     /// Suggested name for a new instance, before deduplication.
     QString defaultObjectName;
+
+    /// True when Manim typesets this through LaTeX, which cannot be bundled
+    /// and is not present on every machine. The editor draws it either way;
+    /// only the render needs LaTeX installed.
+    bool requiresLatex = false;
 };
 
 /// What an animation does to a mobject, which is all the evaluator needs to
@@ -99,8 +148,21 @@ enum class Effect {
     Scale,
     /// Changes colour.
     Recolor,
+
+    /// Moves to an absolute position.
+    MoveTo,
+
+    /// Changes opacity to a given value.
+    Fade,
     /// Nothing visible happens; time simply passes.
     Wait,
+
+    /// Draws attention without lasting: flashes, wiggles, circumscribes.
+    Emphasise,
+
+    /// Arbitrary Python, run at this point in the sequence. This is where
+    /// loops, conditions and anything else the timeline cannot express go.
+    Code,
 };
 
 struct AnimationSpec
@@ -131,6 +193,9 @@ const AnimationSpec *findAnimation(const QString &id);
 /// Categories in the order the library should show them.
 QStringList mobjectCategories();
 QStringList animationCategories();
+
+/// Mobject ids in `document` order that need LaTeX to render.
+QStringList latexDependentIds();
 
 /// Every parameter at its default, ready to be stored on a new object.
 QVariantMap defaultParams(const MobjectSpec &spec);

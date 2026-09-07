@@ -5,6 +5,7 @@
 
 #include <QObject>
 #include <QProcess>
+#include <QStringList>
 
 namespace mn::ui {
 
@@ -33,6 +34,14 @@ public:
     /// The interpreter that will be used, and whether Manim is importable.
     static QString pythonExecutable();
     static bool manimAvailable(QString *versionOut = nullptr);
+
+    /// Whether a LaTeX binary is on the path. Manim typesets formulae through
+    /// it, and it is the one dependency that cannot be shipped with the app.
+    static bool latexAvailable();
+
+    /// Names of objects in `document` that will need LaTeX to render, so the
+    /// user is told which ones rather than shown a Python traceback.
+    static QStringList objectsNeedingLatex(const Document &document);
 
 Q_SIGNALS:
     void started(const QString &commandLine);
