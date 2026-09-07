@@ -51,11 +51,18 @@ jobs:
             libxcb-shape0-dev libxcb-sync-dev libxcb-xfixes0-dev \
             libxcb-xinerama0-dev libxcb-xkb-dev \
             libfontconfig1-dev libfreetype6-dev \
-            libfuse2 desktop-file-utils file
+            libfuse2 desktop-file-utils file \
+            libcairo2-dev libpango1.0-dev pkg-config patchelf
 
       - name: Install NSIS
         if: matrix.platform == 'windows'
         run: choco install nsis --no-progress -y
+
+      # pycairo has no wheel for macOS and manimpango none for Linux, so both
+      # are compiled here and need the libraries to compile against.
+      - name: Install macOS build dependencies
+        if: matrix.platform == 'macos'
+        run: brew install cairo pango pkg-config
 
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
@@ -123,6 +130,13 @@ jobs:
             ./runtime/ffmpeg.exe -version | head -1
           else
             ./runtime/bin/ffmpeg -version | head -1
+          fi
+
+          # The compiled extensions record absolute paths to the libraries on
+          # this runner. Copy those in and rewrite the paths, or the runtime
+          # works here and nowhere else.
+          if [ "${{ matrix.platform }}" != windows ]; then
+            python3 tools/bundle_native_libs.py runtime --platform "${{ matrix.platform }}"
           fi
 
           # Trim what a render never needs. The download is large enough
