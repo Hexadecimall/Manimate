@@ -3,6 +3,7 @@
 #include "Timeline.h"
 #include "Types.h"
 
+#include <QPointF>
 #include <QWidget>
 
 namespace mn::ui {
@@ -66,8 +67,8 @@ private:
         double top = 0.0;
         double height = 0.0;
 
-        /// How many clips of this object overlap at once, and so how many rows
-        /// deep the lane has to be for all of them to be visible.
+        /// How many rows of clips the lane holds, and so how tall it is. The
+        /// lane of a clip being dragged keeps one row spare to drop it onto.
         int depth = 1;
     };
 
@@ -80,6 +81,9 @@ private:
     /// Which row within its lane a clip sits on, so overlapping animations of
     /// one object do not cover each other.
     int rowOf(const Clip &clip) const;
+
+    /// The row of `lane` at `y`, clamped to the rows the lane actually has.
+    int rowAt(const Lane &lane, double y) const;
 
     /// The clip under `point`, and which part of it.
     ClipId clipAt(const QPointF &point, Grab *how) const;
@@ -110,6 +114,11 @@ private:
     bool m_grabMoved = false;
 
     ClipId m_hovered = kInvalidClipId;
+
+    /// A selection rectangle being dragged out, in widget coordinates.
+    bool m_marquee = false;
+    QPointF m_marqueeFrom;
+    QPointF m_marqueeTo;
 
     /// A sound being dragged, and where it was grabbed within itself.
     ClipId m_grabbedAudio = kInvalidClipId;

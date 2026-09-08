@@ -477,6 +477,10 @@ Result parse(const QString &source, Document *document)
         return result;
     }
 
+    // Python says nothing about rows, so overlapping animations are stacked
+    // the same way a project from before rows existed is.
+    parsed.timeline.packRows();
+
     parsed.timeline.duration = qMax(document->timeline.duration, cursor);
     *document = std::move(parsed);
 

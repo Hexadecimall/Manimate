@@ -39,6 +39,11 @@ public:
     bool isSelected(ObjectId id) const { return m_selection.contains(id); }
     ClipId selectedClip() const { return m_selectedClip; }
 
+    /// Every clip selected. A marquee in the timeline makes it several; the
+    /// inspector still edits one, the last of them.
+    const QVector<ClipId> &selectedClips() const { return m_clipSelection; }
+    bool isClipSelected(ClipId id) const { return m_clipSelection.contains(id); }
+
     /// The selected sound, which is selected separately: it animates nothing,
     /// so it shares no state with the animation clips.
     ClipId selectedAudio() const { return m_selectedAudio; }
@@ -62,6 +67,9 @@ public Q_SLOTS:
     /// Add or remove one object, as shift-clicking does.
     void toggleSelected(ObjectId id);
     void selectClip(ClipId id);
+
+    /// Replace the clip selection outright, as a marquee does.
+    void setClipSelection(const QVector<ClipId> &ids);
     void selectAudio(ClipId id);
     void clearSelection();
     void setPlayhead(double seconds);
@@ -92,6 +100,11 @@ public Q_SLOTS:
     /// Point a clip at a different object, which is what dragging it into
     /// another lane means.
     void setClipObject(ClipId id, ObjectId objectId);
+
+    /// Put a clip on another row of its object's lane, which is what dragging
+    /// it up or down means. Rows stay contiguous: one left empty collapses.
+    void setClipRow(ClipId id, int row);
+
     void setClipRateFunction(ClipId id, const QString &name);
 
     /// Copy `sourceFile` into the project's assets and place it at the
@@ -134,12 +147,21 @@ private:
     void commit();
     int freeTrackFor(double start, double duration) const;
 
+    /// The first row of `object`'s lane with nothing running over this span,
+    /// so a new clip does not land underneath one already there.
+    int freeRowFor(ObjectId object, double start, double duration,
+                   ClipId ignore = kInvalidClipId) const;
+
+    /// Renumber `object`'s rows so they run from zero with no gaps.
+    void compactRows(ObjectId object);
+
     Document m_document;
     ProjectLayout m_layout;
 
     ObjectId m_selectedObject = kInvalidObjectId;
     QVector<ObjectId> m_selection;
     ClipId m_selectedClip = kInvalidClipId;
+    QVector<ClipId> m_clipSelection;
     ClipId m_selectedAudio = kInvalidClipId;
     double m_playhead = 0.0;
     bool m_modified = false;

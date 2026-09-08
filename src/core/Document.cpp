@@ -262,6 +262,12 @@ Document Document::fromJson(const QJsonObject &object, QString *errorOut)
 
     document.timeline = Timeline::fromJson(object.value(QStringLiteral("timeline")).toObject());
 
+    // Before format 2 a clip had no row and the timeline stacked overlapping
+    // animations itself. Packing them the same way keeps an older project
+    // looking exactly as it did.
+    if (format < 2)
+        document.timeline.packRows();
+
     const QJsonArray assetArray = object.value(QStringLiteral("assets")).toArray();
     for (const QJsonValue &value : assetArray)
         document.assets.append(value.toString());

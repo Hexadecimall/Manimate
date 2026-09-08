@@ -22,6 +22,7 @@ namespace {
 constexpr int kRulerHeight = 28;
 constexpr int kTrackHeight = 42;
 constexpr int kTrackGap = 5;
+constexpr int kRowGap = 2;
 constexpr int kHeaderWidth = 116;
 constexpr int kLeftPadding = 8;
 constexpr double kTrimHandle = 6.0;
@@ -153,34 +154,31 @@ QVector<TimelineView::Lane> TimelineView::lanes() const
     m_lanes.clear();
     double top = kRulerHeight;
 
+    // While a clip is being dragged its own lane keeps one row spare, so there
+    // is somewhere to drop it that makes a row it did not have.
+    ObjectId dragged = kInvalidObjectId;
+    if (m_grab == Grab::Move) {
+        if (const Clip *clip = document.findClip(m_grabbed))
+            dragged = clip->objectId;
+    }
+
     for (const SceneObject *object : std::as_const(ordered)) {
         Lane lane;
         lane.object = object->id;
         lane.top = top;
 
-        // How deep the lane has to be: the most clips of this object that are
-        // ever running at the same moment.
-        QVector<const Clip *> mine;
+        // As deep as the lowest row anything of this object sits on: rows are
+        // the arrangement the clips themselves carry.
+        int rows = 0;
         for (const Clip &clip : document.timeline.clips) {
             if (clip.objectId == object->id)
-                mine.append(&clip);
+                rows = qMax(rows, clip.row + 1);
         }
-        std::sort(mine.begin(), mine.end(),
-                  [](const Clip *a, const Clip *b) { return a->start < b->start; });
+        if (object->id == dragged)
+            ++rows;
 
-        QVector<double> rowEnds;
-        for (const Clip *clip : std::as_const(mine)) {
-            int row = 0;
-            while (row < rowEnds.size() && clip->start < rowEnds.at(row) - 1e-6)
-                ++row;
-            if (row == rowEnds.size())
-                rowEnds.append(clip->end());
-            else
-                rowEnds[row] = clip->end();
-        }
-
-        lane.depth = qMax(1, int(rowEnds.size()));
-        lane.height = lane.depth * kTrackHeight + (lane.depth - 1) * 2;
+        lane.depth = qMax(1, rows);
+        lane.height = lane.depth * kTrackHeight + (lane.depth - 1) * kRowGap;
         m_lanes.append(lane);
 
         top += lane.height + kTrackGap;
@@ -213,30 +211,13 @@ const TimelineView::Lane *TimelineView::laneAt(double y) const
 
 int TimelineView::rowOf(const Clip &clip) const
 {
-    // Assigned the same way the lane's depth was worked out, so a clip always
-    // lands on the row the lane made room for.
-    QVector<const Clip *> mine;
-    for (const Clip &candidate : m_state->document().timeline.clips) {
-        if (candidate.objectId == clip.objectId)
-            mine.append(&candidate);
-    }
-    std::sort(mine.begin(), mine.end(),
-              [](const Clip *a, const Clip *b) { return a->start < b->start; });
+    return qMax(0, clip.row);
+}
 
-    QVector<double> rowEnds;
-    for (const Clip *candidate : std::as_const(mine)) {
-        int row = 0;
-        while (row < rowEnds.size() && candidate->start < rowEnds.at(row) - 1e-6)
-            ++row;
-        if (row == rowEnds.size())
-            rowEnds.append(candidate->end());
-        else
-            rowEnds[row] = candidate->end();
-
-        if (candidate->id == clip.id)
-            return row;
-    }
-    return 0;
+int TimelineView::rowAt(const Lane &lane, double y) const
+{
+    const int row = int((y - lane.top) / double(kTrackHeight + kRowGap));
+    return std::clamp(row, 0, lane.depth - 1);
 }
 
 QRectF TimelineView::clipRect(const Clip &clip) const
@@ -245,7 +226,7 @@ QRectF TimelineView::clipRect(const Clip &clip) const
     if (!lane)
         return {};
 
-    const double top = lane->top + rowOf(clip) * (kTrackHeight + 2) + 2;
+    const double top = lane->top + rowOf(clip) * (kTrackHeight + kRowGap) + 2;
     return QRectF(xAt(clip.start), top, qMax(6.0, clip.duration * m_scale), kTrackHeight - 4);
 }
 
@@ -338,7 +319,7 @@ void TimelineView::paintEvent(QPaintEvent *)
 
         const catalog::AnimationSpec *spec = catalog::findAnimation(clip.type);
         const SceneObject *object = document.findObject(clip.objectId);
-        const bool selected = clip.id == m_state->selectedClip();
+        const bool selected = m_state->isClipSelected(clip.id);
         const bool hovered = clip.id == m_hovered;
 
         const QColor accent = clipColour(spec);
@@ -426,6 +407,14 @@ void TimelineView::paintEvent(QPaintEvent *)
         }
     }
 
+    // -------------------------------------------------------- marquee ----
+    if (m_marquee) {
+        const QRectF box = QRectF(m_marqueeFrom, m_marqueeTo).normalized();
+        painter.setPen(QPen(p.text, 1.0, Qt::DashLine));
+        painter.setBrush(QColor(p.text.red(), p.text.green(), p.text.blue(), 20));
+        painter.drawRect(box);
+    }
+
     // --------------------------------------------------------- playhead ----
     const double playX = xAt(m_state->playhead());
     if (playX >= kHeaderWidth) {
@@ -479,8 +468,8 @@ void TimelineView::paintEvent(QPaintEvent *)
                          QFontMetricsF(font).elidedText(object->name, Qt::ElideMiddle,
                                                        nameRect.width()));
 
-        // A lane only grows rows when its own animations overlap, so saying how
-        // deep it is explains why it is taller than its neighbours.
+        // Rows are where the clips were put, so saying how many there are
+        // explains why a lane is taller than its neighbours.
         if (lane.depth > 1) {
             QFont sub = theme::font(1);
             sub.setPixelSize(10);
@@ -488,7 +477,7 @@ void TimelineView::paintEvent(QPaintEvent *)
             painter.setPen(p.textFaint);
             painter.drawText(QRectF(36, lane.top + kTrackHeight, kHeaderWidth - 44, 14),
                              Qt::AlignVCenter | Qt::AlignLeft,
-                             tr("%1 at once").arg(lane.depth));
+                             tr("%1 rows").arg(lane.depth));
         }
     }
     painter.setPen(QPen(p.border, 1.0));
@@ -672,8 +661,13 @@ void TimelineView::mousePressEvent(QMouseEvent *event)
     Grab how = Grab::None;
     const ClipId id = clipAt(point, &how);
     if (id == kInvalidClipId) {
-        m_state->selectClip(kInvalidClipId);
+        // Empty background: the playhead follows the press, and a drag from
+        // here sweeps out a selection rather than moving anything.
+        m_state->clearSelection();
         m_state->setPlayhead(timeAt(point.x()));
+        m_marquee = true;
+        m_marqueeFrom = point;
+        m_marqueeTo = point;
         return;
     }
 
@@ -688,11 +682,21 @@ void TimelineView::mousePressEvent(QMouseEvent *event)
     m_grabDuration = clip->duration;
     m_grabTimeOffset = timeAt(point.x()) - clip->start;
     m_grabMoved = false;
+
+    // The lane gains its spare row the moment the drag starts.
+    m_lanesStale = true;
+    update();
 }
 
 void TimelineView::mouseMoveEvent(QMouseEvent *event)
 {
     const QPointF point = event->position();
+
+    if (m_marquee) {
+        m_marqueeTo = point;
+        update();
+        return;
+    }
 
     if (m_grabbedAudio != kInvalidClipId) {
         if (!m_grabMoved) {
@@ -739,9 +743,15 @@ void TimelineView::mouseMoveEvent(QMouseEvent *event)
     case Grab::Move: {
         m_state->setClipTiming(m_grabbed, maybeSnap(time - m_grabTimeOffset), clip->duration,
                                clip->track);
-        // Dragging into another lane points the animation at that object.
-        if (const Lane *lane = laneAt(point.y()); lane && lane->object != clip->objectId)
-            m_state->setClipObject(m_grabbed, lane->object);
+        // Sideways is when the animation runs; up and down is which row it
+        // sits on, or, past the lane it started in, which object it animates.
+        // Taken by value: pointing the clip elsewhere invalidates the lanes.
+        if (const Lane *under = laneAt(point.y())) {
+            const Lane lane = *under;
+            if (lane.object != clip->objectId)
+                m_state->setClipObject(m_grabbed, lane.object);
+            m_state->setClipRow(m_grabbed, rowAt(lane, point.y()));
+        }
         setCursor(Qt::ClosedHandCursor);
         break;
     }
@@ -764,10 +774,32 @@ void TimelineView::mouseMoveEvent(QMouseEvent *event)
 void TimelineView::mouseReleaseEvent(QMouseEvent *event)
 {
     Q_UNUSED(event);
+
+    if (m_marquee) {
+        m_marquee = false;
+
+        // Anything the rectangle touches, as on the canvas. Both are in widget
+        // coordinates, so how far the timeline is scrolled does not matter.
+        const QRectF box = QRectF(m_marqueeFrom, m_marqueeTo).normalized();
+        QVector<ClipId> caught;
+        for (const Clip &clip : m_state->document().timeline.clips) {
+            if (box.intersects(clipRect(clip)))
+                caught.append(clip.id);
+        }
+        m_state->setClipSelection(caught);
+        update();
+        return;
+    }
+
     m_grab = Grab::None;
     m_grabbed = kInvalidClipId;
     m_grabbedAudio = kInvalidClipId;
     m_grabMoved = false;
+
+    // The spare row goes with the drag, taking the lane back to its own rows.
+    m_lanesStale = true;
+    updateGeometry();
+    update();
     unsetCursor();
 }
 
@@ -814,6 +846,16 @@ void TimelineView::wheelEvent(QWheelEvent *event)
 void TimelineView::keyPressEvent(QKeyEvent *event)
 {
     switch (event->key()) {
+    case Qt::Key_Escape:
+        // The rectangle goes away without touching what was selected: nothing
+        // is chosen until it is released.
+        if (m_marquee) {
+            m_marquee = false;
+            update();
+            return;
+        }
+        QWidget::keyPressEvent(event);
+        return;
     case Qt::Key_Delete:
     case Qt::Key_Backspace:
         m_state->deleteSelection();

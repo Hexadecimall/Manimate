@@ -38,6 +38,11 @@ struct Clip
 
     int track = 0;
 
+    /// Which row of its object's lane the clip is drawn on. Layout only: the
+    /// exporter never reads it, so moving a clip between rows cannot change
+    /// the generated Python.
+    int row = 0;
+
     /// Absolute start on the timeline, in seconds.
     double start = 0.0;
 
@@ -95,6 +100,10 @@ struct Timeline
 
     /// Latest point any clip reaches, ignoring `duration`.
     double contentEnd() const;
+
+    /// Give every clip a row by stacking each object's overlapping animations,
+    /// which is how lanes were laid out before rows were part of the file.
+    void packRows();
 
     QJsonObject toJson() const;
     static Timeline fromJson(const QJsonObject &object);

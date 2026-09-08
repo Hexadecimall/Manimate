@@ -12,6 +12,11 @@ target_link_libraries(tst_launcher PRIVATE Manimate::Ui Qt6::Test)
 add_test(NAME tst_launcher COMMAND tst_launcher)
 set_target_properties(tst_launcher PROPERTIES WIN32_EXECUTABLE FALSE MACOSX_BUNDLE FALSE)
 
+qt_add_executable(tst_timeline tst_timeline.cpp)
+target_link_libraries(tst_timeline PRIVATE Manimate::Ui Qt6::Test)
+add_test(NAME tst_timeline COMMAND tst_timeline)
+set_target_properties(tst_timeline PROPERTIES WIN32_EXECUTABLE FALSE MACOSX_BUNDLE FALSE)
+
 qt_add_executable(tst_codeeditor tst_codeeditor.cpp)
 target_link_libraries(tst_codeeditor PRIVATE Manimate::Ui Qt6::Test)
 add_test(NAME tst_codeeditor COMMAND tst_codeeditor)

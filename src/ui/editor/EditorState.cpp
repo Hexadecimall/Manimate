@@ -20,7 +20,9 @@ void EditorState::setDocument(Document document, const ProjectLayout &layout)
     m_document = std::move(document);
     m_layout = layout;
     m_selectedObject = kInvalidObjectId;
+    m_selection.clear();
     m_selectedClip = kInvalidClipId;
+    m_clipSelection.clear();
     m_playhead = 0.0;
     m_undo.clear();
     m_redo.clear();
@@ -73,6 +75,8 @@ void EditorState::undo()
         m_selectedObject = kInvalidObjectId;
     if (!m_document.findClip(m_selectedClip))
         m_selectedClip = kInvalidClipId;
+    m_selection.removeIf([this](ObjectId id) { return !m_document.findObject(id); });
+    m_clipSelection.removeIf([this](ClipId id) { return !m_document.findClip(id); });
 
     commit();
     Q_EMIT selectionChanged();
@@ -91,6 +95,8 @@ void EditorState::redo()
         m_selectedObject = kInvalidObjectId;
     if (!m_document.findClip(m_selectedClip))
         m_selectedClip = kInvalidClipId;
+    m_selection.removeIf([this](ObjectId id) { return !m_document.findObject(id); });
+    m_clipSelection.removeIf([this](ClipId id) { return !m_document.findClip(id); });
 
     commit();
     Q_EMIT selectionChanged();
@@ -109,6 +115,7 @@ void EditorState::selectObject(ObjectId id)
     if (id != kInvalidObjectId)
         m_selection.append(id);
     m_selectedClip = kInvalidClipId;
+    m_clipSelection.clear();
     Q_EMIT selectionChanged();
 }
 
@@ -126,6 +133,7 @@ void EditorState::setSelection(const QVector<ObjectId> &ids)
     // The inspector edits one thing, so it follows the last one chosen.
     m_selectedObject = kept.isEmpty() ? kInvalidObjectId : kept.last();
     m_selectedClip = kInvalidClipId;
+    m_clipSelection.clear();
     Q_EMIT selectionChanged();
 }
 
@@ -145,14 +153,49 @@ void EditorState::toggleSelected(ObjectId id)
 void EditorState::selectClip(ClipId id)
 {
     const Clip *clip = m_document.findClip(id);
-    if (m_selectedClip == id)
+    // Choosing one clip narrows a wider selection down to it, so the size is
+    // part of the question of whether anything changed.
+    if (m_selectedClip == id && m_clipSelection.size() <= 1)
         return;
 
     m_selectedClip = id;
+    m_clipSelection.clear();
+    if (clip)
+        m_clipSelection.append(id);
     m_selectedAudio = kInvalidClipId;
     // Selecting a clip also selects what it animates, so the inspector and the
     // canvas agree about what is being worked on.
     m_selectedObject = clip ? clip->objectId : kInvalidObjectId;
+    m_selection.clear();
+    if (clip)
+        m_selection.append(clip->objectId);
+    Q_EMIT selectionChanged();
+}
+
+void EditorState::setClipSelection(const QVector<ClipId> &ids)
+{
+    QVector<ClipId> kept;
+    for (const ClipId id : ids) {
+        if (m_document.findClip(id) && !kept.contains(id))
+            kept.append(id);
+    }
+    if (kept == m_clipSelection)
+        return;
+
+    m_clipSelection = kept;
+    m_selectedClip = kept.isEmpty() ? kInvalidClipId : kept.last();
+    m_selectedAudio = kInvalidClipId;
+
+    // The objects those clips animate come with them, so the canvas and the
+    // inspector show the same work the timeline does.
+    QVector<ObjectId> objects;
+    for (const ClipId id : std::as_const(kept)) {
+        const Clip *clip = m_document.findClip(id);
+        if (clip && !objects.contains(clip->objectId))
+            objects.append(clip->objectId);
+    }
+    m_selection = objects;
+    m_selectedObject = objects.isEmpty() ? kInvalidObjectId : objects.last();
     Q_EMIT selectionChanged();
 }
 
@@ -171,11 +214,14 @@ void EditorState::selectAudio(ClipId id)
 
 void EditorState::clearSelection()
 {
-    if (m_selectedObject == kInvalidObjectId && m_selectedClip == kInvalidClipId)
+    if (m_selectedObject == kInvalidObjectId && m_selectedClip == kInvalidClipId
+        && m_selectedAudio == kInvalidClipId) {
         return;
+    }
     m_selectedObject = kInvalidObjectId;
     m_selection.clear();
     m_selectedClip = kInvalidClipId;
+    m_clipSelection.clear();
     m_selectedAudio = kInvalidClipId;
     Q_EMIT selectionChanged();
 }
@@ -235,6 +281,41 @@ int EditorState::freeTrackFor(double start, double duration) const
     return int(m_document.timeline.tracks.size());
 }
 
+int EditorState::freeRowFor(ObjectId object, double start, double duration, ClipId ignore) const
+{
+    const double end = start + duration;
+
+    int row = 0;
+    for (;; ++row) {
+        bool clashes = false;
+        for (const Clip &clip : m_document.timeline.clips) {
+            if (clip.objectId != object || clip.row != row || clip.id == ignore)
+                continue;
+            if (start < clip.end() && clip.start < end) {
+                clashes = true;
+                break;
+            }
+        }
+        if (!clashes)
+            return row;
+    }
+}
+
+void EditorState::compactRows(ObjectId object)
+{
+    QVector<int> used;
+    for (const Clip &clip : m_document.timeline.clips) {
+        if (clip.objectId == object && !used.contains(clip.row))
+            used.append(clip.row);
+    }
+    std::sort(used.begin(), used.end());
+
+    for (Clip &clip : m_document.timeline.clips) {
+        if (clip.objectId == object)
+            clip.row = int(used.indexOf(clip.row));
+    }
+}
+
 ClipId EditorState::addClip(ObjectId objectId, const QString &animationId)
 {
     const catalog::AnimationSpec *spec = catalog::findAnimation(animationId);
@@ -250,6 +331,7 @@ ClipId EditorState::addClip(ObjectId objectId, const QString &animationId)
     clip.type = spec->id;
     clip.start = m_playhead;
     clip.duration = spec->defaultDuration;
+    clip.row = freeRowFor(objectId, clip.start, clip.duration);
     clip.params = catalog::defaultParams(*spec);
 
     const ClipId id = m_document.addClip(std::move(clip));
@@ -337,12 +419,18 @@ void EditorState::removeObject(ObjectId id)
 
 void EditorState::removeClip(ClipId id)
 {
-    if (!m_document.findClip(id))
+    const Clip *clip = m_document.findClip(id);
+    if (!clip)
         return;
+    const ObjectId object = clip->objectId;
+
     beginEdit();
     m_document.removeClip(id);
+    // The row it was on may now be empty, and an empty row does not stay.
+    compactRows(object);
     if (m_selectedClip == id) {
         m_selectedClip = kInvalidClipId;
+        m_clipSelection.removeAll(id);
         Q_EMIT selectionChanged();
     }
     commit();
@@ -350,6 +438,14 @@ void EditorState::removeClip(ClipId id)
 
 void EditorState::deleteSelection()
 {
+    // Several clips at once, when a marquee in the timeline put them there.
+    if (m_clipSelection.size() > 1) {
+        const QVector<ClipId> doomed = m_clipSelection;
+        for (const ClipId id : doomed)
+            removeClip(id);
+        return;
+    }
+
     // Several objects at once, when a marquee put them there.
     if (m_selectedClip == kInvalidClipId && m_selectedAudio == kInvalidClipId
         && m_selection.size() > 1) {
@@ -440,9 +536,33 @@ void EditorState::setClipObject(ClipId id, ObjectId objectId)
     if (!clip || clip->objectId == objectId || !m_document.findObject(objectId))
         return;
 
+    const ObjectId was = clip->objectId;
     clip->objectId = objectId;
+    // A row of the old lane means nothing in the new one, so the clip takes a
+    // row with room for it; a drag then puts it wherever the pointer is.
+    clip->row = freeRowFor(objectId, clip->start, clip->duration, id);
+    compactRows(was);
+
     commit();
     Q_EMIT selectionChanged();
+}
+
+void EditorState::setClipRow(ClipId id, int row)
+{
+    Clip *clip = m_document.findClip(id);
+    if (!clip)
+        return;
+
+    const int was = clip->row;
+    clip->row = qMax(0, row);
+    compactRows(clip->objectId);
+
+    // Compaction can put it straight back: a row below the last one only
+    // exists once something else is left on the one it came from.
+    if (clip->row == was)
+        return;
+
+    commit();
 }
 
 void EditorState::setClipRateFunction(ClipId id, const QString &name)

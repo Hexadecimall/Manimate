@@ -2,6 +2,7 @@
 
 #include "Json.h"
 
+#include <QHash>
 #include <QJsonArray>
 #include <algorithm>
 
@@ -32,6 +33,7 @@ QJsonObject Clip::toJson() const
     object.insert(QStringLiteral("object"), qint64(objectId));
     object.insert(QStringLiteral("type"), type);
     object.insert(QStringLiteral("track"), track);
+    object.insert(QStringLiteral("row"), row);
     object.insert(QStringLiteral("start"), start);
     object.insert(QStringLiteral("duration"), duration);
     object.insert(QStringLiteral("rate"), rateFunc);
@@ -48,6 +50,8 @@ Clip Clip::fromJson(const QJsonObject &object)
     clip.objectId = ObjectId(object.value(QStringLiteral("object")).toInteger());
     clip.type = object.value(QStringLiteral("type")).toString();
     clip.track = object.value(QStringLiteral("track")).toInt();
+    // A file written before rows existed has none; Document migrates those.
+    clip.row = std::max(0, object.value(QStringLiteral("row")).toInt());
     clip.start = object.value(QStringLiteral("start")).toDouble();
     clip.duration = object.value(QStringLiteral("duration")).toDouble(1.0);
     clip.rateFunc = object.value(QStringLiteral("rate")).toString(QStringLiteral("smooth"));
@@ -84,6 +88,30 @@ double Timeline::contentEnd() const
     for (const AudioClip &clip : audio)
         end = std::max(end, clip.start);
     return end;
+}
+
+void Timeline::packRows()
+{
+    QVector<Clip *> sorted;
+    for (Clip &clip : clips)
+        sorted.append(&clip);
+    std::sort(sorted.begin(), sorted.end(),
+              [](const Clip *a, const Clip *b) { return a->start < b->start; });
+
+    // Per object, the first row whose last clip has finished. Anything that
+    // overlaps therefore lands a row lower and stays visible.
+    QHash<ObjectId, QVector<double>> rowEnds;
+    for (Clip *clip : std::as_const(sorted)) {
+        QVector<double> &ends = rowEnds[clip->objectId];
+        int row = 0;
+        while (row < ends.size() && clip->start < ends.at(row) - 1e-6)
+            ++row;
+        if (row == ends.size())
+            ends.append(clip->end());
+        else
+            ends[row] = clip->end();
+        clip->row = row;
+    }
 }
 
 QJsonObject Timeline::toJson() const
